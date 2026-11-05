@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>لوحة نتائج الامتحان</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+*{box-sizing:border-box}body{margin:0;padding:16px;background:#f1f5f9;color:#172033;font-family:Tahoma,Arial,sans-serif}.wrap{max-width:1050px;margin:22px auto}.header,.panel{background:#fff;border-radius:16px;padding:20px;box-shadow:0 5px 22px #0000000d;margin-bottom:16px}.header{background:linear-gradient(135deg,#145b46,#218565);color:#fff}.header h1{margin:0 0 8px;font-size:25px}.header p{margin:0;opacity:.9;line-height:1.8}.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-top:18px}.stat{background:#ffffff20;border:1px solid #ffffff30;padding:13px;border-radius:12px}.stat span{display:block;font-size:13px;opacity:.9}.stat strong{display:block;font-size:25px;margin-top:6px}.toolbar{display:flex;gap:10px;flex-wrap:wrap}.toolbar input{flex:1;min-width:190px;padding:13px;border:1px solid #cbd5e1;border-radius:10px;font-size:16px}.toolbar button{padding:12px 18px;border:0;border-radius:10px;background:#176b50;color:white;font-size:15px;cursor:pointer}.toolbar button:disabled{opacity:.55}.status{margin:12px 0;color:#64748b;line-height:1.7}.table-wrap{overflow-x:auto}table{width:100%;border-collapse:collapse;min-width:650px}th,td{padding:13px 10px;text-align:right;border-bottom:1px solid #e2e8f0;white-space:nowrap}th{background:#f8fafc;color:#475569;font-size:14px}td{font-size:14px}.pill{display:inline-block;padding:5px 9px;border-radius:20px;background:#dcfce7;color:#166534;font-weight:bold}.empty{text-align:center;padding:28px;color:#64748b}.error{color:#b91c1c}.footer{font-size:12px;color:#64748b;text-align:center;margin:14px}
+@media(max-width:600px){body{padding:10px}.header,.panel{padding:15px}.header h1{font-size:21px}.stats{gap:7px}.stat{padding:10px}.stat strong{font-size:21px}.stat span{font-size:12px}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <section class="header">
+    <h1>لوحة تحكم نتائج امتحان علوم القرآن</h1>
+    <p>متابعة الطلاب الذين سلّموا الامتحان ودرجاتهم.</p>
+    <div class="stats">
+      <div class="stat"><span>إجمالي الطلاب الظاهرين</span><strong id="totalStudents">—</strong></div>
+      <div class="stat"><span>إجمالي الإجابات الصحيحة</span><strong id="totalCorrect">—</strong></div>
+      <div class="stat"><span>عدد من أنهوا الامتحان</span><strong id="completedCount">—</strong></div>
+    </div>
+  </section>
+  <section class="panel">
+    <div class="toolbar">
+      <input id="search" type="search" placeholder="ابحث باسم الطالب أو كود الطالب...">
+      <button id="refreshBtn" onclick="loadResults()">تحديث النتائج</button>
+    </div>
+    <p id="status" class="status">اضغط «تحديث النتائج» لعرض النتائج.</p>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>#</th><th>اسم الطالب</th><th>كود الطالب</th><th>الإجابات الصحيحة</th><th>تاريخ التسليم</th></tr></thead>
+        <tbody id="resultsBody"><tr><td colspan="5" class="empty">لا توجد بيانات معروضة بعد.</td></tr></tbody>
+      </table>
+    </div>
+  </section>
+  <p class="footer">لوحة نتائج الامتحان — يتم جلب البيانات مباشرة من قاعدة البيانات.</p>
+</div>
+<script>
+const SUPABASE_URL = "https://bouihbsnuuxqeityyrgl.supabase.co";
+const SUPABASE_KEY = "sb_publishable_Ug3xBkJESfI973ZpOeXLFA_wjPoExD-";
+const db = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+let allResults = [];
+function esc(value){return String(value ?? "").replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
+function formatDate(value){if(!value)return "—";const d=new Date(value);return Number.isNaN(d.getTime())?"—":d.toLocaleString('ar-EG',{dateStyle:'medium',timeStyle:'short'});}
+function render(){
+ const term=document.getElementById('search').value.trim().toLowerCase();
+ const filtered=allResults.filter(r=>(r.full_name||'').toLowerCase().includes(term)||String(r.student_code||'').toLowerCase().includes(term));
+ const body=document.getElementById('resultsBody');
+ if(!filtered.length){body.innerHTML='<tr><td colspan="5" class="empty">لا توجد نتائج مطابقة.</td></tr>';return;}
+ body.innerHTML=filtered.map((r,i)=>`<tr><td>${i+1}</td><td>${esc(r.full_name)}</td><td>${esc(r.student_code)}</td><td><span class="pill">${Number(r.correct_count)||0}</span></td><td>${esc(formatDate(r.finished_at))}</td></tr>`).join('');
+}
+async function loadResults(){
+ const btn=document.getElementById('refreshBtn'),status=document.getElementById('status');
+ btn.disabled=true;status.className='status';status.textContent='جاري تحميل النتائج...';
+ try{
+  const {data,error}=await db.rpc('get_admin_results');
+  if(error)throw error;
+  allResults=Array.isArray(data)?data:[];
+  document.getElementById('totalStudents').textContent=allResults.length;
+  document.getElementById('completedCount').textContent=allResults.length;
+  document.getElementById('totalCorrect').textContent=allResults.reduce((sum,r)=>sum+(Number(r.correct_count)||0),0);
+  render();status.textContent=`تم تحميل ${allResults.length} نتيجة.`;
+ }catch(e){
+  console.error(e);allResults=[];
+  document.getElementById('totalStudents').textContent='—';document.getElementById('completedCount').textContent='—';document.getElementById('totalCorrect').textContent='—';
+  document.getElementById('resultsBody').innerHTML='<tr><td colspan="5" class="empty error">تعذر تحميل النتائج. تأكد من تنفيذ أمر SQL الخاص بلوحة الإدارة في Supabase، ثم حدّث الصفحة.</td></tr>';
+  status.className='status error';status.textContent='خطأ: '+(e.message||'تعذر الاتصال بقاعدة البيانات.');
+ }finally{btn.disabled=false;}
+}
+document.getElementById('search').addEventListener('input',render);
+loadResults();
+</script>
+</body>
+</html>

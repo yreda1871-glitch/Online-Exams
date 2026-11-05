@@ -1,0 +1,319 @@
+
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>التسجيل في الاختبار الإلكتروني</title>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+<style>
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 20px;
+  font-family: Tahoma, Arial, sans-serif;
+  background: linear-gradient(135deg,#101d35,#176b87);
+}
+
+.container {
+  width: 100%;
+  max-width: 430px;
+  background: white;
+  padding: 30px 23px;
+  border-radius: 22px;
+  box-shadow: 0 15px 40px #0004;
+  text-align: center;
+}
+
+.logo {
+  font-size: 45px;
+  margin-bottom: 12px;
+}
+
+h1 {
+  color: #10233f;
+  font-size: 25px;
+}
+
+.description {
+  color: #777;
+  line-height: 1.8;
+  font-size: 14px;
+  margin-bottom: 28px;
+}
+
+label {
+  display: block;
+  text-align: right;
+  font-weight: bold;
+  margin-bottom: 10px;
+}
+
+input {
+  width: 100%;
+  padding: 15px;
+  border: 1px solid #ddd;
+  border-radius: 12px;
+  font-size: 16px;
+  outline: none;
+  font-family: inherit;
+}
+
+input:focus {
+  border-color: #176b87;
+}
+
+button {
+  width: 100%;
+  padding: 15px;
+  margin-top: 16px;
+  border: none;
+  border-radius: 12px;
+  background: #176b87;
+  color: white;
+  font-size: 17px;
+  font-weight: bold;
+  cursor: pointer;
+  font-family: inherit;
+}
+
+button:disabled {
+  opacity: .6;
+  cursor: wait;
+}
+
+#message {
+  margin-top: 17px;
+  font-size: 14px;
+  line-height: 1.8;
+}
+
+.error {
+  color: #d32f2f;
+}
+
+.success {
+  color: #16834a;
+}
+
+.result {
+  display: none;
+  background: #effaf3;
+  border: 1px solid #bde5ca;
+  padding: 20px;
+  margin-top: 22px;
+  border-radius: 15px;
+}
+
+.code {
+  font-size: 35px;
+  font-weight: bold;
+  color: #16834a;
+  letter-spacing: 5px;
+  direction: ltr;
+  margin: 15px 0;
+}
+
+.copy {
+  background: #16834a;
+}
+
+.footer {
+  color: #999;
+  font-size: 12px;
+  margin-top: 25px;
+  line-height: 1.8;
+}
+</style>
+</head>
+
+<body>
+
+<div class="container">
+
+  <div class="logo">📝</div>
+
+  <h1>التسجيل في الاختبار الإلكتروني</h1>
+
+  <p class="description">
+    مرحبًا بك!
+    سجل اسمك للحصول على كود المشاركة في الاختبار.
+    احتفظ بالكود وانتظر موعد الامتحان.
+  </p>
+
+  <form id="registerForm">
+
+    <label>اسم الطالب بالكامل</label>
+
+    <input
+      id="studentName"
+      type="text"
+      placeholder="اكتب اسمك رباعي"
+      maxlength="100"
+      required
+    >
+
+    <button id="registerBtn" type="submit">
+      تسجيل والحصول على الكود
+    </button>
+
+  </form>
+
+  <div id="message"></div>
+
+  <div class="result" id="result">
+
+    <h3 style="color:#16834a">
+      تم تسجيلك بنجاح 🎉
+    </h3>
+
+    <p>كود المشاركة الخاص بك:</p>
+
+    <div class="code" id="studentCode"></div>
+
+    <button class="copy" id="copyBtn">
+      📋 نسخ الكود
+    </button>
+
+    <p style="font-size:13px;color:#555;line-height:1.8">
+      احتفظ بهذا الكود جيدًا.
+      ستحتاج إليه عند فتح الاختبار.
+      انتظر إعلان موعد الامتحان.
+    </p>
+
+  </div>
+
+  <div class="footer">
+    نظام الاختبارات الإلكترونية
+    <br>
+    نتمنى لكم التوفيق والنجاح 🌹
+  </div>
+
+</div>
+
+<script>
+
+// بيانات Supabase الخاصة بالمشروع
+const SUPABASE_URL =
+"https://bouihbsnuuxqeityyrgl.supabase.co";
+
+const SUPABASE_KEY =
+"sb_publishable_Ug3xBkJESfI973ZpOeXLFA_wjPoExD-";
+
+const db = window.supabase.createClient(
+  SUPABASE_URL,
+  SUPABASE_KEY
+);
+
+const form = document.getElementById("registerForm");
+const nameInput = document.getElementById("studentName");
+const registerBtn = document.getElementById("registerBtn");
+const message = document.getElementById("message");
+const result = document.getElementById("result");
+const codeBox = document.getElementById("studentCode");
+
+// تسجيل الطالب
+form.addEventListener("submit", async function(e) {
+
+  e.preventDefault();
+
+  const name = nameInput.value.trim();
+
+  if (name.length < 3) {
+    showMessage("اكتب اسم الطالب بشكل صحيح", "error");
+    return;
+  }
+
+  registerBtn.disabled = true;
+  registerBtn.textContent = "جارٍ التسجيل...";
+  result.style.display = "none";
+  message.textContent = "";
+
+  try {
+
+    // إرسال الاسم إلى قاعدة البيانات وإنشاء الكود
+    const { data, error } = await db.rpc(
+      "register_student",
+      { p_name: name }
+    );
+
+    if (error) {
+
+      if (
+        error.message.includes("duplicate") ||
+        error.message.includes("مسجل")
+      ) {
+        throw new Error("هذا الاسم مسجل بالفعل ولا يمكن تسجيله مرة أخرى.");
+      }
+
+      throw error;
+    }
+
+    // إظهار الكود
+    codeBox.textContent = data;
+
+    result.style.display = "block";
+
+    showMessage(
+      "تم حفظ تسجيلك بنجاح. احتفظ بالكود!",
+      "success"
+    );
+
+    form.reset();
+
+  } catch (error) {
+
+    console.error(error);
+
+    showMessage(
+      error.message.includes("مسجل")
+        ? error.message
+        : "حدث خطأ أثناء التسجيل. حاول مرة أخرى.",
+      "error"
+    );
+
+  }
+
+  registerBtn.disabled = false;
+  registerBtn.textContent = "تسجيل والحصول على الكود";
+
+});
+
+// نسخ الكود
+document.getElementById("copyBtn").addEventListener(
+  "click",
+  async function() {
+
+    const code = codeBox.textContent;
+
+    try {
+      await navigator.clipboard.writeText(code);
+      this.textContent = "تم نسخ الكود ✓";
+    } catch {
+      showMessage("حدد الكود وانسخه يدويًا.", "error");
+    }
+
+  }
+);
+
+// رسائل النظام
+function showMessage(text, type) {
+
+  message.textContent = text;
+  message.className = type;
+
+}
+
+</script>
+
+</body>
+</html>

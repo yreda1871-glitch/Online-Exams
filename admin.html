@@ -1,0 +1,369 @@
+
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>لوحة إدارة الامتحان</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+<style>
+*{box-sizing:border-box}
+body{
+ margin:0;padding:14px;background:#f1f5f9;
+ color:#172033;font-family:Tahoma,Arial,sans-serif
+}
+.wrap{max-width:1050px;margin:22px auto}
+.header,.panel{
+ background:white;border-radius:16px;padding:20px;
+ box-shadow:0 5px 22px #0000000d;margin-bottom:16px
+}
+.header{
+ background:linear-gradient(135deg,#145b46,#218565);
+ color:white
+}
+.header h1{margin:0 0 8px;font-size:25px}
+.header p{line-height:1.8}
+.stats{
+ display:grid;grid-template-columns:repeat(3,1fr);
+ gap:10px;margin-top:18px
+}
+.stat{
+ background:#ffffff20;padding:13px;
+ border-radius:12px
+}
+.stat span{display:block;font-size:13px}
+.stat strong{display:block;font-size:25px;margin-top:6px}
+.nav{
+ display:grid;grid-template-columns:1fr 1fr;
+ gap:10px;margin-bottom:16px
+}
+button{
+ padding:14px;border:0;border-radius:11px;
+ background:#e2e8f0;color:#172033;
+ font-size:16px;font-weight:bold;cursor:pointer
+}
+.nav button.active,.primary{
+ background:#176b50;color:white
+}
+.toolbar{display:flex;gap:10px;flex-wrap:wrap}
+.toolbar input{
+ flex:1;min-width:190px;padding:13px;
+ border:1px solid #cbd5e1;border-radius:10px;
+ font-size:16px
+}
+.toolbar button{padding:12px 18px;font-size:15px}
+button:disabled{opacity:.55}
+.section-title{color:#145b46}
+.status{color:#64748b;line-height:1.7}
+.table-wrap{overflow-x:auto}
+table{width:100%;border-collapse:collapse;min-width:560px}
+th,td{
+ padding:13px 10px;text-align:right;
+ border-bottom:1px solid #e2e8f0;white-space:nowrap
+}
+th{background:#f8fafc;color:#475569}
+td{font-size:14px}
+.pill{
+ display:inline-block;padding:5px 9px;
+ border-radius:20px;background:#dcfce7;color:#166534;
+ font-weight:bold
+}
+.score{font-weight:bold;color:#145b46}
+.empty{text-align:center;padding:28px;color:#64748b}
+.error{color:#b91c1c}
+.hidden{display:none}
+.footer{text-align:center;color:#64748b;font-size:12px}
+@media(max-width:600px){
+ body{padding:9px}
+ .header,.panel{padding:14px}
+ .header h1{font-size:21px}
+ .stats{gap:6px}
+ .stat{padding:9px}
+ .stat strong{font-size:21px}
+ .stat span{font-size:11px}
+ .nav button{font-size:14px;padding:12px}
+}
+</style>
+</head>
+
+<body>
+<div class="wrap">
+
+<section class="header">
+<h1>لوحة إدارة امتحان علوم القرآن</h1>
+<p>إدارة الطلاب ومتابعة نتائج الامتحان</p>
+
+<div class="stats">
+<div class="stat">
+<span>إجمالي الطلاب الحاصلين على كود</span>
+<strong id="studentsCount">—</strong>
+</div>
+
+<div class="stat">
+<span>عدد من أدوا الامتحان</span>
+<strong id="examCount">—</strong>
+</div>
+
+<div class="stat">
+<span>متوسط الدرجات من 20</span>
+<strong id="averageScore">—</strong>
+</div>
+</div>
+</section>
+
+<div class="nav">
+<button id="studentsTab" class="active"
+onclick="showTab('students')">
+👥 الطلاب والأكواد
+</button>
+
+<button id="resultsTab"
+onclick="showTab('results')">
+📊 نتائج الامتحان
+</button>
+</div>
+
+<section class="panel" id="studentsPanel">
+<h2 class="section-title">الطلاب الذين حصلوا على كود</h2>
+
+<div class="toolbar">
+<input id="studentsSearch" type="search"
+placeholder="ابحث باسم الطالب أو الكود...">
+
+<button class="primary" id="studentsRefresh"
+onclick="loadStudents()">تحديث الطلاب</button>
+</div>
+
+<p id="studentsStatus" class="status">جاري التحميل...</p>
+
+<div class="table-wrap">
+<table>
+<thead>
+<tr>
+<th>#</th>
+<th>اسم الطالب</th>
+<th>كود الطالب</th>
+<th>تاريخ التسجيل</th>
+</tr>
+</thead>
+<tbody id="studentsBody"></tbody>
+</table>
+</div>
+</section>
+
+<section class="panel hidden" id="resultsPanel">
+<h2 class="section-title">نتائج الطلاب الذين امتحنوا</h2>
+
+<div class="toolbar">
+<input id="resultsSearch" type="search"
+placeholder="ابحث باسم الطالب أو الكود...">
+
+<button class="primary" id="resultsRefresh"
+onclick="loadResults()">تحديث النتائج</button>
+</div>
+
+<p id="resultsStatus" class="status">جاري التحميل...</p>
+
+<div class="table-wrap">
+<table>
+<thead>
+<tr>
+<th>#</th>
+<th>اسم الطالب</th>
+<th>كود الطالب</th>
+<th>الدرجة من 20</th>
+<th>النسبة</th>
+<th>تاريخ التسليم</th>
+</tr>
+</thead>
+<tbody id="resultsBody"></tbody>
+</table>
+</div>
+</section>
+
+<p class="footer">لوحة إدارة الامتحان الإلكتروني</p>
+</div>
+
+<script>
+const SUPABASE_URL =
+"https://bouihbsnuuxqeityyrgl.supabase.co";
+
+const SUPABASE_KEY =
+"sb_publishable_Ug3xBkJESfI973ZpOeXLFA_wjPoExD-";
+
+const db = window.supabase.createClient(
+SUPABASE_URL,SUPABASE_KEY
+);
+
+let studentsData=[];
+let resultsData=[];
+
+function esc(v){
+return String(v??'').replace(/[&<>"']/g,c=>({
+'&':'&amp;','<':'&lt;','>':'&gt;',
+'"':'&quot;',"'":'&#39;'
+}[c]));
+}
+
+function dateText(v){
+if(!v)return '—';
+const d=new Date(v);
+return Number.isNaN(d.getTime())?'—':
+d.toLocaleString('ar-EG',{
+dateStyle:'medium',timeStyle:'short'
+});
+}
+
+function showTab(tab){
+const s=tab==='students';
+document.getElementById('studentsPanel')
+.classList.toggle('hidden',!s);
+document.getElementById('resultsPanel')
+.classList.toggle('hidden',s);
+document.getElementById('studentsTab')
+.classList.toggle('active',s);
+document.getElementById('resultsTab')
+.classList.toggle('active',!s);
+}
+
+function renderStudents(){
+const q=document.getElementById('studentsSearch')
+.value.trim().toLowerCase();
+
+const rows=studentsData.filter(x=>
+(x.full_name||'').toLowerCase().includes(q)||
+String(x.student_code||'').toLowerCase().includes(q)
+);
+
+const body=document.getElementById('studentsBody');
+
+if(!rows.length){
+body.innerHTML='<tr><td colspan="4" class="empty">لا يوجد طلاب.</td></tr>';
+return;
+}
+
+body.innerHTML=rows.map((x,i)=>`
+<tr>
+<td>${i+1}</td>
+<td>${esc(x.full_name)}</td>
+<td><span class="pill">${esc(x.student_code)}</span></td>
+<td>${esc(dateText(x.registered_at))}</td>
+</tr>
+`).join('');
+}
+
+function renderResults(){
+const q=document.getElementById('resultsSearch')
+.value.trim().toLowerCase();
+
+const rows=resultsData.filter(x=>
+(x.full_name||'').toLowerCase().includes(q)||
+String(x.student_code||'').toLowerCase().includes(q)
+);
+
+const body=document.getElementById('resultsBody');
+
+if(!rows.length){
+body.innerHTML='<tr><td colspan="6" class="empty">لا توجد نتائج.</td></tr>';
+return;
+}
+
+body.innerHTML=rows.map((x,i)=>{
+const score=Math.max(0,Math.min(20,
+Number(x.correct_count)||0));
+const pct=(score/20*100).toFixed(2);
+
+return `
+<tr>
+<td>${i+1}</td>
+<td>${esc(x.full_name)}</td>
+<td>${esc(x.student_code)}</td>
+<td class="score">${score} / 20</td>
+<td>${pct}%</td>
+<td>${esc(dateText(x.finished_at))}</td>
+</tr>`;
+}).join('');
+}
+
+async function loadStudents(){
+const b=document.getElementById('studentsRefresh');
+const st=document.getElementById('studentsStatus');
+
+b.disabled=true;
+st.textContent='جاري تحميل الطلاب...';
+
+try{
+const {data,error}=await db.rpc('get_admin_students');
+if(error)throw error;
+
+studentsData=Array.isArray(data)?data:[];
+document.getElementById('studentsCount')
+.textContent=studentsData.length;
+
+renderStudents();
+st.textContent='عدد الطلاب الحاصلين على كود: '+studentsData.length;
+
+}catch(e){
+studentsData=[];
+document.getElementById('studentsBody').innerHTML=
+'<tr><td colspan="4" class="empty error">تعذر تحميل الطلاب. راجع إعدادات Supabase.</td></tr>';
+st.className='status error';
+st.textContent='خطأ: '+e.message;
+
+}finally{
+b.disabled=false;
+}
+}
+
+async function loadResults(){
+const b=document.getElementById('resultsRefresh');
+const st=document.getElementById('resultsStatus');
+
+b.disabled=true;
+st.textContent='جاري تحميل النتائج...';
+
+try{
+const {data,error}=await db.rpc('get_admin_results');
+if(error)throw error;
+
+resultsData=Array.isArray(data)?data:[];
+
+document.getElementById('examCount')
+.textContent=resultsData.length;
+
+const avg=resultsData.length?
+resultsData.reduce((a,x)=>
+a+(Number(x.correct_count)||0),0
+)/resultsData.length:0;
+
+document.getElementById('averageScore')
+.textContent=avg.toFixed(2);
+
+renderResults();
+
+st.textContent='عدد الطلاب الذين أنهوا الامتحان: '+resultsData.length;
+
+}catch(e){
+resultsData=[];
+document.getElementById('resultsBody').innerHTML=
+'<tr><td colspan="6" class="empty error">تعذر تحميل النتائج. راجع إعدادات Supabase.</td></tr>';
+st.className='status error';
+st.textContent='خطأ: '+e.message;
+
+}finally{
+b.disabled=false;
+}
+}
+
+document.getElementById('studentsSearch')
+.addEventListener('input',renderStudents);
+
+document.getElementById('resultsSearch')
+.addEventListener('input',renderResults);
+
+loadStudents();
+loadResults();
+</script>
+</body>
+</html>

@@ -1,0 +1,718 @@
+
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>امتحان علوم القرآن</title>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+<style>
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  padding: 18px;
+  min-height: 100vh;
+  background: #f1f5f9;
+  font-family: Tahoma, Arial, sans-serif;
+  color: #172033;
+}
+
+.container {
+  max-width: 620px;
+  margin: 30px auto;
+  background: white;
+  padding: 24px;
+  border-radius: 18px;
+  box-shadow: 0 5px 25px #00000012;
+}
+
+h1 {
+  text-align: center;
+  color: #176b50;
+}
+
+.subtitle {
+  text-align: center;
+  color: #64748b;
+  line-height: 1.8;
+}
+
+input {
+  width: 100%;
+  padding: 15px;
+  margin: 12px 0;
+  border: 1px solid #cbd5e1;
+  border-radius: 10px;
+  font-size: 18px;
+  text-align: center;
+}
+
+button {
+  width: 100%;
+  padding: 15px;
+  border: 0;
+  border-radius: 10px;
+  background: #176b50;
+  color: white;
+  font-size: 18px;
+  cursor: pointer;
+  margin-top: 12px;
+}
+
+button:disabled {
+  opacity: .5;
+  cursor: not-allowed;
+}
+
+.hidden {
+  display: none;
+}
+
+.top {
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+  margin: 18px 0;
+  font-weight: bold;
+}
+
+.timer {
+  color: #dc2626;
+  font-size: 20px;
+}
+
+.question {
+  font-size: 21px;
+  line-height: 1.9;
+  margin: 25px 0;
+}
+
+.option {
+  display: block;
+  width: 100%;
+  text-align: right;
+  background: #f1f5f9;
+  color: #172033;
+  border: 2px solid transparent;
+  margin: 10px 0;
+  line-height: 1.7;
+}
+
+.option.selected {
+  border-color: #176b50;
+  background: #dcfce7;
+}
+
+.message {
+  text-align: center;
+  margin-top: 15px;
+  color: #dc2626;
+  line-height: 1.8;
+}
+
+.result {
+  text-align: center;
+  font-size: 21px;
+  line-height: 2;
+}
+</style>
+</head>
+
+<body>
+
+<div class="container">
+
+  <!-- صفحة الدخول -->
+  <section id="login">
+
+    <h1>امتحان علوم القرآن</h1>
+
+    <p class="subtitle">
+      أدخل كود الطالب المكوّن من 6 أرقام
+    </p>
+
+    <input
+      id="studentCode"
+      placeholder="كود الطالب"
+      inputmode="numeric"
+      maxlength="6"
+    >
+
+    <button id="startBtn" onclick="startExam()">
+      دخول الامتحان
+    </button>
+
+    <p id="loginMessage" class="message"></p>
+
+  </section>
+
+  <!-- صفحة الامتحان -->
+  <section id="exam" class="hidden">
+
+    <h1>امتحان علوم القرآن</h1>
+
+    <p id="studentName" class="subtitle"></p>
+
+    <div class="top">
+
+      <span id="progress"></span>
+
+      <span class="timer" id="timer">
+        30 ثانية
+      </span>
+
+    </div>
+
+    <div id="question" class="question"></div>
+
+    <div id="options"></div>
+
+    <button
+      id="nextBtn"
+      onclick="submitAnswer()"
+      disabled
+    >
+      تأكيد الإجابة
+    </button>
+
+    <p id="examMessage" class="message"></p>
+
+  </section>
+
+  <!-- صفحة النتيجة -->
+  <section id="result" class="hidden">
+
+    <h1>انتهى الامتحان</h1>
+
+    <div class="result">
+
+      <p>تم تسليم إجاباتك بنجاح.</p>
+
+      <p id="score"></p>
+
+    </div>
+
+  </section>
+
+</div>
+
+<script>
+
+// ==================================
+// بيانات Supabase
+// ==================================
+
+const SUPABASE_URL =
+"https://bouihbsnuuxqeityyrgl.supabase.co";
+
+const SUPABASE_KEY =
+"sb_publishable_Ug3xBkJESfI973ZpOeXLFA_wjPoExD-";
+
+const db = window.supabase.createClient(
+  SUPABASE_URL,
+  SUPABASE_KEY
+);
+
+// ==================================
+// متغيرات الامتحان
+// ==================================
+
+let studentCode = "";
+let currentQuestion = null;
+let selectedOption = null;
+let timerInterval = null;
+let submitting = false;
+let checkingState = false;
+
+// ==================================
+// التنقل بين الصفحات
+// ==================================
+
+function show(id) {
+
+  ["login", "exam", "result"].forEach(section => {
+
+    document.getElementById(section)
+      .classList.add("hidden");
+
+  });
+
+  document.getElementById(id)
+    .classList.remove("hidden");
+
+}
+
+// ==================================
+// رسائل الأخطاء
+// ==================================
+
+function statusMessage(status) {
+
+  const messages = {
+
+    invalid_code: "كود الطالب غير صحيح.",
+
+    no_questions: "لا توجد أسئلة في الامتحان.",
+
+    already_attempted:
+    "هذه محاولة مسجلة بالفعل، جارٍ استعادة حالتها.",
+
+    not_started:
+    "لم يتم بدء الامتحان.",
+
+    completed:
+    "انتهى الامتحان.",
+
+    time_expired:
+    "انتهى وقت السؤال.",
+
+    wrong_question:
+    "السؤال المرسل غير صحيح.",
+
+    invalid_question:
+    "السؤال غير موجود.",
+
+    already_answered:
+    "تم تسجيل إجابة هذا السؤال من قبل.",
+
+    configuration_error:
+    "خطأ في إعداد الامتحان."
+
+  };
+
+  return messages[status] || "حدث خطأ غير متوقع.";
+
+}
+
+// ==================================
+// استدعاء حالة الامتحان
+// ==================================
+
+async function getExamState() {
+
+  const { data, error } = await db.rpc(
+    "get_exam_state",
+    {
+      p_student_code: studentCode
+    }
+  );
+
+  if (error) throw error;
+
+  return data;
+
+}
+
+// ==================================
+// بدء الامتحان
+// ==================================
+
+async function startExam() {
+
+  const code = document
+    .getElementById("studentCode")
+    .value.trim();
+
+  const button = document.getElementById("startBtn");
+
+  const message = document.getElementById("loginMessage");
+
+  if (!/^[0-9]{6}$/.test(code)) {
+
+    message.textContent =
+      "أدخل كودًا صحيحًا مكونًا من 6 أرقام.";
+
+    return;
+
+  }
+
+  button.disabled = true;
+
+  message.textContent = "جاري التحقق من الكود...";
+
+  try {
+
+    studentCode = code;
+
+    const { data, error } = await db.rpc(
+      "start_exam",
+      {
+        p_student_code: studentCode
+      }
+    );
+
+    if (error) throw error;
+
+    if (!data) {
+      throw new Error("لم يصل رد من قاعدة البيانات.");
+    }
+
+    // محاولة موجودة: استعادة الحالة دون إنشاء محاولة جديدة
+    if (data.status === "already_attempted") {
+
+      const state = await getExamState();
+
+      handleState(state);
+
+      return;
+
+    }
+
+    handleState(data);
+
+  } catch (error) {
+
+    message.textContent =
+      error.message || "تعذر الاتصال بقاعدة البيانات.";
+
+  } finally {
+
+    button.disabled = false;
+
+  }
+
+}
+
+// ==================================
+// معالجة رد قاعدة البيانات
+// ==================================
+
+function handleState(data) {
+
+  if (!data || !data.status) {
+
+    throw new Error("رد قاعدة البيانات غير مفهوم.");
+
+  }
+
+  if (data.status === "active") {
+
+    displayQuestion(data);
+
+    return;
+
+  }
+
+  if (data.status === "completed") {
+
+    showResult(data);
+
+    return;
+
+  }
+
+  show("login");
+
+  document.getElementById("loginMessage")
+    .textContent = statusMessage(data.status);
+
+}
+
+// ==================================
+// عرض السؤال
+// ==================================
+
+function displayQuestion(data) {
+
+  if (
+    !Array.isArray(data.options) ||
+    data.options.length !== 4
+  ) {
+
+    show("login");
+
+    document.getElementById("loginMessage")
+      .textContent = "بيانات اختيارات السؤال غير صحيحة.";
+
+    return;
+
+  }
+
+  currentQuestion = {
+    id: data.question_id,
+    number: data.question_number,
+    total: data.total_questions
+  };
+
+  selectedOption = null;
+
+  submitting = false;
+
+  document.getElementById("studentName")
+    .textContent = data.student_name
+      ? "الطالب: " + data.student_name
+      : "";
+
+  document.getElementById("progress")
+    .textContent =
+      "السؤال " + data.question_number +
+      " من " + data.total_questions;
+
+  document.getElementById("question")
+    .textContent = data.question;
+
+  const optionsBox =
+    document.getElementById("options");
+
+  optionsBox.innerHTML = "";
+
+  const labels = ["أ", "ب", "ج", "د"];
+
+  data.options.forEach((option, index) => {
+
+    const button = document.createElement("button");
+
+    button.className = "option";
+
+    button.textContent =
+      labels[index] + ") " + option;
+
+    button.onclick = function() {
+
+      if (submitting) return;
+
+      selectedOption = index + 1;
+
+      document.querySelectorAll(".option")
+        .forEach(item => {
+
+          item.classList.remove("selected");
+
+        });
+
+      button.classList.add("selected");
+
+      document.getElementById("nextBtn")
+        .disabled = false;
+
+    };
+
+    optionsBox.appendChild(button);
+
+  });
+
+  document.getElementById("nextBtn")
+    .disabled = true;
+
+  document.getElementById("examMessage")
+    .textContent = "";
+
+  show("exam");
+
+  startTimer(data.seconds_left);
+
+}
+
+// ==================================
+// المؤقت
+// ==================================
+
+function startTimer(seconds) {
+
+  clearInterval(timerInterval);
+
+  let remaining = Math.max(0, Math.ceil(seconds));
+
+  updateTimer(remaining);
+
+  timerInterval = setInterval(async function() {
+
+    remaining--;
+
+    updateTimer(remaining);
+
+    if (remaining <= 0) {
+
+      clearInterval(timerInterval);
+
+      await refreshQuestion();
+
+    }
+
+  }, 1000);
+
+}
+
+function updateTimer(seconds) {
+
+  document.getElementById("timer")
+    .textContent = seconds + " ثانية";
+
+}
+
+// ==================================
+// تحديث السؤال بعد انتهاء الوقت
+// ==================================
+
+async function refreshQuestion() {
+
+  if (checkingState || submitting) return;
+
+  checkingState = true;
+
+  document.getElementById("nextBtn")
+    .disabled = true;
+
+  document.getElementById("examMessage")
+    .textContent = "انتهى الوقت، جاري تحديث السؤال...";
+
+  try {
+
+    // الخادم هو الذي يقرر انتهاء الوقت
+    const state = await getExamState();
+
+    handleState(state);
+
+  } catch (error) {
+
+    document.getElementById("examMessage")
+      .textContent =
+      "تعذر الاتصال بالخادم. حاول تحديث الحالة مرة أخرى.";
+
+  } finally {
+
+    checkingState = false;
+
+  }
+
+}
+
+// ==================================
+// إرسال الإجابة
+// ==================================
+
+async function submitAnswer() {
+
+  if (
+    submitting ||
+    !currentQuestion ||
+    selectedOption === null
+  ) return;
+
+  submitting = true;
+
+  clearInterval(timerInterval);
+
+  document.getElementById("nextBtn")
+    .disabled = true;
+
+  document.getElementById("examMessage")
+    .textContent = "جاري حفظ الإجابة...";
+
+  try {
+
+    const { data, error } = await db.rpc(
+      "submit_exam_answer",
+      {
+        p_student_code: studentCode,
+
+        p_question_id: currentQuestion.id,
+
+        p_selected_option: selectedOption
+      }
+    );
+
+    if (error) throw error;
+
+    if (!data) {
+      throw new Error("لم يصل رد من الخادم.");
+    }
+
+    // الإجابة تم حفظها
+    if (
+      data.status === "answer_saved" &&
+      data.state
+    ) {
+
+      handleState(data.state);
+
+      return;
+
+    }
+
+    // انتهى الوقت قبل وصول الإجابة
+    if (
+      data.status === "time_expired" &&
+      data.state
+    ) {
+
+      handleState(data.state);
+
+      return;
+
+    }
+
+    // الإجابة مسجلة بالفعل
+    if (data.status === "already_answered") {
+
+      const state = await getExamState();
+
+      handleState(state);
+
+      return;
+
+    }
+
+    if (data.status === "completed") {
+
+      const state = await getExamState();
+
+      handleState(state);
+
+      return;
+
+    }
+
+    throw new Error(statusMessage(data.status));
+
+  } catch (error) {
+
+    submitting = false;
+
+    document.getElementById("examMessage")
+      .textContent =
+      error.message || "تعذر حفظ الإجابة.";
+
+    document.getElementById("nextBtn")
+      .disabled = selectedOption === null;
+
+  }
+
+}
+
+// ==================================
+// عرض النتيجة
+// ==================================
+
+function showResult(data) {
+
+  clearInterval(timerInterval);
+
+  show("result");
+
+  const correct = Number(data.correct_count || 0);
+
+  const total = Number(data.total_questions || 0);
+
+  const percentage = Number(
+    data.percentage ||
+    (total ? correct * 100 / total : 0)
+  );
+
+  document.getElementById("score")
+    .textContent =
+    "درجتك: " + correct +
+    " من " + total +
+    " — النسبة: " + percentage.toFixed(2) + "%";
+
+}
+
+</script>
+
+</body>
+</html>

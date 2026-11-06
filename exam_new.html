@@ -1,0 +1,878 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>امتحان النحو والصرف</title>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+<style>
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  padding: 18px;
+  min-height: 100vh;
+  background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
+  font-family: system-ui, -apple-system, "Segoe UI", Tahoma, Arial, sans-serif;
+  color: #1e293b;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.container {
+  width: 100%;
+  max-width: 620px;
+  background: #ffffff;
+  padding: 32px;
+  border-radius: 20px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08);
+  border: 1px solid rgba(226, 232, 240, 0.8);
+}
+
+h1 {
+  text-align: center;
+  color: #0f4c3a;
+  margin-top: 0;
+  font-size: 26px;
+  font-weight: 700;
+}
+
+.subtitle {
+  text-align: center;
+  color: #64748b;
+  line-height: 1.8;
+  font-size: 15px;
+}
+
+input {
+  width: 100%;
+  padding: 16px;
+  margin: 14px 0 6px 0;
+  border: 2px solid #e2e8f0;
+  border-radius: 12px;
+  font-size: 20px;
+  text-align: center;
+  letter-spacing: 4px;
+  transition: all 0.3s ease;
+  background: #f8fafc;
+}
+
+input:focus {
+  outline: none;
+  border-color: #176b50;
+  background: #fff;
+  box-shadow: 0 0 0 4px rgba(23, 107, 80, 0.1);
+}
+
+/* تصميم حقوق الإعداد */
+.creators-credit {
+  text-align: center;
+  font-size: 13px;
+  color: #64748b;
+  margin: 12px 0 20px 0;
+  font-weight: 500;
+  letter-spacing: 0.3px;
+}
+
+.creators-credit span {
+  color: #176b50;
+  font-weight: 700;
+}
+
+button {
+  width: 100%;
+  padding: 16px;
+  border: 0;
+  border-radius: 12px;
+  background: #176b50;
+  color: white;
+  font-size: 18px;
+  font-weight: 600;
+  cursor: pointer;
+  margin-top: 8px;
+  transition: background 0.2s ease, transform 0.1s ease;
+  box-shadow: 0 4px 12px rgba(23, 107, 80, 0.2);
+}
+
+button:hover:not(:disabled) {
+  background: #12543e;
+}
+
+button:active:not(:disabled) {
+  transform: scale(0.99);
+}
+
+button:disabled {
+  opacity: .5;
+  cursor: not-allowed;
+  box-shadow: none;
+}
+
+.hidden {
+  display: none;
+}
+
+.top {
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+  margin: 18px 0;
+  font-weight: bold;
+  font-size: 15px;
+  background: #f8fafc;
+  padding: 10px 14px;
+  border-radius: 10px;
+}
+
+.timer {
+  color: #dc2626;
+  font-size: 18px;
+}
+
+.question {
+  font-size: 20px;
+  line-height: 1.9;
+  margin: 25px 0;
+  font-weight: 600;
+  color: #1e293b;
+}
+
+.option {
+  display: block;
+  width: 100%;
+  text-align: right;
+  background: #f8fafc;
+  color: #1e293b;
+  border: 2px solid #e2e8f0;
+  margin: 12px 0;
+  line-height: 1.7;
+  padding: 14px 18px;
+  border-radius: 12px;
+  font-size: 17px;
+  transition: all 0.2s ease;
+  box-shadow: none;
+}
+
+.option:hover {
+  background: #f1f5f9;
+  border-color: #cbd5e1;
+}
+
+.option.selected {
+  border-color: #176b50;
+  background: #f0fdf4;
+  color: #065f46;
+}
+
+.message {
+  text-align: center;
+  margin-top: 15px;
+  color: #dc2626;
+  line-height: 1.8;
+  font-size: 14px;
+}
+
+.result {
+  text-align: center;
+  font-size: 20px;
+  line-height: 2;
+}
+
+#score {
+  font-weight: bold;
+  color: #176b50;
+  font-size: 22px;
+  margin-top: 15px;
+}
+
+.review-summary{background:#f0fdf4;border:1px solid #bbf7d0;border-radius:14px;padding:18px;text-align:center;margin:16px 0}
+.review-summary .big-score{font-size:30px;font-weight:800;color:#166534;margin:8px 0}
+.review-item{border:1px solid #e2e8f0;border-radius:14px;padding:16px;margin:14px 0;text-align:right;background:#fff}
+.review-item h3{font-size:16px;line-height:1.8;margin:0 0 12px;color:#1e293b}
+.review-choice{padding:9px 12px;border-radius:9px;margin:7px 0;line-height:1.7;background:#f8fafc;border:1px solid #e2e8f0}
+.review-choice.correct{background:#dcfce7;border-color:#16a34a;color:#166534;font-weight:700}
+.review-choice.wrong{background:#fee2e2;border-color:#dc2626;color:#991b1b;font-weight:700}
+.review-note{font-size:13px;color:#475569;margin-top:10px;line-height:1.8}
+.feedback-box{border-top:1px solid #e2e8f0;margin-top:22px;padding-top:18px;text-align:right}
+.feedback-box label{display:block;font-weight:700;margin:12px 0 7px}
+.feedback-box select,.feedback-box textarea{width:100%;padding:13px;border:1px solid #cbd5e1;border-radius:10px;font:inherit;background:#fff}
+.feedback-box textarea{min-height:100px;resize:vertical}
+.feedback-status{text-align:center;line-height:1.8;margin-top:10px}
+
+</style>
+</head>
+
+<body>
+
+<div class="container">
+
+  <!-- صفحة الدخول -->
+  <section id="login">
+
+    <h1>امتحان النحو والصرف</h1>
+
+    <p class="subtitle">
+      أدخل كود الطالب المكوّن من 6 أرقام
+    </p>
+
+    <input
+      id="studentCode"
+      placeholder="••••••"
+      inputmode="numeric"
+      maxlength="6"
+    >
+
+    <!-- مكان إضافة الأسماء تحت خانة الكود مباشرة -->
+    <div class="creators-credit">
+      إعداد الطالب / <span>يوسف رضا</span>
+    </div>
+
+    <button id="startBtn" onclick="startExam()">
+      دخول الامتحان
+    </button>
+
+    <p id="loginMessage" class="message"></p>
+
+  </section>
+
+  <!-- صفحة الامتحان -->
+  <section id="exam" class="hidden">
+
+    <h1>امتحان النحو والصرف</h1>
+
+    <p id="studentName" class="subtitle"></p>
+
+    <div class="top">
+
+      <span id="progress"></span>
+
+      <span class="timer" id="timer">
+        30 ثانية
+      </span>
+
+    </div>
+
+    <div id="question" class="question"></div>
+
+    <div id="options"></div>
+
+    <button
+      id="nextBtn"
+      onclick="submitAnswer()"
+      disabled
+    >
+      تأكيد الإجابة
+    </button>
+
+    <p id="examMessage" class="message"></p>
+
+  </section>
+
+  <!-- صفحة النتيجة والمراجعة -->
+  <section id="result" class="hidden">
+    <h1>نتيجة امتحان النحو والصرف</h1>
+    <p id="resultStudentName" class="subtitle"></p>
+    <div class="review-summary">
+      <div>درجتك النهائية</div>
+      <div id="score" class="big-score">— / 20</div>
+      <div id="percentageText"></div>
+    </div>
+    <p class="subtitle">مراجعة إجاباتك: الأخضر هو الاختيار الصحيح، والأحمر هو إجابتك الخاطئة.</p>
+    <div id="reviewList"><p class="subtitle">جاري تحميل مراجعة الإجابات...</p></div>
+    <div class="feedback-box">
+      <h2>قيّم تجربتك واترك تعليقك</h2>
+      <p class="subtitle">رأيك سيصل إلى لوحة الإدارة لمراجعته.</p>
+      <label for="rating">تقييمك للامتحان</label>
+      <select id="rating">
+        <option value="5">★★★★★ ممتاز</option>
+        <option value="4">★★★★ جيد جدًا</option>
+        <option value="3">★★★ جيد</option>
+        <option value="2">★★ يحتاج إلى تحسين</option>
+        <option value="1">★ ضعيف</option>
+      </select>
+      <label for="feedbackComment">اكتب تعليقك أو اقتراحك (اختياري)</label>
+      <textarea id="feedbackComment" maxlength="1000" placeholder="اكتب رأيك هنا..."></textarea>
+      <button id="sendFeedbackBtn" onclick="sendFeedback()">إرسال التقييم والتعليق</button>
+      <p id="feedbackStatus" class="feedback-status"></p>
+    </div>
+    <p class="creators-credit">إعداد الطالب / <span>يوسف رضا</span></p>
+  </section>
+
+</div>
+
+<script>
+
+// ==================================
+// بيانات Supabase
+// ==================================
+
+const SUPABASE_URL =
+"https://bouihbsnuuxqeityyrgl.supabase.co";
+
+const SUPABASE_KEY =
+"sb_publishable_Ug3xBkJESfI973ZpOeXLFA_wjPoExD-";
+
+const db = window.supabase.createClient(
+  SUPABASE_URL,
+  SUPABASE_KEY
+);
+
+// ==================================
+// متغيرات الامتحان
+// ==================================
+
+let studentCode = "";
+let currentQuestion = null;
+let selectedOption = null;
+let timerInterval = null;
+let submitting = false;
+let checkingState = false;
+
+// ==================================
+// التنقل بين الصفحات
+// ==================================
+
+function show(id) {
+
+  ["login", "exam", "result"].forEach(section => {
+
+    document.getElementById(section)
+      .classList.add("hidden");
+
+  });
+
+  document.getElementById(id)
+    .classList.remove("hidden");
+
+}
+
+// ==================================
+// رسائل الأخطاء
+// ==================================
+
+function statusMessage(status) {
+
+  const messages = {
+
+    invalid_code: "كود الطالب غير صحيح.",
+
+    no_questions: "لا توجد أسئلة في الامتحان.",
+
+    already_attempted:
+    "هذه محاولة مسجلة بالفعل، جارٍ استعادة حالتها.",
+
+    not_started:
+    "لم يتم بدء الامتحان.",
+
+    completed:
+    "انتهى الامتحان.",
+
+    time_expired:
+    "انتهى وقت السؤال.",
+
+    wrong_question:
+    "السؤال المرسل غير صحيح.",
+
+    invalid_question:
+    "السؤال غير موجود.",
+
+    already_answered:
+    "تم تسجيل إجابة هذا السؤال من قبل.",
+
+    configuration_error:
+    "خطأ في إعداد الامتحان."
+
+  };
+
+  return messages[status] || "حدث خطأ غير متوقع.";
+
+}
+
+// ==================================
+// استدعاء حالة الامتحان
+// ==================================
+
+async function getExamState() {
+
+  const { data, error } = await db.rpc(
+    "get_exam_state",
+    {
+      p_student_code: studentCode
+    }
+  );
+
+  if (error) throw error;
+
+  return data;
+
+}
+
+// ==================================
+// بدء الامتحان
+// ==================================
+
+async function startExam() {
+
+  const code = document
+    .getElementById("studentCode")
+    .value.trim();
+
+  const button = document.getElementById("startBtn");
+
+  const message = document.getElementById("loginMessage");
+
+  if (!/^[0-9]{6}$/.test(code)) {
+
+    message.textContent =
+      "أدخل كودًا صحيحًا مكونًا من 6 أرقام.";
+
+    return;
+
+  }
+
+  button.disabled = true;
+
+  message.textContent = "جاري التحقق من الكود...";
+
+  try {
+
+    studentCode = code;
+
+    const { data, error } = await db.rpc(
+      "start_exam",
+      {
+        p_student_code: studentCode
+      }
+    );
+
+    if (error) throw error;
+
+    if (!data) {
+      throw new Error("لم يصل رد من قاعدة البيانات.");
+    }
+
+    // محاولة موجودة: استعادة الحالة دون إنشاء محاولة جديدة
+    if (data.status === "already_attempted") {
+
+      const state = await getExamState();
+
+      handleState(state);
+
+      return;
+
+    }
+
+    handleState(data);
+
+  } catch (error) {
+
+    message.textContent =
+      error.message || "تعذر الاتصال بقاعدة البيانات.";
+
+  } finally {
+
+    button.disabled = false;
+
+  }
+
+}
+
+// ==================================
+// معالجة رد قاعدة البيانات
+// ==================================
+
+function handleState(data) {
+
+  if (!data || !data.status) {
+
+    throw new Error("رد قاعدة البيانات غير مفهوم.");
+
+  }
+
+  if (data.status === "active") {
+
+    displayQuestion(data);
+
+    return;
+
+  }
+
+  if (data.status === "completed") {
+
+    showResult(data);
+
+    return;
+
+  }
+
+  show("login");
+
+  document.getElementById("loginMessage")
+    .textContent = statusMessage(data.status);
+
+}
+
+// ==================================
+// عرض السؤال
+// ==================================
+
+function displayQuestion(data) {
+
+  if (
+    !Array.isArray(data.options) ||
+    data.options.length !== 4
+  ) {
+
+    show("login");
+
+    document.getElementById("loginMessage")
+      .textContent = "بيانات اختيارات السؤال غير صحيحة.";
+
+    return;
+
+  }
+
+  currentQuestion = {
+    id: data.question_id,
+    number: data.question_number,
+    total: data.total_questions
+  };
+
+  selectedOption = null;
+
+  submitting = false;
+
+  document.getElementById("studentName")
+    .textContent = data.student_name
+      ? "الطالب: " + data.student_name
+      : "";
+
+  document.getElementById("progress")
+    .textContent =
+      "السؤال " + data.question_number +
+      " من " + data.total_questions;
+
+  document.getElementById("question")
+    .textContent = data.question;
+
+  const optionsBox =
+    document.getElementById("options");
+
+  optionsBox.innerHTML = "";
+
+  const labels = ["أ", "ب", "ج", "د"];
+
+  data.options.forEach((option, index) => {
+
+    const button = document.createElement("button");
+
+    button.className = "option";
+
+    button.textContent =
+      labels[index] + ") " + option;
+
+    button.onclick = function() {
+
+      if (submitting) return;
+
+      selectedOption = index + 1;
+
+      document.querySelectorAll(".option")
+        .forEach(item => {
+
+          item.classList.remove("selected");
+
+        });
+
+      button.classList.add("selected");
+
+      document.getElementById("nextBtn")
+        .disabled = false;
+
+    };
+
+    optionsBox.appendChild(button);
+
+  });
+
+  document.getElementById("nextBtn")
+    .disabled = true;
+
+  document.getElementById("examMessage")
+    .textContent = "";
+
+  show("exam");
+
+  startTimer(data.seconds_left);
+
+}
+
+// ==================================
+// المؤقت
+// ==================================
+
+function startTimer(seconds) {
+
+  clearInterval(timerInterval);
+
+  let remaining = Math.max(0, Math.ceil(seconds));
+
+  updateTimer(remaining);
+
+  timerInterval = setInterval(async function() {
+
+    remaining--;
+
+    updateTimer(remaining);
+
+    if (remaining <= 0) {
+
+      clearInterval(timerInterval);
+
+      await refreshQuestion();
+
+    }
+
+  }, 1000);
+
+}
+
+function updateTimer(seconds) {
+
+  document.getElementById("timer")
+    .textContent = seconds + " ثانية";
+
+}
+
+// ==================================
+// تحديث السؤال بعد انتهاء الوقت
+// ==================================
+
+async function refreshQuestion() {
+
+  if (checkingState || submitting) return;
+
+  checkingState = true;
+
+  document.getElementById("nextBtn")
+    .disabled = true;
+
+  document.getElementById("examMessage")
+    .textContent = "انتهى الوقت، جاري تحديث السؤال...";
+
+  try {
+
+    // الخادم هو الذي يقرر انتهاء الوقت
+    const state = await getExamState();
+
+    handleState(state);
+
+  } catch (error) {
+
+    document.getElementById("examMessage")
+      .textContent =
+      "تعذر الاتصال بالخادم. حاول تحديث الحالة مرة أخرى.";
+
+  } finally {
+
+    checkingState = false;
+
+  }
+
+}
+
+// ==================================
+// إرسال الإجابة
+// ==================================
+
+async function submitAnswer() {
+
+  if (
+    submitting ||
+    !currentQuestion ||
+    selectedOption === null
+  ) return;
+
+  submitting = true;
+
+  clearInterval(timerInterval);
+
+  document.getElementById("nextBtn")
+    .disabled = true;
+
+  document.getElementById("examMessage")
+    .textContent = "جاري حفظ الإجابة...";
+
+  try {
+
+    const { data, error } = await db.rpc(
+      "submit_exam_answer",
+      {
+        p_student_code: studentCode,
+
+        p_question_id: currentQuestion.id,
+
+        p_selected_option: selectedOption
+      }
+    );
+
+    if (error) throw error;
+
+    if (!data) {
+      throw new Error("لم يصل رد من الخادم.");
+    }
+
+    // الإجابة تم حفظها
+    if (
+      data.status === "answer_saved" &&
+      data.state
+    ) {
+
+      handleState(data.state);
+
+      return;
+
+    }
+
+    // انتهى الوقت قبل وصول الإجابة
+    if (
+      data.status === "time_expired" &&
+      data.state
+    ) {
+
+      handleState(data.state);
+
+      return;
+
+    }
+
+    // الإجابة مسجلة بالفعل
+    if (data.status === "already_answered") {
+
+      const state = await getExamState();
+
+      handleState(state);
+
+      return;
+
+    }
+
+    if (data.status === "completed") {
+
+      const state = await getExamState();
+
+      handleState(state);
+
+      return;
+
+    }
+
+    throw new Error(statusMessage(data.status));
+
+  } catch (error) {
+
+    submitting = false;
+
+    document.getElementById("examMessage")
+      .textContent =
+      error.message || "تعذر حفظ الإجابة.";
+
+    document.getElementById("nextBtn")
+      .disabled = selectedOption === null;
+
+  }
+
+}
+
+// ==================================
+// عرض النتيجة
+// ==================================
+
+async function showResult(data) {
+  clearInterval(timerInterval);
+  show("result");
+  const correct = Number(data.correct_count || 0);
+  const total = Number(data.total_questions || 20);
+  const percentage = Number(data.percentage ?? (total ? correct * 100 / total : 0));
+  document.getElementById("score").textContent = correct + " / " + total;
+  document.getElementById("percentageText").textContent = "النسبة المئوية: " + percentage.toFixed(2) + "%";
+  document.getElementById("resultStudentName").textContent = "اسم الطالب: " + (data.student_name || "");
+  document.getElementById("reviewList").innerHTML = '<p class="subtitle">جاري تحميل مراجعة الإجابات...</p>';
+  try {
+    const {data: reviewData, error} = await db.rpc("get_exam_review", {p_student_code: studentCode});
+    if (error) throw error;
+    if (!reviewData || reviewData.status !== "completed" || !Array.isArray(reviewData.review)) {
+      throw new Error("لم تصل تفاصيل المراجعة من قاعدة البيانات.");
+    }
+    document.getElementById("score").textContent = Number(reviewData.correct_count || correct) + " / 20";
+    document.getElementById("percentageText").textContent = "النسبة المئوية: " + Number(reviewData.percentage || percentage).toFixed(2) + "%";
+    document.getElementById("resultStudentName").textContent = "اسم الطالب: " + (reviewData.student_name || data.student_name || "");
+    renderReview(reviewData.review);
+  } catch (error) {
+    document.getElementById("reviewList").innerHTML = '<p class="message">تعذر تحميل مراجعة الإجابات: ' + escapeHtml(error.message || "خطأ غير معروف") + '</p>';
+  }
+}
+
+function escapeHtml(value) {
+  return String(value ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#39;"}[c]));
+}
+
+function renderReview(items) {
+  const labels = ["أ", "ب", "ج", "د"];
+  const box = document.getElementById("reviewList");
+  box.innerHTML = items.map((item, index) => {
+    const opts = Array.isArray(item.options) ? item.options : [];
+    const chosen = item.selected_option == null ? null : Number(item.selected_option);
+    const correct = Number(item.correct_option);
+    const choices = opts.map((option, i) => {
+      const n = i + 1;
+      let cls = "review-choice";
+      let mark = "";
+      if (n === correct) { cls += " correct"; mark = " ✓ الإجابة الصحيحة"; }
+      if (chosen === n && chosen !== correct) { cls += " wrong"; mark = " ✗ إجابتك"; }
+      else if (chosen === n && chosen === correct) { mark = " ✓ إجابتك الصحيحة"; }
+      return '<div class="' + cls + '">' + labels[i] + ") " + escapeHtml(option) + mark + '</div>';
+    }).join("");
+    const status = chosen == null ? "لم تُسجّل إجابة لهذا السؤال." : (chosen === correct ? "إجابة صحيحة" : "إجابة غير صحيحة");
+    const selectedText = chosen == null ? "لم يختر الطالب إجابة" : (opts[chosen - 1] || "إجابة غير متاحة");
+    const correctText = opts[correct - 1] || item.correct_answer || "غير متاحة";
+    return '<article class="review-item"><h3>السؤال ' + (index + 1) + ': ' + escapeHtml(item.question) + '</h3>' + choices + '<div class="review-note"><strong>' + status + '</strong><br>إجابتك: ' + escapeHtml(selectedText) + '<br>الإجابة الصحيحة: ' + escapeHtml(correctText) + '</div></article>';
+  }).join("");
+}
+
+async function sendFeedback() {
+  const button = document.getElementById("sendFeedbackBtn");
+  const status = document.getElementById("feedbackStatus");
+  const rating = Number(document.getElementById("rating").value);
+  const comment = document.getElementById("feedbackComment").value.trim();
+  button.disabled = true;
+  status.textContent = "جاري إرسال تقييمك...";
+  try {
+    const {data, error} = await db.rpc("submit_exam_feedback", {
+      p_student_code: studentCode,
+      p_rating: rating,
+      p_comment: comment
+    });
+    if (error) throw error;
+    if (!data || data.status !== "saved") throw new Error("لم يتم حفظ التقييم.");
+    status.style.color = "#166534";
+    status.textContent = "شكرًا لك، تم إرسال تقييمك وتعليقك بنجاح.";
+    document.getElementById("feedbackComment").disabled = true;
+    document.getElementById("rating").disabled = true;
+    button.textContent = "تم إرسال التقييم";
+  } catch (error) {
+    status.style.color = "#b91c1c";
+    status.textContent = error.message || "تعذر إرسال التقييم.";
+    button.disabled = false;
+  }
+}
+
+</script>
+
+</body>
+</html>

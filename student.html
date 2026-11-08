@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>منصة الامتحانات الجامعية | الطالب</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+:root{--g:#123d32;--g2:#1d604c;--gold:#c9a45c;--bg:#f4f7f4;--ink:#1d2b26;--muted:#718078;--line:#e4eae5;--white:#fff;--red:#b84444}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font-family:Tahoma,Arial,sans-serif}button,input,textarea,select{font:inherit}button{cursor:pointer;border:0}
+.top{background:linear-gradient(120deg,#0d3028,var(--g2));color:white;padding:16px 5%;display:flex;justify-content:space-between;align-items:center;gap:12px;box-shadow:0 5px 22px #102e251c}.brand{display:flex;align-items:center;gap:11px}.mark{width:44px;height:44px;border:1px solid #ffffff40;background:#ffffff18;border-radius:14px;display:grid;place-items:center;color:var(--gold);font-size:23px}.brand h1{font-size:17px;margin:0 0 5px}.brand p{margin:0;color:#c9d8d0;font-size:11px}.topuser{display:flex;align-items:center;gap:10px}.avatar{width:38px;height:38px;border-radius:50%;object-fit:cover;background:#e7eee9;border:2px solid #ffffff55}.btn{background:var(--g2);color:white;border-radius:11px;padding:11px 16px;font-weight:bold}.btn.gold{background:var(--gold);color:#25362e}.btn.light{background:#edf3ef;color:var(--g)}.btn.outline{background:white;color:var(--g);border:1px solid var(--line)}.btn.red{background:#fff0f0;color:var(--red)}.btn:disabled{opacity:.5;cursor:not-allowed}.small{font-size:12px;padding:8px 11px}.wrap{max-width:1120px;margin:24px auto;padding:0 16px}.hidden{display:none!important}.muted{color:var(--muted);font-size:13px;line-height:1.8}.auth{max-width:470px;margin:6vh auto;background:white;border:1px solid var(--line);border-radius:23px;padding:25px;box-shadow:0 18px 50px #183b2c12}.authhead{text-align:center;margin-bottom:18px}.authlogo{width:60px;height:60px;border-radius:19px;background:#eaf2ed;color:var(--g);display:grid;place-items:center;font-size:30px;margin:0 auto 12px}.auth h2{color:var(--g);margin:0 0 7px}.tabs{display:flex;background:#f0f4f1;padding:4px;border-radius:12px;margin:18px 0}.tabs button{flex:1;padding:10px;border-radius:9px;background:transparent;color:var(--muted)}.tabs button.active{background:white;color:var(--g);box-shadow:0 2px 8px #0000000c}.field{display:flex;flex-direction:column;gap:7px;margin:12px 0}.field label{font-size:13px;font-weight:bold}.field input,.field textarea{width:100%;border:1px solid var(--line);border-radius:11px;padding:12px;background:white;outline:none}.field input:focus,.field textarea:focus{border-color:var(--g2);box-shadow:0 0 0 3px #1d604c12}.field textarea{resize:vertical}.grid2{display:grid;grid-template-columns:1fr 1fr;gap:10px}.note{padding:11px 13px;background:#fff8e9;border:1px solid #efdfbd;border-radius:12px;color:#795e2b;font-size:12px;line-height:1.8;margin:12px 0}.err{color:var(--red);font-size:13px;margin-top:10px}.ok{color:#26734d;font-size:13px;margin-top:10px}.dashboard{display:grid;grid-template-columns:220px 1fr;gap:20px}.side{background:var(--g);border-radius:18px;padding:13px;height:max-content;position:sticky;top:14px}.nav{display:flex;flex-direction:column;gap:6px}.nav button{text-align:right;background:transparent;color:#d7e5dd;padding:13px;border-radius:10px}.nav button.active,.nav button:hover{background:#ffffff1b;color:#fff}.nav span{margin-left:9px}.main{min-width:0}.welcome{background:linear-gradient(120deg,#174a3b,#23664f);border-radius:20px;padding:22px;color:white;display:flex;align-items:center;justify-content:space-between;gap:15px;margin-bottom:17px;overflow:hidden}.welcome h2{margin:0 0 8px;font-size:21px}.welcome p{margin:0;color:#d6e4dc;font-size:13px}.welcome .welcomeicon{font-size:58px;color:#ffffff28}.pagehead{display:flex;justify-content:space-between;align-items:center;gap:10px;margin:0 0 15px}.pagehead h2{margin:0;color:var(--g);font-size:21px}.cards{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:17px}.stat,.panel,.examcard,.person{background:white;border:1px solid var(--line);border-radius:16px;padding:16px}.stat small{color:var(--muted)}.stat strong{display:block;color:var(--g);font-size:24px;margin-top:7px}.examgrid{display:grid;grid-template-columns:repeat(2,1fr);gap:13px}.examcard{display:flex;flex-direction:column;gap:11px}.examtop{display:flex;justify-content:space-between;align-items:flex-start;gap:10px}.examicon{width:42px;height:42px;border-radius:13px;background:#edf4ef;color:var(--g);display:grid;place-items:center;font-size:21px}.examcard h3{font-size:16px;margin:0 0 5px;color:var(--g)}.examcard p{font-size:12px;color:var(--muted);margin:0;line-height:1.7}.tag{display:inline-block;background:#eaf4ed;color:#27704c;padding:5px 9px;border-radius:30px;font-size:11px}.tag.done{background:#edf0f2;color:#53615a}.tag.off{background:#fff2e3;color:#95621d}.examfoot{display:flex;justify-content:space-between;align-items:center;gap:8px;margin-top:auto}.panel h3{margin:0 0 14px;color:var(--g);font-size:16px}.profilehead{display:flex;align-items:center;gap:15px;margin-bottom:18px}.profilebig{width:82px;height:82px;border-radius:50%;object-fit:cover;background:#edf2ee;border:3px solid #e0eae3}.profilehead h3{margin:0 0 6px;color:var(--g)}.tablewrap{overflow:auto}table{width:100%;border-collapse:collapse;min-width:500px}th,td{text-align:right;padding:12px;border-bottom:1px solid var(--line);font-size:13px}th{background:#f8faf8;color:var(--muted)}.leader{display:flex;align-items:center;gap:12px;padding:12px 0;border-bottom:1px solid var(--line)}.rank{width:30px;height:30px;border-radius:10px;background:#edf3ef;color:var(--g);display:grid;place-items:center;font-weight:bold}.leader img{width:42px;height:42px;border-radius:50%;object-fit:cover;background:#edf2ee}.leader strong{display:block;font-size:13px}.leader small{color:var(--muted)}.chatlist{display:flex;flex-direction:column;gap:10px;max-height:430px;overflow:auto;margin-bottom:14px}.bubble{background:#f2f6f3;padding:11px 13px;border-radius:13px;max-width:90%;align-self:flex-start}.bubble.mine{background:#e5f1e9;align-self:flex-end}.bubble b{font-size:12px;color:var(--g)}.bubble p{margin:5px 0;font-size:13px;white-space:pre-wrap;overflow-wrap:anywhere}.bubble small{color:var(--muted);font-size:10px}.chatcompose{display:flex;gap:8px}.chatcompose input{flex:1;min-width:0;border:1px solid var(--line);border-radius:11px;padding:12px}.footer{text-align:center;color:#8a968f;font-size:11px;padding:22px 10px}.toast{position:fixed;bottom:17px;left:17px;background:#173d32;color:white;padding:12px 16px;border-radius:12px;display:none;z-index:30;max-width:90%}
+@media(max-width:780px){.dashboard{grid-template-columns:1fr}.side{position:static}.nav{display:grid;grid-template-columns:repeat(3,1fr)}.nav button{font-size:12px;padding:10px 7px}.cards{grid-template-columns:repeat(3,1fr)}}
+@media(max-width:540px){.top{padding:13px}.brand h1{font-size:14px}.brand p{font-size:10px}.wrap{padding:0 11px;margin:15px auto}.auth{margin:4vh 11px;padding:19px}.grid2{grid-template-columns:1fr}.examgrid{grid-template-columns:1fr}.cards{grid-template-columns:1fr 1fr}.welcome{padding:17px}.welcome h2{font-size:18px}.welcome .welcomeicon{font-size:42px}.pagehead h2{font-size:18px}.nav{grid-template-columns:repeat(3,1fr)}.nav button{font-size:11px}}
+</style>
+</head>
+<body>
+<header class="top">
+ <div class="brand"><div class="mark">✦</div><div><h1>منصة الامتحانات الجامعية</h1><p>كلية الآداب · قسم اللغة العربية</p></div></div>
+ <div id="topUser" class="topuser hidden"><img id="topAvatar" class="avatar" alt="صورة الطالب"><button class="btn light small" onclick="logout()">خروج</button></div>
+</header>
+
+<section id="authView" class="auth">
+ <div class="authhead"><div class="authlogo">✦</div><h2>مرحبًا بك في منصتنا</h2><p class="muted">سجّل حسابك وابدأ رحلتك التعليمية</p></div>
+ <div class="tabs"><button id="registerTab" class="active" onclick="setAuthMode('register')">إنشاء حساب</button><button id="loginTab" onclick="setAuthMode('login')">تسجيل الدخول</button></div>
+ <div id="registerForm">
+  <div class="field"><label>اسم الطالب بالكامل</label><input id="regName" autocomplete="name" placeholder="اكتب اسمك كما تحب أن يظهر"></div>
+  <div class="grid2">
+   <div class="field"><label>الفرقة</label><input value="الأولى" disabled></div>
+   <div class="field"><label>القسم</label><input value="اللغة العربية" disabled></div>
+  </div>
+  <div class="field"><label>كلمة المرور</label><input id="regPassword" type="password" autocomplete="new-password" placeholder="8 أحرف على الأقل"></div>
+  <div class="field"><label>نبذة شخصية (اختياري)</label><textarea id="regBio" rows="2" placeholder="اكتب نبذة قصيرة عنك"></textarea></div>
+  <button class="btn" style="width:100%" onclick="register()">إنشاء حساب</button>
+ </div>
+ <div id="loginForm" class="hidden">
+  <div class="field"><label>اسم الطالب</label><input id="loginName" autocomplete="name" placeholder="اسمك (للعرض فقط)"></div>
+  <div class="field"><label>كلمة المرور</label><input id="loginPassword" type="password" autocomplete="current-password" placeholder="كلمة المرور"></div>
+  <button class="btn" style="width:100%" onclick="login()">دخول إلى حسابي</button>
+ </div>
+ <div id="authMsg"></div>
+ <div class="footer">إعداد الطالب / يوسف رضا</div>
+</section>
+
+<main id="studentView" class="wrap hidden">
+ <div class="dashboard">
+  <aside class="side"><div class="nav">
+   <button class="active" onclick="showPage('home',this)"><span>⌂</span>الرئيسية</button>
+   <button onclick="showPage('exams',this)"><span>▤</span>الامتحانات</button>
+   <button onclick="showPage('profile',this)"><span>♙</span>ملفي الشخصي</button>
+   <button onclick="showPage('leaders',this)"><span>★</span>المتفوقون</button>
+   <button onclick="showPage('chat',this)"><span>☏</span>المحادثة</button>
+  </div></aside>
+  <section class="main">
+   <div id="homePage">
+    <div class="welcome"><div><h2 id="welcomeName">أهلًا بك 👋</h2><p>تابع امتحاناتك ونتائجك من مكان واحد.</p></div><div class="welcomeicon">✦</div></div>
+    <div class="cards"><div class="stat"><small>الامتحانات المكتملة</small><strong id="homeCompleted">0</strong></div><div class="stat"><small>متوسط تقييمك</small><strong id="homeAverage">0%</strong></div><div class="stat"><small>الامتحانات المتاحة</small><strong id="homeAvailable">0</strong></div></div>
+    <div class="pagehead"><h2>الامتحانات المنشورة</h2><button class="btn light small" onclick="loadExams()">تحديث</button></div>
+    <div id="homeExams" class="examgrid"></div>
+   </div>
+   <div id="examsPage" class="hidden"><div class="pagehead"><h2>كل الامتحانات</h2><button class="btn light small" onclick="loadExams()">تحديث</button></div><div id="allExams" class="examgrid"></div></div>
+   <div id="profilePage" class="hidden">
+    <div class="pagehead"><h2>ملفي الشخصي</h2></div>
+    <div class="panel">
+     <div class="profilehead"><img id="profileAvatar" class="profilebig" alt="صورة الطالب"><div><h3 id="profileName">اسم الطالب</h3><p class="muted">الفرقة الأولى · اللغة العربية</p></div></div>
+     <div class="field"><label>الاسم</label><input id="editName"></div>
+     <div class="field"><label>نبذة شخصية</label><textarea id="editBio" rows="3"></textarea></div>
+        <button class="btn" onclick="saveProfile()">حفظ التعديلات</button>
+    </div>
+    <div class="cards"><div class="stat"><small>متوسط النسبة</small><strong id="profileAverage">0%</strong></div><div class="stat"><small>امتحانات مكتملة</small><strong id="profileCount">0</strong></div><div class="stat"><small>إجمالي الدرجات</small><strong id="profileScores">0</strong></div></div>
+    <div class="panel"><h3>نتائجي</h3><div class="tablewrap"><table id="myResults"><thead><tr><th>الامتحان</th><th>الدرجة</th><th>النسبة</th><th>التاريخ</th><th>التفاصيل</th></tr></thead><tbody></tbody></table></div></div>
+   </div>
+   <div id="leadersPage" class="hidden"><div class="pagehead"><h2>لوحة المتفوقين</h2><button class="btn light small" onclick="loadLeaderboard()">تحديث</button></div><div class="panel"><p class="muted">ترتيب الطلاب حسب متوسط نسب نتائج الامتحانات المكتملة.</p><div id="leaderList">سيتم عرض الترتيب بعد تفعيل دالة المتفوقين الآمنة.</div></div></div>
+   <div id="chatPage" class="hidden"><div class="pagehead"><h2>المحادثة العامة</h2><button class="btn light small" onclick="loadChat()">تحديث</button></div><div class="panel"><div id="chatList" class="chatlist"></div><div class="chatcompose"><input id="chatInput" maxlength="2000" placeholder="اكتب رسالة للطلاب..."><button class="btn" onclick="sendMessage()">إرسال</button></div></div></div>
+  </section>
+ </div>
+ <div class="footer">إعداد الطالب / يوسف رضا</div>
+</main>
+<div id="toast" class="toast"></div>
+
+<script>
+const SUPABASE_URL="https://bouihbsnuuxqeityyrgl.supabase.co";
+const SUPABASE_ANON_KEY="sb_publishable_Ug3xBkJESfI973ZpOeXLFA_wjPoExD-";
+const db=window.supabase.createClient(SUPABASE_URL,SUPABASE_ANON_KEY);
+let user=null,profile=null,attempts=[],examCache=[];
+const fallbackAvatar='data:image/svg+xml;charset=UTF-8,'+encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" width="100" height="100"><rect width="100" height="100" rx="50" fill="#e8f0ea"/><circle cx="50" cy="37" r="18" fill="#8ba596"/><path d="M17 94c3-22 16-33 33-33s30 11 33 33" fill="#8ba596"/></svg>');
+function toast(t){let x=document.getElementById('toast');x.textContent=t;x.style.display='block';setTimeout(()=>x.style.display='none',3000)}
+function authMessage(t,ok=false){let x=document.getElementById('authMsg');x.className=ok?'ok':'err';x.textContent=t}
+function setAuthMode(mode){document.getElementById('registerForm').classList.toggle('hidden',mode!=='register');document.getElementById('loginForm').classList.toggle('hidden',mode!=='login');document.getElementById('registerTab').classList.toggle('active',mode==='register');document.getElementById('loginTab').classList.toggle('active',mode==='login');document.getElementById('authMsg').textContent=''}
+async function makeInternalEmail(password){
+ const bytes=new TextEncoder().encode(password);
+ const digest=await crypto.subtle.digest('SHA-256',bytes);
+ const hex=Array.from(new Uint8Array(digest)).map(b=>b.toString(16).padStart(2,'0')).join('');
+ return 'student.'+hex+'@students.example.com';
+}
+async function register(){
+ const full_name=document.getElementById('regName').value.trim(),password=document.getElementById('regPassword').value,bio=document.getElementById('regBio').value.trim();
+ if(!full_name||password.length<8){authMessage('اكتب اسمك وكلمة مرور لا تقل عن 8 أحرف.');return}
+ const email=await makeInternalEmail(password);
+ const {data,error}=await db.auth.signUp({email,password,options:{data:{full_name,academic_year:'الأولى',department:'اللغة العربية',bio}}});
+ if(error){authMessage('تعذر إنشاء الحساب: '+error.message);return}
+ if(data.session){await openStudent(data.user)}
+ else authMessage('تم إنشاء الحساب. أوقف خيار تأكيد الحساب من إعدادات تسجيل الدخول في Supabase ليعمل الدخول مباشرة.',true);
+}
+async function login(){
+ const full_name=document.getElementById('loginName')?.value?.trim()||document.getElementById('regName').value.trim();
+ const password=document.getElementById('loginPassword').value;
+ if(!password){authMessage('اكتب كلمة المرور.');return}
+ const email=await makeInternalEmail(password);
+ const {data,error}=await db.auth.signInWithPassword({email,password});
+ if(error){authMessage('تعذر تسجيل الدخول: تأكد من كلمة المرور. '+error.message);return}
+ await openStudent(data.user);
+}
+async function openStudent(u){
+ user=u;
+ const {data,error}=await db.from('profiles').select('id,full_name,academic_year,department,bio,avatar_url,created_at').eq('id',u.id).maybeSingle();
+ if(error||!data){authMessage('لم يتم العثور على الملف الشخصي. تأكد من تشغيل إعداد قاعدة البيانات. '+(error?.message||''));await db.auth.signOut();return}
+ profile=data;
+ document.getElementById('authView').classList.add('hidden');document.getElementById('studentView').classList.remove('hidden');document.getElementById('topUser').classList.remove('hidden');
+ renderProfile();await loadExams();await loadMyResults();
+}
+function renderProfile(){
+ const name=profile.full_name||'الطالب';const avatar=profile.avatar_url||fallbackAvatar;
+ document.getElementById('welcomeName').textContent='أهلًا بك، '+name+' 👋';
+ document.getElementById('topAvatar').src=avatar;document.getElementById('profileAvatar').src=avatar;
+ document.getElementById('profileName').textContent=name;document.getElementById('editName').value=profile.full_name||'';
+ document.getElementById('editBio').value=profile.bio||'';
+}
+async function saveProfile(){
+ const full_name=document.getElementById('editName').value.trim(),bio=document.getElementById('editBio').value.trim();
+ if(!full_name){toast('اكتب اسمك');return}
+ const {data,error}=await db.from('profiles').update({full_name,bio}).eq('id',user.id).select('id,full_name,academic_year,department,bio,avatar_url,created_at').single();
+ if(error){toast('تعذر حفظ الملف: '+error.message);return}
+ profile=data;renderProfile();toast('تم حفظ الملف الشخصي');
+}
+async function logout(){await db.auth.signOut();location.reload()}
+function showPage(page,btn){
+ ['home','exams','profile','leaders','chat'].forEach(p=>document.getElementById(p+'Page').classList.toggle('hidden',p!==page));
+ document.querySelectorAll('.nav button').forEach(b=>b.classList.remove('active'));if(btn)btn.classList.add('active');
+ if(page==='profile')loadMyResults();if(page==='leaders')loadLeaderboard();if(page==='chat')loadChat();
+}
+async function loadExams(){
+ const {data,error}=await db.from('exams').select('id,title,description,duration_minutes,total_marks,created_at,subjects(name),exam_questions(id)').eq('published',true).eq('target_year','الأولى').eq('target_department','اللغة العربية').order('created_at',{ascending:false});
+ if(error){document.getElementById('homeExams').innerHTML='<div class="panel">تعذر تحميل الامتحانات: '+esc(error.message)+'</div>';return}
+ examCache=data||[];
+ const {data:mine}=await db.from('exam_attempts').select('exam_id,score,total_marks,percentage,completed').eq('student_id',user.id);
+ attempts=mine||[];
+ const html=examCache.map(e=>{
+  const done=attempts.find(a=>a.exam_id===e.id&&a.completed);
+  return `<article class="examcard"><div class="examtop"><div class="examicon">▤</div><span class="tag ${done?'done':''}">${done?'تم الحل':'متاح'}</span></div><div><h3>${esc(e.title)}</h3><p>${esc(e.subjects?.name||'مادة دراسية')} · ${e.exam_questions?.length||0} سؤال · ${e.total_marks} درجة</p><p>${esc(e.description||'')}</p></div><div class="examfoot"><small class="muted">${e.duration_minutes?e.duration_minutes+' دقيقة':'بدون وقت محدد'}</small>${done?`<button class="btn light small" onclick="showReviewNotice('${e.id}')">عرض التصحيح</button>`:`<button class="btn small" onclick="startExamNotice('${e.id}')">دخول الامتحان</button>`}</div></article>`;
+ }).join('')||'<div class="panel muted">لا توجد امتحانات منشورة حاليًا. تابع الصفحة لاحقًا.</div>';
+ document.getElementById('homeExams').innerHTML=html;document.getElementById('allExams').innerHTML=html;
+ const completed=attempts.filter(a=>a.completed),avg=completed.length?completed.reduce((s,a)=>s+Number(a.percentage||0),0)/completed.length:0;
+ document.getElementById('homeCompleted').textContent=completed.length;document.getElementById('homeAverage').textContent=avg.toFixed(1)+'%';document.getElementById('homeAvailable').textContent=examCache.length-completed.length;
+}
+function startExamNotice(id){toast('قريبًا: سيتم تفعيل بدء الامتحان بعد إضافة دوال بدء الامتحان الآمنة في قاعدة البيانات.');}
+function showReviewNotice(id){toast('قريبًا: سيتم تفعيل عرض التصحيح التفصيلي بعد إضافة دالة مراجعة الامتحان.');}
+async function loadMyResults(){
+ const {data,error}=await db.from('exam_attempts').select('id,exam_id,score,total_marks,percentage,finished_at,completed,exams(title)').eq('student_id',user.id).eq('completed',true).order('finished_at',{ascending:false});
+ const body=document.querySelector('#myResults tbody');if(error){body.innerHTML=`<tr><td colspan="5">${esc(error.message)}</td></tr>`;return}
+ const rows=data||[];body.innerHTML=rows.map(a=>`<tr><td>${esc(a.exams?.title||'امتحان')}</td><td>${a.score} / ${a.total_marks}</td><td>${Number(a.percentage).toFixed(1)}%</td><td>${date(a.finished_at)}</td><td><button class="btn light small" onclick="showReviewNotice('${a.exam_id}')">عرض التصحيح</button></td></tr>`).join('')||'<tr><td colspan="5">لم تكمل أي امتحان بعد.</td></tr>';
+ const avg=rows.length?rows.reduce((s,a)=>s+Number(a.percentage||0),0)/rows.length:0;
+ document.getElementById('profileAverage').textContent=avg.toFixed(1)+'%';document.getElementById('profileCount').textContent=rows.length;document.getElementById('profileScores').textContent=rows.reduce((s,a)=>s+Number(a.score||0),0);
+}
+async function loadLeaderboard(){
+ const box=document.getElementById('leaderList');box.innerHTML='<p class="muted">جارٍ تحميل المتفوقين...</p>';
+ const {data,error}=await db.rpc('get_student_leaderboard');
+ if(error){box.innerHTML='<div class="note">قائمة المتفوقين تحتاج إلى تفعيل دالة آمنة في قاعدة البيانات. سنضيفها في المرحلة التالية.</div>';return}
+ box.innerHTML=(data||[]).map((x,i)=>`<div class="leader"><div class="rank">${i+1}</div><img src="${esc(x.avatar_url||fallbackAvatar)}" onerror="this.src='${fallbackAvatar}'" alt=""><div style="flex:1"><strong>${esc(x.full_name)}</strong><small>متوسط التقييم</small></div><b style="color:var(--g)">${Number(x.average_percentage||0).toFixed(1)}%</b></div>`).join('')||'<p class="muted">لا توجد نتائج كافية لعرض الترتيب.</p>';
+}
+async function loadChat(){
+ const box=document.getElementById('chatList');box.innerHTML='<p class="muted">جارٍ تحميل الرسائل...</p>';
+ const {data,error}=await db.from('chat_messages').select('id,user_id,message,created_at,profiles(full_name)').order('created_at',{ascending:true}).limit(100);
+ if(error){box.textContent='تعذر تحميل المحادثة: '+error.message;return}
+ box.innerHTML=(data||[]).map(m=>`<div class="bubble ${m.user_id===user.id?'mine':''}"><b>${esc(m.profiles?.full_name||'طالب')}</b><p>${esc(m.message)}</p><small>${date(m.created_at)}</small></div>`).join('')||'<p class="muted">لا توجد رسائل بعد. ابدأ المحادثة!</p>';
+ box.scrollTop=box.scrollHeight;
+}
+async function sendMessage(){
+ const input=document.getElementById('chatInput'),message=input.value.trim();if(!message)return;
+ const {error}=await db.from('chat_messages').insert({user_id:user.id,message});
+ if(error){toast('تعذر إرسال الرسالة: '+error.message);return}
+ input.value='';await loadChat();
+}
+function esc(v){return String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
+function date(v){return v?new Date(v).toLocaleString('ar-EG'):'—'}
+async function restore(){const {data}=await db.auth.getSession();if(data.session)await openStudent(data.session.user)}
+db.auth.onAuthStateChange((event,session)=>{if(event==='SIGNED_OUT'){user=null;profile=null}});
+restore();
+</script>
+</body>
+</html>

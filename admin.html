@@ -1,0 +1,312 @@
+
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>لوحة الإدارة</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+*{box-sizing:border-box}
+body{margin:0;padding:12px;background:#f1f5f9;color:#172033;font-family:Tahoma,Arial}
+.wrap{max-width:1050px;margin:15px auto}
+.header,.panel{background:white;border-radius:15px;padding:17px;margin-bottom:14px;box-shadow:0 4px 18px #0000000b}
+.header{background:linear-gradient(135deg,#145b46,#218565);color:white}
+.header h1{margin:0 0 8px;font-size:23px}
+.header p{line-height:1.7;margin:0}
+.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:9px;margin-top:16px}
+.stat{background:#ffffff20;padding:12px;border-radius:11px}
+.stat span{font-size:12px;display:block}
+.stat strong{font-size:23px;display:block;margin-top:7px}
+.nav{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:14px}
+button{border:0;border-radius:10px;padding:12px;font-weight:bold;font-size:14px;cursor:pointer}
+.nav button{background:#e2e8f0;color:#172033}
+.nav button.active,.primary{background:#176b50;color:white}
+.toolbar{display:flex;gap:8px;margin-bottom:12px}
+.toolbar input{flex:1;min-width:0;padding:12px;border:1px solid #cbd5e1;border-radius:9px;font-size:15px}
+.danger{background:#fee2e2;color:#b91c1c}
+.small{padding:8px 11px;font-size:12px}
+.status{color:#64748b;line-height:1.7}
+.error{color:#b91c1c}
+.table-wrap{overflow-x:auto}
+table{width:100%;border-collapse:collapse;min-width:580px}
+th,td{padding:12px 9px;text-align:right;border-bottom:1px solid #e2e8f0;white-space:nowrap;font-size:13px}
+th{background:#f8fafc}
+.pill{background:#dcfce7;color:#166534;padding:5px 8px;border-radius:20px}
+.score{color:#145b46;font-weight:bold}
+.hidden{display:none!important}
+.empty{text-align:center;padding:25px;color:#64748b}
+.footer{text-align:center;color:#64748b;font-size:12px}
+#loginScreen{position:fixed;inset:0;background:#f1f5f9;z-index:10;display:flex;align-items:center;justify-content:center;padding:20px}
+.loginBox{background:white;padding:25px;border-radius:17px;width:100%;max-width:380px;text-align:center;box-shadow:0 5px 25px #0002}
+.loginBox h2{color:#145b46}
+.loginBox input{width:100%;padding:14px;border:1px solid #cbd5e1;border-radius:10px;font-size:16px;margin:12px 0}
+.loginBox button{width:100%;padding:14px}
+@media(max-width:600px){
+body{padding:8px}.header,.panel{padding:13px}
+.header h1{font-size:20px}
+.stats{gap:5px}.stat{padding:9px}.stat span{font-size:10px}
+.stat strong{font-size:20px}
+.nav{gap:5px}.nav button{font-size:12px;padding:11px 4px}
+.toolbar{flex-wrap:wrap}.toolbar input{flex-basis:100%}
+}
+</style>
+</head>
+<body>
+
+<div id="loginScreen">
+ <div class="loginBox">
+  <h2>🔐 دخول الإدارة</h2>
+  <p>أدخل كلمة مرور لوحة الإدارة</p>
+  <input id="adminPassword" type="password" placeholder="كلمة المرور">
+  <button class="primary" onclick="login()">دخول</button>
+  <p id="loginError" class="error"></p>
+ </div>
+</div>
+
+<div class="wrap hidden" id="adminPage">
+ <section class="header">
+  <h1>لوحة إدارة امتحان علوم القرآن</h1>
+  <p>إدارة الطلاب والامتحانات والنتائج</p>
+  <div class="stats">
+   <div class="stat"><span>عدد الطلاب</span><strong id="studentsCount">—</strong></div>
+   <div class="stat"><span>عدد النتائج</span><strong id="examCount">—</strong></div>
+   <div class="stat"><span>متوسط الدرجات</span><strong id="averageScore">—</strong></div>
+  </div>
+ </section>
+
+ <div class="nav">
+  <button id="studentsTab" class="active" onclick="showTab('students')">👥 الطلاب</button>
+  <button id="resultsTab" onclick="showTab('results')">📊 النتائج</button>
+  <button id="examsTab" onclick="showTab('exams')">📝 الامتحانات</button>
+ </div>
+
+ <section class="panel" id="studentsPanel">
+  <h3>الطلاب المسجلون</h3>
+  <div class="toolbar">
+   <input id="studentsSearch" placeholder="ابحث باسم الطالب أو الكود">
+   <button class="primary" onclick="loadStudents()">تحديث</button>
+  </div>
+  <p id="studentsStatus" class="status">جاري التحميل...</p>
+  <div class="table-wrap">
+   <table>
+    <thead><tr><th>#</th><th>اسم الطالب</th><th>الكود</th><th>تاريخ التسجيل</th><th>حذف</th></tr></thead>
+    <tbody id="studentsBody"></tbody>
+   </table>
+  </div>
+ </section>
+
+ <section class="panel hidden" id="resultsPanel">
+  <h3>نتائج الطلاب</h3>
+  <div class="toolbar">
+   <input id="resultsSearch" placeholder="ابحث باسم الطالب أو الكود">
+   <button class="primary" onclick="loadResults()">تحديث</button>
+  </div>
+  <p id="resultsStatus" class="status">جاري التحميل...</p>
+  <div class="table-wrap">
+   <table>
+    <thead><tr><th>#</th><th>اسم الطالب</th><th>الكود</th><th>الدرجة</th><th>النسبة</th><th>تاريخ التسليم</th></tr></thead>
+    <tbody id="resultsBody"></tbody>
+   </table>
+  </div>
+ </section>
+
+ <section class="panel hidden" id="examsPanel">
+  <h3>إدارة الامتحانات</h3>
+  <div class="toolbar">
+   <input id="examsSearch" placeholder="ابحث عن امتحان">
+   <button class="primary" onclick="loadExams()">تحديث</button>
+  </div>
+  <p id="examsStatus" class="status">جاري التحميل...</p>
+  <div class="table-wrap">
+   <table>
+    <thead><tr><th>#</th><th>اسم الامتحان</th><th>الحالة</th><th>تاريخ الإنشاء</th><th>حذف</th></tr></thead>
+    <tbody id="examsBody"></tbody>
+   </table>
+  </div>
+ </section>
+
+ <p class="footer">لوحة إدارة الامتحانات</p>
+</div>
+
+<script>
+const SUPABASE_URL="https://bouihbsnuuxqeityyrgl.supabase.co";
+const SUPABASE_KEY="sb_publishable_Ug3xBkJESfI973ZpOeXLFA_wjPoExD-";
+const db=window.supabase.createClient(SUPABASE_URL,SUPABASE_KEY);
+
+let studentsData=[],resultsData=[],examsData=[];
+
+function login(){
+ const pass=document.getElementById("adminPassword").value;
+ if(pass==="Yussefreda123@#$"){
+  document.getElementById("loginScreen").classList.add("hidden");
+  document.getElementById("adminPage").classList.remove("hidden");
+  loadAll();
+ }else{
+  document.getElementById("loginError").textContent="كلمة المرور غير صحيحة";
+ }
+}
+document.getElementById("adminPassword").addEventListener("keydown",e=>{
+ if(e.key==="Enter")login();
+});
+
+function esc(v){
+ return String(v??"").replace(/[&<>"']/g,c=>({
+ "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"
+ }[c]));
+}
+function dateText(v){
+ if(!v)return "—";
+ const d=new Date(v);
+ return Number.isNaN(d.getTime())?"—":d.toLocaleString("ar-EG");
+}
+function showTab(tab){
+ ["students","results","exams"].forEach(t=>{
+  document.getElementById(t+"Panel").classList.toggle("hidden",t!==tab);
+  document.getElementById(t+"Tab").classList.toggle("active",t===tab);
+ });
+}
+function loadAll(){
+ loadStudents();
+ loadResults();
+ loadExams();
+}
+
+function renderStudents(){
+ const q=document.getElementById("studentsSearch").value.trim().toLowerCase();
+ const rows=studentsData.filter(x=>
+  (x.full_name||"").toLowerCase().includes(q)||
+  String(x.student_code||"").toLowerCase().includes(q)
+ );
+ const body=document.getElementById("studentsBody");
+ if(!rows.length){
+  body.innerHTML='<tr><td colspan="5" class="empty">لا يوجد طلاب</td></tr>';
+  return;
+ }
+ body.innerHTML=rows.map((x,i)=>`
+ <tr>
+  <td>${i+1}</td>
+  <td>${esc(x.full_name)}</td>
+  <td><span class="pill">${esc(x.student_code)}</span></td>
+  <td>${esc(dateText(x.registered_at))}</td>
+  <td><button class="danger small" onclick="deleteStudent('${x.id}','${esc(x.full_name)}')">حذف</button></td>
+ </tr>`).join("");
+}
+
+async function loadStudents(){
+ const st=document.getElementById("studentsStatus");
+ st.textContent="جاري تحميل الطلاب...";
+ try{
+  const {data,error}=await db.rpc("get_admin_students");
+  if(error)throw error;
+  studentsData=data||[];
+  document.getElementById("studentsCount").textContent=studentsData.length;
+  renderStudents();
+  st.textContent="عدد الطلاب: "+studentsData.length;
+ }catch(e){
+  st.textContent="خطأ: "+e.message;
+  st.className="status error";
+ }
+}
+
+function renderResults(){
+ const q=document.getElementById("resultsSearch").value.trim().toLowerCase();
+ const rows=resultsData.filter(x=>
+  (x.full_name||"").toLowerCase().includes(q)||
+  String(x.student_code||"").toLowerCase().includes(q)
+ );
+ const body=document.getElementById("resultsBody");
+ if(!rows.length){
+  body.innerHTML='<tr><td colspan="6" class="empty">لا توجد نتائج</td></tr>';
+  return;
+ }
+ body.innerHTML=rows.map((x,i)=>{
+  const score=Number(x.correct_count)||0;
+  const pct=(score/20*100).toFixed(1);
+  return `<tr>
+   <td>${i+1}</td><td>${esc(x.full_name)}</td>
+   <td>${esc(x.student_code)}</td>
+   <td class="score">${score} / 20</td>
+   <td>${pct}%</td><td>${esc(dateText(x.finished_at))}</td>
+  </tr>`;
+ }).join("");
+}
+async function loadResults(){
+ const st=document.getElementById("resultsStatus");
+ st.textContent="جاري تحميل النتائج...";
+ try{
+  const {data,error}=await db.rpc("get_admin_results");
+  if(error)throw error;
+  resultsData=data||[];
+  document.getElementById("examCount").textContent=resultsData.length;
+  const avg=resultsData.length?
+   resultsData.reduce((a,x)=>a+(Number(x.correct_count)||0),0)/resultsData.length:0;
+  document.getElementById("averageScore").textContent=avg.toFixed(2);
+  renderResults();
+  st.textContent="عدد النتائج: "+resultsData.length;
+ }catch(e){
+  st.textContent="خطأ: "+e.message;
+  st.className="status error";
+ }
+}
+
+function renderExams(){
+ const q=document.getElementById("examsSearch").value.trim().toLowerCase();
+ const rows=examsData.filter(x=>(x.title||"").toLowerCase().includes(q));
+ const body=document.getElementById("examsBody");
+ if(!rows.length){
+  body.innerHTML='<tr><td colspan="5" class="empty">لا توجد امتحانات</td></tr>';
+  return;
+ }
+ body.innerHTML=rows.map((x,i)=>`
+ <tr>
+  <td>${i+1}</td>
+  <td>${esc(x.title)}</td>
+  <td>${x.published?"<span class='pill'>منشور</span>":"غير منشور"}</td>
+  <td>${esc(dateText(x.created_at))}</td>
+  <td><button class="danger small" onclick="deleteExam('${x.id}','${esc(x.title)}')">حذف</button></td>
+ </tr>`).join("");
+}
+async function loadExams(){
+ const st=document.getElementById("examsStatus");
+ st.textContent="جاري تحميل الامتحانات...";
+ try{
+  const {data,error}=await db.rpc("get_admin_exams");
+  if(error)throw error;
+  examsData=data||[];
+  renderExams();
+  st.textContent="عدد الامتحانات: "+examsData.length;
+ }catch(e){
+  st.textContent="خطأ: "+e.message;
+  st.className="status error";
+ }
+}
+
+async function deleteStudent(id,name){
+ if(!confirm("هل أنت متأكد من حذف الطالب "+name+"؟ سيتم حذف محاولاته وإجاباته ونتائجه أيضًا."))return;
+ try{
+  const {data,error}=await db.rpc("delete_admin_student",{p_student_id:id});
+  if(error)throw error;
+  if(data!==true)throw new Error("لم يتم العثور على الطالب");
+  alert("تم حذف الطالب بنجاح");
+  loadAll();
+ }catch(e){alert("تعذر حذف الطالب: "+e.message);}
+}
+
+async function deleteExam(id,title){
+ if(!confirm("هل أنت متأكد من حذف امتحان "+title+"؟ سيتم حذف الأسئلة والمحاولات والإجابات والنتائج المرتبطة به نهائيًا."))return;
+ try{
+  const {data,error}=await db.rpc("delete_admin_exam",{p_exam_id:id});
+  if(error)throw error;
+  if(data!==true)throw new Error("لم يتم العثور على الامتحان");
+  alert("تم حذف الامتحان وكل بياناته بنجاح");
+  loadAll();
+ }catch(e){alert("تعذر حذف الامتحان: "+e.message);}
+}
+
+document.getElementById("studentsSearch").addEventListener("input",renderStudents);
+document.getElementById("resultsSearch").addEventListener("input",renderResults);
+document.getElementById("examsSearch").addEventListener("input",renderExams);
+</script>
+</body>
+</html>

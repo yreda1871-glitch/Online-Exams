@@ -456,12 +456,12 @@ th{background:var(--light-blue);color:var(--navy-dark);font-weight:700}
   box-shadow: 0 6px 20px rgba(196, 154, 120, 0.2);
 }
 
-/* Right Section (Percentage & Score in RTL) */
-.leader-right-sec {
+/* Left Section: Percentage & Score */
+.leader-left-sec {
   display: flex;
   flex-direction: column;
   align-items: flex-start;
-  text-align: right;
+  text-align: left;
 }
 .leader-pct-title {
   font-size: 18px;
@@ -481,7 +481,7 @@ th{background:var(--light-blue);color:var(--navy-dark);font-weight:700}
 .rank-2 .leader-score-sub { color: #475569; }
 .rank-3 .leader-score-sub { color: #785235; }
 
-/* Mid Section (Name & Evaluation) */
+/* Mid Section: Name & Evaluation */
 .leader-mid-sec {
   text-align: center;
   flex: 1;
@@ -505,8 +505,8 @@ th{background:var(--light-blue);color:var(--navy-dark);font-weight:700}
 .rank-2 .leader-eval-text { color: #475569; }
 .rank-3 .leader-eval-text { color: #694426; }
 
-/* Left Section (Avatar, Crown & Badge in RTL) */
-.leader-left-sec {
+/* Right Section: Avatar, Wreath/Crown, and Rank Badge */
+.leader-right-sec {
   position: relative;
   display: flex;
   align-items: center;
@@ -524,6 +524,14 @@ th{background:var(--light-blue);color:var(--navy-dark);font-weight:700}
   border: 2px solid #FFF;
   box-shadow: 0 2px 8px rgba(0,0,0,0.15);
 }
+.wreath-icon {
+  position: absolute;
+  inset: -8px;
+  pointer-events: none;
+  background-size: contain;
+  background-repeat: no-repeat;
+  background-position: center;
+}
 .crown-icon {
   position: absolute;
   top: -14px;
@@ -534,7 +542,7 @@ th{background:var(--light-blue);color:var(--navy-dark);font-weight:700}
 }
 .rank-badge-num {
   position: absolute;
-  right: -20px;
+  left: -22px;
   top: 50%;
   transform: translateY(-50%);
   width: 26px;
@@ -551,6 +559,17 @@ th{background:var(--light-blue);color:var(--navy-dark);font-weight:700}
 .rank-1 .rank-badge-num { background: #FFE082; color: #5D4037; border: 1px solid #FFC107; }
 .rank-2 .rank-badge-num { background: #E2E8F0; color: #1E293B; border: 1px solid #94A3B8; }
 .rank-3 .rank-badge-num { background: #D7CCC8; color: #4E342E; border: 1px solid #A1887F; }
+
+/* Standard list item for rank 4+ */
+.leader-card:not(.rank-1):not(.rank-2):not(.rank-3) {
+  background: #ffffff;
+}
+.leader-card:not(.rank-1):not(.rank-2):not(.rank-3) .leader-left-sec {
+  text-align: right;
+}
+.leader-card:not(.rank-1):not(.rank-2):not(.rank-3) .leader-mid-sec {
+  text-align: right;
+}
 
 /* WhatsApp Style Chat Layout (Fixed Height & Bottom Input) */
 .chat-container {
@@ -1278,7 +1297,7 @@ async function loadMyResults(){
  document.getElementById('profileAverage').textContent=avg.toFixed(1)+'%';document.getElementById('profileCount').textContent=rows.length;document.getElementById('profileScores').textContent=rows.reduce((s,a)=>s+Number(a.score||0),0);
 }
 
-/* Corrected RTL Layout Alignment */
+/* Corrected RTL Layout Alignment & Wreath/Crown/Badges Restored */
 async function loadLeaderboard(){
  const box=document.getElementById('leaderList');box.innerHTML='<p class="muted">جارٍ تحميل المتفوقين...</p>';
  const {data,error}=await db.rpc('get_student_leaderboard');
@@ -1286,10 +1305,20 @@ async function loadLeaderboard(){
  box.innerHTML=(data||[]).map((x,i)=>{
    const rank = i + 1;
    const isVerified = x.avatar_url && String(x.avatar_url).trim();
-   const crownHtml = rank === 1 ? '<div class="crown-icon">👑</div>' : '';
    
+   // SVG Laurel Wreath (أوسمة أوراق الغار للأوائل)
+   const wreathSvg = `<svg class="wreath-icon" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
+     <path d="M25 75 C 10 50, 15 25, 40 15" stroke="${rank===1?'#D4AF37':rank===2?'#94A3B8':'#C49A78'}" stroke-width="3" stroke-linecap="round"/>
+     <path d="M75 75 C 90 50, 85 25, 60 15" stroke="${rank===1?'#D4AF37':rank===2?'#94A3B8':'#C49A78'}" stroke-width="3" stroke-linecap="round"/>
+     <path d="M20 60 Q 10 55 22 45" fill="${rank===1?'#D4AF37':rank===2?'#94A3B8':'#C49A78'}"/>
+     <path d="M80 60 Q 90 55 78 45" fill="${rank===1?'#D4AF37':rank===2?'#94A3B8':'#C49A78'}"/>
+   </svg>`;
+
+   const crownHtml = rank === 1 ? '<div class="crown-icon">👑</div>' : '';
+   const topDecoration = rank <= 3 ? wreathSvg : '';
+
    return `<div class="leader-card rank-${rank}">
-     <div class="leader-right-sec">
+     <div class="leader-left-sec">
        <div class="leader-pct-title">النسبة ${Number(x.average_percentage||0).toFixed(1)}%</div>
        <div class="leader-score-sub">(الدرجات: ${x.total_score ?? 0})</div>
      </div>
@@ -1300,9 +1329,10 @@ async function loadLeaderboard(){
        </div>
        <div class="leader-eval-text">متوسط التقييم</div>
      </div>
-     <div class="leader-left-sec">
+     <div class="leader-right-sec">
        <div class="leader-avatar-wrapper">
          ${crownHtml}
+         ${topDecoration}
          <img class="leader-avatar-img" src="${esc(x.avatar_url||fallbackAvatar)}" onerror="this.src='${fallbackAvatar}'" alt="">
          <div class="rank-badge-num">${rank}</div>
        </div>

@@ -403,12 +403,158 @@ table{width:100%;border-collapse:collapse;min-width:500px}
 th,td{text-align:right;padding:14px;border-bottom:1px solid var(--border-line);font-size:14px}
 th{background:var(--light-blue);color:var(--navy-dark);font-weight:700}
 
-/* Leaderboard */
-.leader{display:flex;align-items:center;gap:14px;padding:14px 0;border-bottom:1px solid var(--border-line)}
-.rank{width:34px;height:34px;border-radius:10px;background:var(--light-blue);color:var(--accent-blue);display:grid;place-items:center;font-weight:bold;flex-shrink: 0;}
-.leader img{width:44px;height:44px;border-radius:50%;object-fit:cover;background:#E2E8F0;flex-shrink: 0;}
-.leader strong{display:block;font-size:14px;color:var(--navy-dark);letter-spacing:normal!important}
-.leader small{color:var(--text-muted)}
+/* Leaderboard - Matching Attached Image Design Exactly */
+.leaderboard-title {
+  text-align: center;
+  font-size: 28px;
+  font-weight: 800;
+  color: #1E293B;
+  margin: 0 0 10px;
+}
+.leaderboard-sub {
+  text-align: center;
+  color: #64748B;
+  font-size: 14px;
+  margin-bottom: 24px;
+}
+.leaders-container {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  max-width: 600px;
+  margin: 0 auto;
+}
+.leader-card {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 14px 18px;
+  border-radius: 20px;
+  box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+  background: #ffffff;
+  border: 1px solid #E2E8F0;
+}
+
+/* Rank 1 - Gold Style */
+.leader-card.rank-1 {
+  background: linear-gradient(135deg, #FFF6D6 0%, #F5D77F 50%, #E5B842 100%);
+  border: 2px solid #E5C158;
+  box-shadow: 0 6px 20px rgba(229, 184, 66, 0.25);
+}
+/* Rank 2 - Silver Style */
+.leader-card.rank-2 {
+  background: linear-gradient(135deg, #F1F5F9 0%, #E2E8F0 50%, #CBD5E1 100%);
+  border: 2px solid #94A3B8;
+  box-shadow: 0 6px 20px rgba(148, 163, 184, 0.2);
+}
+/* Rank 3 - Bronze Style */
+.leader-card.rank-3 {
+  background: linear-gradient(135deg, #FBF3EC 0%, #EAD5C3 50%, #D4B096 100%);
+  border: 2px solid #C49A78;
+  box-shadow: 0 6px 20px rgba(196, 154, 120, 0.2);
+}
+
+.leader-left-sec {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+}
+.leader-pct-title {
+  font-size: 18px;
+  font-weight: 800;
+  color: #2D3748;
+}
+.rank-1 .leader-pct-title { color: #5B4100; }
+.rank-2 .leader-pct-title { color: #1E293B; }
+.rank-3 .leader-pct-title { color: #5C3A21; }
+
+.leader-score-sub {
+  font-size: 12px;
+  color: #64748B;
+  margin-top: 2px;
+}
+.rank-1 .leader-score-sub { color: #7A5B0B; }
+.rank-2 .leader-score-sub { color: #475569; }
+.rank-3 .leader-score-sub { color: #785235; }
+
+.leader-mid-sec {
+  text-align: center;
+  flex: 1;
+  padding: 0 10px;
+}
+.leader-name {
+  font-size: 17px;
+  font-weight: 800;
+  color: #1E293B;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+}
+.leader-eval-text {
+  font-size: 13px;
+  color: #64748B;
+  margin-top: 4px;
+}
+.rank-1 .leader-eval-text { color: #694F06; }
+.rank-2 .leader-eval-text { color: #475569; }
+.rank-3 .leader-eval-text { color: #694426; }
+
+.leader-right-sec {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+.leader-avatar-wrapper {
+  position: relative;
+  width: 58px;
+  height: 58px;
+}
+.leader-avatar-img {
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 2px solid #FFF;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+}
+/* Wreath / Laurel effect for top 3 */
+.wreath-icon {
+  position: absolute;
+  inset: -6px;
+  pointer-events: none;
+  background-size: contain;
+  background-repeat: no-repeat;
+  background-position: center;
+}
+.crown-icon {
+  position: absolute;
+  top: -14px;
+  right: 50%;
+  transform: translateX(50%);
+  font-size: 18px;
+  z-index: 2;
+}
+.rank-badge-num {
+  position: absolute;
+  left: -22px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  background: #FFF;
+  display: grid;
+  place-items: center;
+  font-weight: 800;
+  font-size: 13px;
+  color: #334155;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.15);
+}
+.rank-1 .rank-badge-num { background: #FFE082; color: #5D4037; border: 1px solid #FFC107; }
+.rank-2 .rank-badge-num { background: #E2E8F0; color: #1E293B; border: 1px solid #94A3B8; }
+.rank-3 .rank-badge-num { background: #D7CCC8; color: #4E342E; border: 1px solid #A1887F; }
 
 /* WhatsApp Style Chat Layout (Fixed Height & Bottom Input) */
 .chat-container {
@@ -783,7 +929,14 @@ button,.btn{touch-action:manipulation}input,textarea,select{font-size:16px!impor
     </div>
    </div>
    
-   <div id="leadersPage" class="hidden"><div class="pagehead"><h2>لوحة المتفوقين</h2><button class="btn small" onclick="loadLeaderboard()">تحديث</button></div><div class="panel"><p class="muted">ترتيب الطلاب حسب متوسط نسب نتائج الامتحانات المكتملة.</p><div id="leaderList">سيتم عرض الترتيب بعد تفعيل دالة المتفوقين الآمنة.</div></div></div>
+   <div id="leadersPage" class="hidden">
+    <div class="pagehead">
+      <button class="btn small" onclick="loadLeaderboard()">تحديث</button>
+    </div>
+    <h1 class="leaderboard-title">لوحة المتفوقين</h1>
+    <p class="leaderboard-sub">ترتيب الطلاب حسب متوسط نسب نتائج الامتحانات المكتملة.</p>
+    <div id="leaderList" class="leaders-container">سيتم عرض الترتيب بعد تفعيل دالة المتفوقين الآمنة.</div>
+   </div>
    
    <div id="chatPage" class="hidden">
     <div class="pagehead"><h2>المحادثة العامة</h2><button class="btn small" onclick="loadChat()">تحديث</button></div>
@@ -1128,23 +1281,40 @@ async function loadMyResults(){
  const avg=rows.length?rows.reduce((s,a)=>s+Number(a.percentage||0),0)/rows.length:0;
  document.getElementById('profileAverage').textContent=avg.toFixed(1)+'%';document.getElementById('profileCount').textContent=rows.length;document.getElementById('profileScores').textContent=rows.reduce((s,a)=>s+Number(a.score||0),0);
 }
+
+/* Updated loadLeaderboard to render layout matching image */
 async function loadLeaderboard(){
  const box=document.getElementById('leaderList');box.innerHTML='<p class="muted">جارٍ تحميل المتفوقين...</p>';
  const {data,error}=await db.rpc('get_student_leaderboard');
  if(error){box.innerHTML='<div class="note">قائمة المتفوقين تحتاج إلى تفعيل دالة آمنة في قاعدة البيانات. سنضيفها في المرحلة التالية.</div>';return}
- box.innerHTML=(data||[]).map((x,i)=>`<div class="leader">
-   <div class="rank">${i+1}</div>
-   <img src="${esc(x.avatar_url||fallbackAvatar)}" onerror="this.src='${fallbackAvatar}'" alt="">
-   <div style="flex:1">
-     <strong>${esc(x.full_name)}${x.avatar_url && String(x.avatar_url).trim() ? ' <span class="verified-mark" title="حساب موثّق بالصورة" aria-label="حساب موثّق">✓</span>' : ''}</strong>
-     <small>متوسط التقييم</small>
-   </div>
-   <div style="text-align:left;">
-     <b style="color:var(--accent-blue);display:block;">${Number(x.average_percentage||0).toFixed(1)}%</b>
-     <small class="muted" style="font-size:11px;">(الدرجات: ${x.total_score ?? 0})</small>
-   </div>
- </div>`).join('')||'<p class="muted">لا توجد نتائج كافية لعرض الترتيب.</p>';
+ box.innerHTML=(data||[]).map((x,i)=>{
+   const rank = i + 1;
+   const isVerified = x.avatar_url && String(x.avatar_url).trim();
+   const crownHtml = rank === 1 ? '<div class="crown-icon">👑</div>' : '';
+   
+   return `<div class="leader-card rank-${rank}">
+     <div class="leader-left-sec">
+       <div class="leader-pct-title">النسبة ${Number(x.average_percentage||0).toFixed(1)}%</div>
+       <div class="leader-score-sub">(الدرجات: ${x.total_score ?? 0})</div>
+     </div>
+     <div class="leader-mid-sec">
+       <div class="leader-name">
+         ${esc(x.full_name)}
+         ${isVerified ? '<span class="verified-mark" title="حساب موثّق بالصورة" aria-label="حساب موثّق">✓</span>' : ''}
+       </div>
+       <div class="leader-eval-text">متوسط التقييم</div>
+     </div>
+     <div class="leader-right-sec">
+       <div class="leader-avatar-wrapper">
+         ${crownHtml}
+         <img class="leader-avatar-img" src="${esc(x.avatar_url||fallbackAvatar)}" onerror="this.src='${fallbackAvatar}'" alt="">
+         <div class="rank-badge-num">${rank}</div>
+       </div>
+     </div>
+   </div>`;
+ }).join('')||'<p class="muted">لا توجد نتائج كافية لعرض الترتيب.</p>';
 }
+
 async function loadChat(){
  await markStudentSeen('mark_student_chat_seen');
  const box=document.getElementById('chatList');box.innerHTML='<p class="muted">جارٍ تحميل الرسائل...</p>';

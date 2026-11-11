@@ -833,23 +833,34 @@ function closeProfileSettings(){
 async function saveProfileSettings(){
  const newName = document.getElementById('settingNameInput').value.trim();
  const newBio = document.getElementById('settingBioInput').value.trim();
+ const saveBtn = document.querySelector('#profileSettingsModal button[onclick="saveProfileSettings()"]');
  if(newName.length < 3){toast('اكتب اسمًا صحيحًا');return;}
+ if(!profile?.id){toast('تعذر تحديد حساب الطالب. أعد تسجيل الدخول.');return;}
+ if(saveBtn){saveBtn.disabled=true;saveBtn.textContent='جاري الحفظ...';}
  try{
-  // تحديث الاسم والوصف (إذا كانت الدالة تدعم الوصف أو الحفظ المحلي)
-  profile.full_name = newName;
-  profile.bio = newBio;
-  // حفظ محلي في حال لم تتواجد عمود bio في قاعدة البيانات
-  localStorage.setItem('student_bio_'+profile.id, newBio);
+  // الحفظ في جدول profiles؛ لا نعرض رسالة نجاح إلا بعد تأكيد قاعدة البيانات.
+  const {data,error}=await db.from('profiles')
+   .update({full_name:newName,bio:newBio})
+   .eq('id',profile.id)
+   .select('id,full_name,bio')
+   .maybeSingle();
+  if(error)throw error;
+  if(!data)throw new Error('لم يتم تحديث بيانات الطالب. تحقق من صلاحيات تحديث الملف الشخصي (RLS).');
+  profile.full_name=data.full_name||newName;
+  profile.bio=data.bio??newBio;
   renderProfile();
   closeProfileSettings();
-  toast('تم تحديث الملف الشخصي بنجاح.');
- }catch(e){toast('تعذر الحفظ');}
+  toast('تم حفظ بيانات الملف الشخصي.');
+ }catch(e){
+  console.error('save profile failed:',e);
+  toast('تعذر حفظ البيانات في قاعدة البيانات: '+(e.message||'خطأ غير معروف'));
+ }finally{
+  if(saveBtn){saveBtn.disabled=false;saveBtn.textContent='حفظ التعديلات';}
+ }
 }
 
 async function logout(){localStorage.removeItem('exam_student_code');location.reload();}
-async function restoreStudent(){const code=localStorage.getItem('exam_student_code');if(!code)return;try{const {data,error}=await db.rpc('login_student',{p_student_code:code});if(error||!data||data.status!=='ok'||!data.profile){localStorage.removeItem('exam_student_code');return;}// استرجاع الوصف المحلي إن وجد
- data.profile.bio = localStorage.getItem('student_bio_'+data.profile.id) || '';
- await openStudent(data.profile);}catch(e){console.warn('restore student session failed',e);}}
+async function restoreStudent(){const code=localStorage.getItem('exam_student_code');if(!code)return;try{const {data,error}=await db.rpc('login_student',{p_student_code:code});if(error||!data||data.status!=='ok'||!data.profile){localStorage.removeItem('exam_student_code');return;}await openStudent(data.profile);}catch(e){console.warn('restore student session failed',e);}}
 
 function showPage(page,btn){
  ['home','exams','profile','leaders','chat'].forEach(p=>document.getElementById(p+'Page').classList.toggle('hidden',p!==page));
@@ -872,7 +883,7 @@ async function loadMyPosts(){
  box.innerHTML='<p class="muted">جاري تحميل منشوراتك...</p>';
  const {data,error}=await db.from('chat_messages').select('id,message,created_at').eq('user_id', user.id).order('created_at',{ascending:false});
  if(error){box.innerHTML='<p class="muted">تعذر تحميل المنشورات.</p>';return;}
- box.innerHTML = (data||[]).map(m=>`<div class="bubble" style="max-width:100%;"><p>${esc(m.message)}</p><small>${date(m.created_at)}</small></div>`).join('') || '<ليس لديك أي منشورات بعد>';
+ box.innerHTML = (data||[]).map(m=>`<div class="bubble" style="max-width:100%;"><p>${esc(m.message)}</p><small>${date(m.created_at)}</small></div>`).join('') || '<p class="muted">ليس لديك أي منشورات بعد.</p>';
 }
 
 function setBadge(id,count){const el=document.getElementById(id);if(!el)return;const n=Number(count||0);el.textContent=n>99?'99+':n>0?String(n):'';}
@@ -905,21 +916,23 @@ let examSelections = {};
 let examTimerHandle = null;
 let examReviewMode = false;
 let currentQuestionIndex = 0;
+let questionAdvanceLocked = false;
 function examOptions(value){
  if(Array.isArray(value)) return value;
  if(typeof value==='string'){try{const x=JSON.parse(value);return Array.isArray(x)?x:[];}catch(e){return value.split('|');}}
  return [];
 }
 function selectExamOption(questionId,index){
- if(!activeExam||examReviewMode)return;
+ if(!activeExam||examReviewMode||questionAdvanceLocked)return;
  const q=activeExam.questions[currentQuestionIndex];
  if(!q||q.id!==questionId)return;
  examSelections[questionId]=Number(index);
- if(activeExam.attempt_id)localStorage.setItem('exam_answers_'+activeExam.attempt_id,JSON.stringify(examSelections));
+ if(activeExam.attempt_id){try{localStorage.setItem('exam_answers_'+activeExam.attempt_id,JSON.stringify(examSelections));}catch(storageError){console.warn('تعذر حفظ نسخة محلية من الإجابات:',storageError);}}
+ questionAdvanceLocked=true;
  clearInterval(examTimerHandle);
  document.querySelectorAll('.exam-option input').forEach(x=>x.disabled=true);
  document.getElementById('examTimer').textContent='تم تسجيل الإجابة';
- setTimeout(()=>advanceTimedQuestion(),350);
+ setTimeout(()=>{if(activeExam&&!examReviewMode){questionAdvanceLocked=false;advanceTimedQuestion();}},350);
 }
 async function startExamNotice(id){
  if(!profile?.student_code){toast('سجّل دخولك أولًا');return;}
@@ -940,6 +953,8 @@ async function startExamNotice(id){
 function renderActiveExam(){
  clearInterval(examTimerHandle);
  currentQuestionIndex=0;
+ questionAdvanceLocked=false;
+ if(!Array.isArray(activeExam?.questions)||!activeExam.questions.length){toast('الامتحان لا يحتوي على أسئلة قابلة للعرض.');return;}
  document.getElementById('examModalTitle').textContent=activeExam.title||'الامتحان';
  document.getElementById('examModalSub').textContent='لكل سؤال 30 ثانية. اختر إجابة للانتقال فورًا، أو انتظر حتى ينتهي الوقت.';
  document.getElementById('examModal').classList.remove('hidden');
@@ -951,6 +966,7 @@ function renderActiveExam(){
  startQuestionTimer();
 }
 function renderCurrentExamQuestion(){
+ questionAdvanceLocked=false;
  const questions=activeExam?.questions||[];
  if(!questions.length)return;
  const q=questions[currentQuestionIndex];
@@ -983,7 +999,8 @@ function startQuestionTimer(){
  examTimerHandle=setInterval(tick,1000);
 }
 function advanceTimedQuestion(){
- if(!activeExam||examReviewMode)return;
+ if(!activeExam||examReviewMode||questionAdvanceLocked)return;
+ questionAdvanceLocked=true;
  clearInterval(examTimerHandle);
  const count=(activeExam.questions||[]).length;
  if(currentQuestionIndex>=count-1){
@@ -1019,15 +1036,8 @@ function showExamResult(result){
  document.getElementById('prevQuestionBtn').classList.add('hidden');document.getElementById('nextQuestionBtn').classList.add('hidden');
  document.getElementById('submitExamBtn').classList.remove('hidden');document.getElementById('submitExamBtn').textContent='إغلاق';document.getElementById('submitExamBtn').disabled=false;document.getElementById('submitExamBtn').onclick=closeExamModal;
 }
-function closeExamModal(){clearInterval(examTimerHandle);document.getElementById('examModal').classList.add('hidden');activeExam=null;examSelections={};examReviewMode=false;const b=document.getElementById('submitExamBtn');b.onclick=()=>submitCurrentExam();b.textContent='تسليم الامتحان';b.disabled=false;document.getElementById('prevQuestionBtn').classList.remove('hidden');document.getElementById('nextQuestionBtn').classList.remove('hidden');}
+function closeExamModal(){clearInterval(examTimerHandle);document.getElementById('examModal').classList.add('hidden');activeExam=null;examSelections={};examReviewMode=false;questionAdvanceLocked=false;const b=document.getElementById('submitExamBtn');b.onclick=()=>submitCurrentExam();b.textContent='تسليم الامتحان';b.disabled=false;document.getElementById('prevQuestionBtn').classList.remove('hidden');document.getElementById('nextQuestionBtn').classList.remove('hidden');}
 async function showReviewNotice(id){
  try{
   const {data,error}=await db.rpc('get_student_exam_review',{p_student_code:profile.student_code,p_exam_id:id});
-  if(error)throw error;if(!data||data.status!=='ok')throw new Error('لا يوجد تصحيح متاح لهذا الامتحان.');
-  activeExam={title:'مراجعة الامتحان',questions:data.questions||[]};examReviewMode=true;
-  document.getElementById('examModalTitle').textContent='مراجعة: '+(examCache.find(x=>x.id===id)?.title||'الامتحان');
-  document.getElementById('examModalSub').textContent=`النتيجة: ${data.score} / ${data.total_marks} — ${Number(data.percentage||0).toFixed(1)}%`;
-  document.getElementById('examTimer').textContent='التصحيح';
-  document.getElementById('examModalBody').innerHTML=(data.questions||[]).map((q,i)=>{
-   const opts=examOptions(q.options);
-   return `<article class="exam-question"><h3><span>${i+1}.</span>${esc(q.question_text)}</h3>${opts.map((op,j)=>`<div class="exam-option ${j===Number(q.correct_option)?'review-correct':''} ${q.selected_option!==null&&j===Number(q.selected_option)&&!q.is_correct?'review-wrong':''}"><span>${esc(op)} ${j===Number(q.correct_option)?'✓ الإجابة الصحيحة':''} ${q.selected_option!==null&&j===Number(q.selected_option)?' — إجابتك':''}</span></div>
+  if(error)throw 

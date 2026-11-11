@@ -871,26 +871,28 @@ async function saveProfileSettings(){
  const newName = document.getElementById('settingNameInput').value.trim();
  const newBio = document.getElementById('settingBioInput').value.trim();
  const saveBtn = document.querySelector('#profileSettingsModal button[onclick="saveProfileSettings()"]');
- if(newName.length < 3){toast('اكتب اسمًا صحيحًا');return;}
- if(!profile?.id){toast('تعذر تحديد حساب الطالب. أعد تسجيل الدخول.');return;}
+ if(newName.length < 3){toast('اكتب اسمًا صحيحًا (3 أحرف على الأقل).');return;}
+ if(!profile?.student_code){toast('تعذر تحديد كود الطالب. سجّل الدخول مرة أخرى.');return;}
  if(saveBtn){saveBtn.disabled=true;saveBtn.textContent='جاري الحفظ...';}
  try{
-  // الحفظ في جدول profiles؛ لا نعرض رسالة نجاح إلا بعد تأكيد قاعدة البيانات.
-  const {data,error}=await db.from('profiles')
-   .update({full_name:newName,bio:newBio})
-   .eq('id',profile.id)
-   .select('id,full_name,bio')
-   .maybeSingle();
+  // استخدام RPC آمنة بدل UPDATE المباشر الذي تمنعه صلاحيات RLS في تسجيل الدخول بالكود.
+  const {data,error}=await db.rpc('update_student_profile',{
+   p_student_code:profile.student_code,
+   p_full_name:newName,
+   p_bio:newBio
+  });
   if(error)throw error;
-  if(!data)throw new Error('لم يتم تحديث بيانات الطالب. تحقق من صلاحيات تحديث الملف الشخصي (RLS).');
-  profile.full_name=data.full_name||newName;
-  profile.bio=data.bio??newBio;
+  if(!data || data.status!=='updated' || !data.profile){
+   throw new Error(data?.message || 'لم تؤكد قاعدة البيانات حفظ التعديلات.');
+  }
+  profile.full_name=data.profile.full_name || newName;
+  profile.bio=data.profile.bio ?? newBio;
   renderProfile();
   closeProfileSettings();
-  toast('تم حفظ بيانات الملف الشخصي.');
+  toast('تم حفظ بيانات الملف الشخصي بنجاح.');
  }catch(e){
   console.error('save profile failed:',e);
-  toast('تعذر حفظ البيانات في قاعدة البيانات: '+(e.message||'خطأ غير معروف'));
+  toast('تعذر حفظ البيانات: '+(e.message||'خطأ غير معروف'));
  }finally{
   if(saveBtn){saveBtn.disabled=false;saveBtn.textContent='حفظ التعديلات';}
  }

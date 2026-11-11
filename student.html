@@ -334,11 +334,11 @@ button{cursor:pointer;border:0}
   place-items:center;
   width:18px;
   height:18px;
-  margin-right:6px;
+  margin-right:4px;
   border-radius:50%;
   background:#1D9BF0;
   color:#fff;
-  font-size:12px;
+  font-size:11px;
   font-weight:900;
   vertical-align:middle;
   box-shadow:0 1px 3px rgba(29,155,240,.25);
@@ -403,7 +403,7 @@ table{width:100%;border-collapse:collapse;min-width:500px}
 th,td{text-align:right;padding:14px;border-bottom:1px solid var(--border-line);font-size:14px}
 th{background:var(--light-blue);color:var(--navy-dark);font-weight:700}
 
-/* Leaderboard - Matching Attached Image Design Exactly */
+/* Leaderboard - Matching Attached Image Design Exactly (RTL Corrected) */
 .leaderboard-title {
   text-align: center;
   font-size: 28px;
@@ -431,14 +431,15 @@ th{background:var(--light-blue);color:var(--navy-dark);font-weight:700}
   justify-content: space-between;
   padding: 14px 18px;
   border-radius: 20px;
-  box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+  box-shadow: 0 4px 15px rgba(0,0,0,0.04);
   background: #ffffff;
   border: 1px solid #E2E8F0;
+  direction: rtl;
 }
 
 /* Rank 1 - Gold Style */
 .leader-card.rank-1 {
-  background: linear-gradient(135deg, #FFF6D6 0%, #F5D77F 50%, #E5B842 100%);
+  background: linear-gradient(135deg, #FFF7D6 0%, #F7DC8B 50%, #E7BE4A 100%);
   border: 2px solid #E5C158;
   box-shadow: 0 6px 20px rgba(229, 184, 66, 0.25);
 }
@@ -455,15 +456,17 @@ th{background:var(--light-blue);color:var(--navy-dark);font-weight:700}
   box-shadow: 0 6px 20px rgba(196, 154, 120, 0.2);
 }
 
-.leader-left-sec {
+/* Right Section (Percentage & Score in RTL) */
+.leader-right-sec {
   display: flex;
   flex-direction: column;
   align-items: flex-start;
+  text-align: right;
 }
 .leader-pct-title {
   font-size: 18px;
   font-weight: 800;
-  color: #2D3748;
+  color: #1E293B;
 }
 .rank-1 .leader-pct-title { color: #5B4100; }
 .rank-2 .leader-pct-title { color: #1E293B; }
@@ -478,6 +481,7 @@ th{background:var(--light-blue);color:var(--navy-dark);font-weight:700}
 .rank-2 .leader-score-sub { color: #475569; }
 .rank-3 .leader-score-sub { color: #785235; }
 
+/* Mid Section (Name & Evaluation) */
 .leader-mid-sec {
   text-align: center;
   flex: 1;
@@ -501,7 +505,8 @@ th{background:var(--light-blue);color:var(--navy-dark);font-weight:700}
 .rank-2 .leader-eval-text { color: #475569; }
 .rank-3 .leader-eval-text { color: #694426; }
 
-.leader-right-sec {
+/* Left Section (Avatar, Crown & Badge in RTL) */
+.leader-left-sec {
   position: relative;
   display: flex;
   align-items: center;
@@ -519,26 +524,17 @@ th{background:var(--light-blue);color:var(--navy-dark);font-weight:700}
   border: 2px solid #FFF;
   box-shadow: 0 2px 8px rgba(0,0,0,0.15);
 }
-/* Wreath / Laurel effect for top 3 */
-.wreath-icon {
-  position: absolute;
-  inset: -6px;
-  pointer-events: none;
-  background-size: contain;
-  background-repeat: no-repeat;
-  background-position: center;
-}
 .crown-icon {
   position: absolute;
   top: -14px;
-  right: 50%;
-  transform: translateX(50%);
+  left: 50%;
+  transform: translateX(-50%);
   font-size: 18px;
   z-index: 2;
 }
 .rank-badge-num {
   position: absolute;
-  left: -22px;
+  right: -20px;
   top: 50%;
   transform: translateY(-50%);
   width: 26px;
@@ -1282,7 +1278,7 @@ async function loadMyResults(){
  document.getElementById('profileAverage').textContent=avg.toFixed(1)+'%';document.getElementById('profileCount').textContent=rows.length;document.getElementById('profileScores').textContent=rows.reduce((s,a)=>s+Number(a.score||0),0);
 }
 
-/* Updated loadLeaderboard to render layout matching image */
+/* Corrected RTL Layout Alignment */
 async function loadLeaderboard(){
  const box=document.getElementById('leaderList');box.innerHTML='<p class="muted">جارٍ تحميل المتفوقين...</p>';
  const {data,error}=await db.rpc('get_student_leaderboard');
@@ -1293,7 +1289,7 @@ async function loadLeaderboard(){
    const crownHtml = rank === 1 ? '<div class="crown-icon">👑</div>' : '';
    
    return `<div class="leader-card rank-${rank}">
-     <div class="leader-left-sec">
+     <div class="leader-right-sec">
        <div class="leader-pct-title">النسبة ${Number(x.average_percentage||0).toFixed(1)}%</div>
        <div class="leader-score-sub">(الدرجات: ${x.total_score ?? 0})</div>
      </div>
@@ -1304,7 +1300,7 @@ async function loadLeaderboard(){
        </div>
        <div class="leader-eval-text">متوسط التقييم</div>
      </div>
-     <div class="leader-right-sec">
+     <div class="leader-left-sec">
        <div class="leader-avatar-wrapper">
          ${crownHtml}
          <img class="leader-avatar-img" src="${esc(x.avatar_url||fallbackAvatar)}" onerror="this.src='${fallbackAvatar}'" alt="">

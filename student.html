@@ -821,12 +821,38 @@ button,.btn{touch-action:manipulation}input,textarea,select{font-size:16px!impor
 .exam-question h3 span{color:var(--accent-blue);margin-left:6px}
 .exam-option{display:flex;align-items:flex-start;gap:12px;padding:14px;border:1.5px solid var(--border-line);border-radius:12px;margin:10px 0;background:#fff;cursor:pointer;line-height:1.7;font-size:14px;transition:all 0.2s}
 .exam-option:has(input:checked){border-color:var(--accent-blue);background:var(--light-blue)}
+.exam-option input:checked{accent-color:#111111}
 .exam-option input{margin-top:4px;accent-color:var(--accent-blue);flex:0 0 auto}
 .exam-actions{display:flex;justify-content:space-between;gap:8px;align-items:center;padding:16px 20px;background:#fff;border-top:1px solid var(--border-line)}
 .exam-result{text-align:center;background:#fff;border-radius:20px;padding:30px 20px}
 .exam-result strong{display:block;color:var(--navy-dark);font-size:36px;margin:12px;font-weight:800;letter-spacing:normal!important}
 .review-correct{border-color:var(--emerald-green)!important;background:var(--emerald-bg)!important;color:#065F46!important}
 .review-wrong{border-color:var(--red-accent)!important;background:#FEF2F2!important;color:#991B1B!important}
+
+/* Monochrome theme: clean white and black palette */
+:root{
+  --navy-dark:#111111;--navy-primary:#222222;--accent-blue:#111111;
+  --light-blue:#F3F3F3;--bg-color:#FFFFFF;--card-bg:#FFFFFF;
+  --text-primary:#171717;--text-muted:#666666;--border-line:#E5E5E5;
+  --emerald-green:#333333;--emerald-bg:#EEEEEE;--red-accent:#555555;
+}
+.top,.side,.welcome,.exam-head{background:#111111!important;color:#FFFFFF}
+.mark,.welcome .welcomeicon,.stat-icon,.examicon{background:#F1F1F1!important;color:#111111!important;border-color:#DDDDDD!important}
+.btn,.send-btn{background:#111111!important;color:#FFFFFF!important}
+.btn.light{background:#FFFFFF!important;color:#111111!important;border:1px solid #CCCCCC!important}
+.btn.gold{background:#E8E8E8!important;color:#111111!important}
+.btn.red{background:#F2F2F2!important;color:#111111!important}
+.nav button.active,.nav button:hover{background:#FFFFFF!important;color:#111111!important}
+.tag.available,.tag.done,.tag.off{background:#EEEEEE!important;color:#222222!important}
+.stat-progress-fill{background:#111111!important}
+.profile-sub-tabs,.tabs,.note,.student-code-panel{background:#F3F3F3!important}
+.profile-sub-tabs button.active,.tabs button.active{background:#FFFFFF!important;color:#111111!important}
+.verified-mark{background:#222222!important}
+.leader-card.rank-1,.leader-card.rank-2,.leader-card.rank-3{background:#F4F4F4!important;border-color:#BBBBBB!important;box-shadow:none!important}
+.rank-1 .leader-pct-title,.rank-2 .leader-pct-title,.rank-3 .leader-pct-title,.rank-1 .leader-score-sub,.rank-2 .leader-score-sub,.rank-3 .leader-score-sub,.rank-1 .leader-eval-text,.rank-2 .leader-eval-text,.rank-3 .leader-eval-text{color:#222222!important}
+.review-correct{border-color:#555!important;background:#EEEEEE!important;color:#111!important}
+.review-wrong{border-color:#999!important;background:#F7F7F7!important;color:#444!important}
+
 </style>
 </head>
 <body>
@@ -1040,7 +1066,7 @@ function showCodeReveal(p){pendingProfile=p;document.getElementById('authTabs').
 async function register(){const full_name=document.getElementById('regName').value.trim(),btn=document.getElementById('registerBtn');if(full_name.length<3){authMessage('اكتب اسمك بالكامل (3 أحرف على الأقل).');return;}btn.disabled=true;authMessage('جاري إنشاء حسابك...');try{await ensureDb();const {data,error}=await db.rpc('register_student',{p_full_name:full_name});if(error)throw error;if(!data||data.status!=='created'||!data.profile)throw new Error(data?.message||'تعذر إنشاء الحساب.');localStorage.setItem('exam_student_code',data.profile.student_code);showCodeReveal(data.profile);document.getElementById('authMsg').textContent='';}catch(e){authMessage('تعذر إنشاء الحساب: '+(e.message||'خطأ غير معروف'));}finally{btn.disabled=false;}}
 async function login(){const code=document.getElementById('loginCode').value.trim(),btn=document.getElementById('loginBtn');if(!/^[0-9]{6}$/.test(code)){authMessage('اكتب كودًا صحيحًا مكوّنًا من 6 أرقام.');return;}btn.disabled=true;authMessage('جاري التحقق من الكود...');try{await ensureDb();const {data,error}=await db.rpc('login_student',{p_student_code:code});if(error)throw error;if(!data||data.status!=='ok'||!data.profile)throw new Error('كود الطالب غير صحيح.');localStorage.setItem('exam_student_code',code);await openStudent(data.profile);}catch(e){authMessage(e.message||'تعذر تسجيل الدخول.');}finally{btn.disabled=false;}}
 function continueAfterRegister(){if(pendingProfile)openStudent(pendingProfile);}
-async function openStudent(p){profile=p;user={id:p.id};document.getElementById('authView').classList.add('hidden');document.getElementById('studentView').classList.remove('hidden');document.getElementById('topUser').classList.remove('hidden');renderProfile();await refreshStudentBadges();if(badgeRefreshHandle)clearInterval(badgeRefreshHandle);badgeRefreshHandle=setInterval(refreshStudentBadges,30000);await loadExams();await loadMyResults();}
+async function openStudent(p){if(!p||!p.id||!p.student_code)throw new Error('بيانات الطالب غير مكتملة.');await ensureDb();profile=p;user={id:p.id};document.getElementById('authView').classList.add('hidden');document.getElementById('studentView').classList.remove('hidden');document.getElementById('topUser').classList.remove('hidden');renderProfile();await refreshStudentBadges();if(badgeRefreshHandle)clearInterval(badgeRefreshHandle);badgeRefreshHandle=setInterval(refreshStudentBadges,30000);await loadExams();await loadMyResults();}
 function renderProfile(){
  const name=profile.full_name||'الطالب',avatar=profile.avatar_url||fallbackAvatar;
  document.getElementById('welcomeName').textContent='أهلاً بك، '+name+' 👋';
@@ -1053,7 +1079,7 @@ function renderProfile(){
  document.getElementById('profileBio').textContent = bio;
 }
 function chooseAvatar(){document.getElementById('profilePhotoInput').click();}
-async function changeProfilePhoto(input){const file=input.files&&input.files[0];if(!file)return;if(!['image/jpeg','image/png','image/webp'].includes(file.type)){toast('اختر صورة JPG أو PNG أو WEBP.');input.value='';return;}if(file.size>5*1024*1024){toast('حجم الصورة يجب ألا يتجاوز 5 ميجابايت.');input.value='';return;}try{toast('جاري رفع الصورة...');const ext=file.type==='image/png'?'png':file.type==='image/webp'?'webp':'jpg';const path=profile.id+'/'+crypto.randomUUID()+'.'+ext;const {error:upErr}=await db.storage.from('avatars').upload(path,file,{upsert:false,contentType:file.type,cacheControl:'3600'});if(upErr)throw upErr;const {data:urlData}=db.storage.from('avatars').getPublicUrl(path);const {data,error}=await db.rpc('update_student_avatar',{p_student_code:profile.student_code,p_avatar_url:urlData.publicUrl});if(error)throw error;if(!data||data.status!=='updated')throw new Error('تعذر حفظ الصورة في الملف الشخصي.');profile.avatar_url=data.avatar_url;renderProfile();toast('تم تغيير صورتك الشخصية بنجاح.');}catch(e){toast('تعذر تغيير الصورة: '+(e.message||'خطأ غير معروف'));}finally{input.value='';}}
+async function changeProfilePhoto(input){const file=input.files&&input.files[0];if(!file)return;if(!['image/jpeg','image/png','image/webp'].includes(file.type)){toast('اختر صورة JPG أو PNG أو WEBP.');input.value='';return;}if(file.size>5*1024*1024){toast('حجم الصورة يجب ألا يتجاوز 5 ميجابايت.');input.value='';return;}try{toast('جاري رفع الصورة...');const ext=file.type==='image/png'?'png':file.type==='image/webp'?'webp':'jpg';const unique=(window.crypto&&crypto.randomUUID)?crypto.randomUUID():Date.now().toString(36)+'-'+Math.random().toString(36).slice(2);const path=profile.id+'/'+unique+'.'+ext;const {error:upErr}=await db.storage.from('avatars').upload(path,file,{upsert:false,contentType:file.type,cacheControl:'3600'});if(upErr)throw upErr;const {data:urlData}=db.storage.from('avatars').getPublicUrl(path);const {data,error}=await db.rpc('update_student_avatar',{p_student_code:profile.student_code,p_avatar_url:urlData.publicUrl});if(error)throw error;if(!data||data.status!=='updated')throw new Error('تعذر حفظ الصورة في الملف الشخصي.');profile.avatar_url=data.avatar_url;renderProfile();toast('تم تغيير صورتك الشخصية بنجاح.');}catch(e){toast('تعذر تغيير الصورة: '+(e.message||'خطأ غير معروف'));}finally{input.value='';}}
 async function copyStudentCode(){const code=profile?.student_code||pendingProfile?.student_code||document.getElementById('profileStudentCode')?.textContent;if(!code||code==='------'){toast('الكود غير متاح');return;}try{await navigator.clipboard.writeText(code);toast('تم نسخ كود الطالب.');}catch(e){const t=document.createElement('textarea');t.value=code;document.body.appendChild(t);t.select();document.execCommand('copy');t.remove();toast('تم نسخ الكود.');}}
 
 function openProfileSettings(){
@@ -1114,6 +1140,7 @@ function switchProfileTab(tab){
 }
 
 async function loadMyPosts(){
+ await ensureDb();
  const box = document.getElementById('myPostsList');
  box.innerHTML='<p class="muted">جاري تحميل منشوراتك...</p>';
  const {data,error}=await db.from('chat_messages').select('id,message,created_at').eq('user_id', user.id).order('created_at',{ascending:false});
@@ -1122,9 +1149,11 @@ async function loadMyPosts(){
 }
 
 function setBadge(id,count){const el=document.getElementById(id);if(!el)return;const n=Number(count||0);el.textContent=n>99?'99+':n>0?String(n):'';}
-async function refreshStudentBadges(){if(!profile?.student_code)return;const {data,error}=await db.rpc('get_student_badges',{p_student_code:profile.student_code});if(error){console.warn('تعذر تحديث الإشعارات:',error.message);return;}if(data?.status==='ok'){setBadge('newExamsBadge',data.new_exams);setBadge('unreadChatBadge',data.unread_messages);}}
+async function refreshStudentBadges(){if(!profile?.student_code)return;try{await ensureDb();const {data,error}=await db.rpc('get_student_badges',{p_student_code:profile.student_code});if(error){console.warn('تعذر تحديث الإشعارات:',error.message);return;}if(data?.status==='ok'){setBadge('newExamsBadge',data.new_exams);setBadge('unreadChatBadge',data.unread_messages);}}catch(e){console.warn('تعذر تحديث الإشعارات:',e);}}
 async function markStudentSeen(fn){if(!profile?.student_code)return;const {error}=await db.rpc(fn,{p_student_code:profile.student_code});if(error){console.warn('تعذر تحديث حالة القراءة:',error.message);return;}await refreshStudentBadges();}
 async function loadExams(){
+ if(!profile?.student_code)return;
+ await ensureDb();
  const {data,error}=await db.from('exams').select('id,title,description,duration_minutes,total_marks,created_at,subjects(name),exam_questions(id)').eq('published',true).eq('target_year','الأولى').eq('target_department','اللغة العربية').order('created_at',{ascending:false});
  if(error){document.getElementById('homeExams').innerHTML='<div class="panel">تعذر تحميل الامتحانات: '+esc(error.message)+'</div>';return}
  examCache=data||[];
@@ -1144,7 +1173,7 @@ async function loadExams(){
  document.getElementById('homeCompleted').innerHTML=`${completed.length} <span style="font-size:14px;color:var(--text-muted);font-weight:600;">(المجموع: <span id="homeTotalScore" style="color:var(--accent-blue);">${totalScore}</span>)</span>`;
  document.getElementById('homeAverage').textContent=avg.toFixed(1)+'%';
  document.getElementById('homeAverageFill').style.width=Math.min(100, Math.max(0, avg))+'%';
- document.getElementById('homeAvailable').textContent=examCache.length-completed.length;
+ document.getElementById('homeAvailable').textContent=Math.max(0,examCache.length-completed.filter(a=>examCache.some(e=>e.id===a.exam_id)).length);
 }
 let activeExam = null;
 let examSelections = {};
@@ -1213,6 +1242,7 @@ function renderCurrentExamQuestion(){
  document.getElementById('submitExamBtn').classList.add('hidden');
 }
 function moveExamQuestion(step){
+ // التنقل اليدوي متوقف عمدًا لأن نظام الامتحان الحالي مؤقت لكل سؤال.
  return;
 }
 function startQuestionTimer(){
@@ -1288,6 +1318,8 @@ async function showReviewNotice(id){
  }catch(e){toast('تعذر عرض التصحيح: '+(e.message||'خطأ غير معروف'));}
 }
 async function loadMyResults(){
+ if(!profile?.student_code)return;
+ await ensureDb();
  const {data,error}=await db.rpc('get_student_attempts',{p_student_code:profile.student_code});
  const body=document.querySelector('#myResults tbody');
  if(error){body.innerHTML=`<tr><td colspan="5">${esc(error.message)}</td></tr>`;return;}
@@ -1299,6 +1331,7 @@ async function loadMyResults(){
 
 /* Corrected RTL Layout Alignment & Wreath/Crown/Badges Restored */
 async function loadLeaderboard(){
+ await ensureDb();
  const box=document.getElementById('leaderList');box.innerHTML='<p class="muted">جارٍ تحميل المتفوقين...</p>';
  const {data,error}=await db.rpc('get_student_leaderboard');
  if(error){box.innerHTML='<div class="note">قائمة المتفوقين تحتاج إلى تفعيل دالة آمنة في قاعدة البيانات. سنضيفها في المرحلة التالية.</div>';return}
@@ -1342,7 +1375,7 @@ async function loadLeaderboard(){
 }
 
 async function loadChat(){
- await markStudentSeen('mark_student_chat_seen');
+ await ensureDb();
  const box=document.getElementById('chatList');box.innerHTML='<p class="muted">جارٍ تحميل الرسائل...</p>';
  const {data,error}=await db.from('chat_messages').select('id,user_id,message,created_at,profiles(full_name,avatar_url)').order('created_at',{ascending:true}).limit(100);
  if(error){box.textContent='تعذر تحميل المحادثة: '+error.message;return}
@@ -1362,6 +1395,7 @@ async function loadChat(){
  box.scrollTop=box.scrollHeight;
 }
 async function sendMessage(){
+ await ensureDb();
  const input=document.getElementById('chatInput'),message=input.value.trim();if(!message)return;
  const {data,error}=await db.rpc('send_student_message',{p_student_code:profile.student_code,p_message:message});
  if(error){toast('تعذر إرسال الرسالة: '+error.message);return;}
@@ -1370,7 +1404,8 @@ async function sendMessage(){
 }
 function esc(v){return String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
 function date(v){return v?new Date(v).toLocaleString('ar-EG'):'—'}
-restoreStudent();
+document.getElementById('chatInput')?.addEventListener('keydown',e=>{if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();sendMessage();}});
+restoreStudent().catch(e=>{console.error('restore student failed:',e);authMessage('تعذر استعادة الجلسة. حاول تسجيل الدخول مرة أخرى.');});
 </script>
 </body>
 </html>

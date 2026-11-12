@@ -13,7 +13,7 @@ button,input,select,textarea{font:inherit}button{cursor:pointer;border:0}
 .brand{display:flex;align-items:center;gap:12px}.brandmark{width:46px;height:46px;border-radius:15px;background:#ffffff18;border:1px solid #ffffff35;display:grid;place-items:center;color:var(--gold);font-size:24px}.brand h1{font-size:19px;margin:0 0 5px}.brand p{margin:0;color:#c7d7d0;font-size:12px}
 .wrap{max-width:1200px;margin:28px auto;padding:0 18px}.login{max-width:430px;margin:8vh auto;background:#fff;padding:30px;border-radius:22px;box-shadow:0 15px 45px #193b2b12}.login h2{margin:0 0 8px;color:var(--green)}.muted{color:var(--muted);font-size:13px;line-height:1.8}
 .field{display:flex;flex-direction:column;gap:7px;margin:15px 0}.field label{font-size:13px;font-weight:bold}.field input,.field select,.field textarea{width:100%;border:1px solid var(--line);border-radius:11px;padding:12px;background:#fff;outline:none}.field input:focus,.field select:focus,.field textarea:focus{border-color:var(--green2);box-shadow:0 0 0 3px #1b5a4912}
-.btn{padding:11px 17px;border-radius:11px;background:var(--green2);color:#fff;font-weight:bold}.btn:hover{filter:brightness(1.08)}.btn.gold{background:var(--gold);color:#1c2c25}.btn.light{background:#edf3ef;color:var(--green)}.btn.red{background:#fff0f0;color:var(--red)}.btn.small{padding:8px 11px;font-size:12px}
+.btn{padding:11px 17px;border-radius:11px;background:var(--green2);color:#fff;font-weight:bold}.btn:hover{filter:brightness(1.08)}.btn.gold{background:var(--gold);color:#1c2c25}.btn.light{background:#edf3ef;color:var(--green)}.btn.red{background:#fff0f0;color:var(--red)}.btn.small{padding:8px 11px;font-size:12px}.btn:disabled{opacity:0.6;cursor:not-allowed}
 .hidden{display:none!important}.gate{max-width:430px;margin:9vh auto;background:#fff;padding:28px;border-radius:20px;box-shadow:0 15px 45px #193b2b18}.gate h2{color:var(--green);margin-top:0}.gate input{width:100%;padding:13px;border:1px solid var(--line);border-radius:11px;margin:12px 0}
 .error{color:var(--red);font-size:13px;margin-top:10px}.success{color:#23744d;font-size:13px;margin-top:10px}
 .layout{display:grid;grid-template-columns:235px 1fr;gap:22px}.side{background:var(--green);border-radius:19px;padding:16px;height:max-content;position:sticky;top:15px}.side .nav{display:flex;flex-direction:column;gap:7px}.nav button{text-align:right;padding:13px;border-radius:10px;background:transparent;color:#d9e6df}.nav button.active,.nav button:hover{background:#ffffff19;color:#fff}.nav button span{margin-left:9px}
@@ -21,6 +21,7 @@ button,input,select,textarea{font:inherit}button{cursor:pointer;border:0}
 .panel{background:#fff;border:1px solid var(--line);border-radius:17px;padding:20px;margin-bottom:17px}.panel h3{margin:0 0 15px;color:var(--green);font-size:17px}.grid2{display:grid;grid-template-columns:1fr 1fr;gap:13px}.tablewrap{overflow:auto}table{width:100%;border-collapse:collapse;min-width:580px}th,td{text-align:right;padding:12px;border-bottom:1px solid var(--line);font-size:13px}th{color:var(--muted);font-weight:bold;background:#f8faf8}td{vertical-align:middle}.pill{display:inline-block;padding:5px 9px;border-radius:30px;background:#eaf4ed;color:#267048;font-size:11px}.pill.off{background:#fff1e2;color:#98601e}.actions{display:flex;gap:7px;flex-wrap:wrap}.toolbar{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:13px}.toolbar input{flex:1;min-width:180px;border:1px solid var(--line);border-radius:10px;padding:10px}
 .notice{background:#fff8e9;border:1px solid #f0dfb9;color:#765b27;padding:12px 14px;border-radius:12px;font-size:12px;line-height:1.8;margin-bottom:15px}
 .qrow{border:1px solid var(--line);padding:13px;border-radius:12px;margin:10px 0}.qrow h4{margin:0 0 8px;font-size:14px}.qrow p{margin:4px 0;color:var(--muted);font-size:12px}
+.book-thumb{width:45px;height:60px;object-fit:cover;border-radius:6px;border:1px solid var(--line)}
 #toast{position:fixed;bottom:18px;left:18px;background:#173d32;color:#fff;padding:12px 17px;border-radius:12px;display:none;z-index:20;max-width:90%}
 @media(max-width:850px){.layout{grid-template-columns:1fr}.side{position:static}.side .nav{display:grid;grid-template-columns:repeat(2,1fr)}.cards{grid-template-columns:repeat(2,1fr)}}
 @media(max-width:520px){.top{padding:15px}.brand h1{font-size:16px}.wrap{padding:0 12px;margin:16px auto}.panel{padding:14px}.grid2{grid-template-columns:1fr}.pagehead h2{font-size:18px}.side .nav{grid-template-columns:1fr 1fr}}
@@ -36,6 +37,7 @@ button,input,select,textarea{font:inherit}button{cursor:pointer;border:0}
  <input id="adminPassword" type="password" placeholder="كلمة المرور" autocomplete="current-password" onkeydown="if(event.key==='Enter')unlockAdmin()">
  <button class="btn" style="width:100%" onclick="unlockAdmin()">دخول</button><p id="gateError" class="error"></p>
 </section>
+
 <main id="adminView" class="wrap hidden">
  <div class="layout">
   <aside class="side">
@@ -45,6 +47,7 @@ button,input,select,textarea{font:inherit}button{cursor:pointer;border:0}
     <button data-page="subjects" onclick="showPage('subjects',this)"><span>▤</span>المواد</button>
     <button data-page="exams" onclick="showPage('exams',this)"><span>✎</span>الامتحانات</button>
     <button data-page="results" onclick="showPage('results',this)"><span>▥</span>النتائج</button>
+    <button data-page="library" onclick="showPage('library',this)"><span>📚</span>المكتبة</button>
     <button data-page="chat" onclick="showPage('chat',this)"><span>☏</span>المحادثة</button>
     <button data-page="reset" onclick="showPage('reset',this)"><span>↻</span>تصفير البيانات</button>
    </div>
@@ -120,6 +123,38 @@ button,input,select,textarea{font:inherit}button{cursor:pointer;border:0}
     <div class="panel"><div class="tablewrap"><table id="resultsTable"><thead><tr><th>الطالب</th><th>الامتحان</th><th>الدرجة</th><th>النسبة</th><th>تاريخ الانتهاء</th></tr></thead><tbody></tbody></table></div></div>
    </div>
 
+   <!-- قسم المكتبة الجديد -->
+   <div id="libraryPage" class="hidden">
+    <div class="pagehead"><h2>إدارة المكتبة الدراسية</h2><button class="btn light small" onclick="loadBooks()">تحديث</button></div>
+    <div class="panel">
+     <h3>رفع كتاب جديد (PDF + غلاف)</h3>
+     <div class="field">
+      <label>اسم الكتاب / المذكرة</label>
+      <input id="bookTitle" placeholder="مثال: مذكرة النحو والصرف - الفرقة الأولى">
+     </div>
+     <div class="grid2">
+      <div class="field">
+       <label>صورة غلاف الكتاب (JPG / PNG / WEBP)</label>
+       <input id="bookCover" type="file" accept="image/jpeg,image/png,image/webp">
+      </div>
+      <div class="field">
+       <label>ملف الكتاب (PDF)</label>
+       <input id="bookPdf" type="file" accept="application/pdf">
+      </div>
+     </div>
+     <button id="uploadBookBtn" class="btn gold" onclick="uploadBook()">رفع الكتاب ونشره في المكتبة</button>
+    </div>
+    <div class="panel">
+     <h3>الكتب الموجودة في المكتبة</h3>
+     <div class="tablewrap">
+      <table id="booksTable">
+       <thead><tr><th>الغلاف</th><th>اسم الكتاب</th><th>الملف</th><th>تاريخ الرفع</th><th>حذف</th></tr></thead>
+       <tbody></tbody>
+      </table>
+     </div>
+    </div>
+   </div>
+
    <div id="resetPage" class="hidden">
     <div class="pagehead"><h2>تصفير بيانات المنصة</h2></div>
     <div class="panel"><h3>حذف جميع الطلاب والدرجات والمحاولات</h3>
@@ -127,6 +162,7 @@ button,input,select,textarea{font:inherit}button{cursor:pointer;border:0}
      <button class="btn red" onclick="resetAllStudentData()">تصفير الطلاب والدرجات بالكامل</button>
     </div>
    </div>
+
    <div id="chatPage" class="hidden">
     <div class="pagehead"><h2>المحادثة العامة</h2><button class="btn light small" onclick="loadChat()">تحديث</button></div>
     <div class="panel"><div id="chatList" class="muted">جارٍ تحميل الرسائل...</div></div>
@@ -145,8 +181,6 @@ let subjectsCache = [];
 
 function toast(msg){const el=document.getElementById('toast');el.textContent=msg;el.style.display='block';setTimeout(()=>el.style.display='none',3200)}
 function msg(el,text,kind='error'){el.className=kind;el.textContent=text}
-// تفتح لوحة الإدارة مباشرة دون شاشة تسجيل دخول.
-// ملاحظة: صلاحيات قاعدة البيانات ما زالت تتحكم فيما يمكن عرضه أو تعديله.
 async function openAdminDirectly(){ /* لا تفتح اللوحة قبل إدخال كلمة المرور */ }
 function unlockAdmin(){
  const pass=document.getElementById('adminPassword').value;
@@ -156,13 +190,14 @@ function unlockAdmin(){
  refreshAll();
 }
 function showPage(name,btn){
- ['overview','students','subjects','exams','results','chat','reset'].forEach(p=>document.getElementById(p+'Page').classList.toggle('hidden',p!==name));
+ ['overview','students','subjects','exams','results','library','chat','reset'].forEach(p=>document.getElementById(p+'Page').classList.toggle('hidden',p!==name));
  document.querySelectorAll('.nav button').forEach(b=>b.classList.remove('active'));
  if(btn)btn.classList.add('active');
  if(name==='students')loadStudents();
  if(name==='subjects')loadSubjects();
  if(name==='exams'){loadSubjects();loadExams()}
  if(name==='results')loadResults();
+ if(name==='library')loadBooks();
  if(name==='chat')loadChat();
 }
 async function refreshAll(){
@@ -290,6 +325,82 @@ async function loadResults(){
  if(error){body.innerHTML=`<tr><td colspan="5">${esc(error.message)}</td></tr>`;return}
  body.innerHTML=(data||[]).map(x=>`<tr><td>${esc(x.full_name||'')}</td><td>${esc(x.exam_title||'')}</td><td>${Number(x.score||0)} / ${Number(x.total_marks||0)}</td><td>${Number(x.percentage||0).toFixed(1)}%</td><td>${date(x.finished_at)}</td></tr>`).join('')||'<tr><td colspan="5">لا توجد نتائج حتى الآن.</td></tr>';
 }
+
+/* دوال المكتبة (رفع وعرض وحذف الكتب) */
+async function uploadBook(){
+ const title = document.getElementById('bookTitle').value.trim();
+ const coverFile = document.getElementById('bookCover').files[0];
+ const pdfFile = document.getElementById('bookPdf').files[0];
+ const btn = document.getElementById('uploadBookBtn');
+
+ if(!title){toast('اكتب اسم الكتاب أولاً');return;}
+ if(!coverFile){toast('اختر صورة غلاف الكتاب');return;}
+ if(!pdfFile){toast('اختر ملف الكتاب بصيغة PDF');return;}
+ if(pdfFile.type !== 'application/pdf'){toast('يجب أن يكون الملف بصيغة PDF');return;}
+
+ btn.disabled = true;
+ btn.textContent = 'جاري رفع الغلاف والملف...';
+
+ try{
+  const uid = crypto.randomUUID();
+  const coverExt = coverFile.name.split('.').pop() || 'jpg';
+  const coverPath = `covers/${uid}.${coverExt}`;
+  const pdfPath = `pdfs/${uid}.pdf`;
+
+  // رفع الغلاف
+  const {error: coverErr} = await db.storage.from('library').upload(coverPath, coverFile, {contentType: coverFile.type});
+  if(coverErr) throw coverErr;
+  const {data: coverUrlData} = db.storage.from('library').getPublicUrl(coverPath);
+
+  // رفع ملف الـ PDF
+  const {error: pdfErr} = await db.storage.from('library').upload(pdfPath, pdfFile, {contentType: 'application/pdf'});
+  if(pdfErr) throw pdfErr;
+  const {data: pdfUrlData} = db.storage.from('library').getPublicUrl(pdfPath);
+
+  // حفظ البيانات في الجدول
+  const {error: dbErr} = await db.from('library_books').insert({
+   title: title,
+   cover_url: coverUrlData.publicUrl,
+   pdf_url: pdfUrlData.publicUrl
+  });
+  if(dbErr) throw dbErr;
+
+  toast('تم رفع الكتاب ونشره بنجاح!');
+  document.getElementById('bookTitle').value = '';
+  document.getElementById('bookCover').value = '';
+  document.getElementById('bookPdf').value = '';
+  await loadBooks();
+ }catch(e){
+  toast('خطأ أثناء الرفع: ' + (e.message || 'خطأ غير معروف'));
+ }finally{
+  btn.disabled = false;
+  btn.textContent = 'رفع الكتاب ونشره في المكتبة';
+ }
+}
+
+async function loadBooks(){
+ const {data,error} = await db.from('library_books').select('*').order('created_at',{ascending:false});
+ const body = document.querySelector('#booksTable tbody');
+ if(error){body.innerHTML=`<tr><td colspan="5">${esc(error.message)}</td></tr>`;return;}
+ body.innerHTML = (data||[]).map(b=>`
+  <tr>
+   <td><img src="${esc(b.cover_url)}" class="book-thumb" alt="غلاف"></td>
+   <td><b>${esc(b.title)}</b></td>
+   <td><a href="${esc(b.pdf_url)}" target="_blank" class="btn light small" style="text-decoration:none;display:inline-block;">فتح PDF</a></td>
+   <td>${date(b.created_at)}</td>
+   <td><button class="btn red small" onclick="deleteBook('${b.id}')">حذف</button></td>
+  </tr>
+ `).join('') || '<tr><td colspan="5">لا توجد كتب مضافة في المكتبة بعد.</td></tr>';
+}
+
+async function deleteBook(id){
+ if(!confirm('هل أنت متأكد من حذف هذا الكتاب من المكتبة؟')) return;
+ const {error} = await db.from('library_books').delete().eq('id', id);
+ if(error){toast('تعذر الحذف: ' + error.message);return;}
+ toast('تم حذف الكتاب من المكتبة');
+ await loadBooks();
+}
+
 async function loadChat(){
  const {data,error}=await db.from('chat_messages').select('id,message,created_at,profiles(full_name)').order('created_at',{ascending:false}).limit(100);
  const box=document.getElementById('chatList');

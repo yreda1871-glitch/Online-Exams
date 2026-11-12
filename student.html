@@ -867,8 +867,54 @@ function authMessage(t,ok=false){let x=document.getElementById('authMsg');x.clas
 let pendingProfile=null;
 function setAuthMode(mode){document.getElementById('registerForm').classList.toggle('hidden',mode!=='register');document.getElementById('loginForm').classList.toggle('hidden',mode!=='login');document.getElementById('registerTab').classList.toggle('active',mode==='register');document.getElementById('loginTab').classList.toggle('active',mode==='login');document.getElementById('authMsg').textContent='';}
 function showCodeReveal(p){pendingProfile=p;document.getElementById('authTabs').classList.add('hidden');document.getElementById('registerForm').classList.add('hidden');document.getElementById('loginForm').classList.add('hidden');document.getElementById('newStudentCode').textContent=p.student_code;document.getElementById('codeReveal').classList.remove('hidden');}
-async function register(){const full_name=document.getElementById('regName').value.trim(),btn=document.getElementById('registerBtn');if(full_name.length<3){authMessage('اكتب اسمك بالكامل (3 أحرف على الأقل).');return;}btn.disabled=true;authMessage('جاري إنشاء حسابك...');try{await ensureDb();const {data,error}=await db.rpc('register_student',{p_full_name:full_name});if(error)throw error;if(!data||data.status!=='created'||!data.profile)throw new Error(data?.message||'تعذر إنشاء الحساب.');localStorage.setItem('exam_student_code',data.profile.student_code);showCodeReveal(data.profile);document.getElementById('authMsg').textContent='';}catch(e){authMessage('تعذر إنشاء الحساب: '+(e.message||'خطأ غير معروف'));}finally{btn.disabled=false;}}
-async function login(){const code=document.getElementById('loginCode').value.trim(),btn=document.getElementById('loginBtn');if(!/^[0-9]{6}$/.test(code)){authMessage('اكتب كودًا صحيحًا مكوّنًا من 6 أرقام.');return;}btn.disabled=true;authMessage('جاري التحقق من الكود...');try{await ensureDb();const {data,error}=await db.rpc('login_student',{p_student_code:code});if(error)throw error;if(!data||data.status!=='ok'||!data.profile)throw new Error('كود الطالب غير صحيح.');localStorage.setItem('exam_student_code',code);await openStudent(data.profile);}catch(e){authMessage(e.message||'تعذر تسجيل الدخول.');}finally{btn.disabled=false;}}
+
+async function register(){
+ const full_name=document.getElementById('regName').value.trim();
+ const btn=document.getElementById('registerBtn');
+ if(full_name.length<3){authMessage('اكتب اسمك بالكامل (3 أحرف على الأقل).');return;}
+ btn.disabled=true;
+ authMessage('جاري إنشاء حسابك...');
+ try{
+  await ensureDb();
+  const {data,error}=await db.rpc('register_student',{p_full_name:full_name});
+  if(error)throw error;
+  if(!data||data.status!=='created'||!data.profile)throw new Error(data?.message||'تعذر إنشاء الحساب.');
+  localStorage.setItem('exam_student_code',data.profile.student_code);
+  showCodeReveal(data.profile);
+  document.getElementById('authMsg').textContent='';
+ }catch(e){
+  authMessage('تعذر إنشاء الحساب: '+(e.message||'خطأ غير معروف'));
+ }finally{
+  btn.disabled=false;
+ }
+}
+
+async function login(){
+ const code=document.getElementById('loginCode').value.trim();
+ const btn=document.getElementById('loginBtn');
+ if(!/^[0-9]{6}$/.test(code)){
+  authMessage('اكتب كودًا صحيحًا مكوّنًا من 6 أرقام.');
+  return;
+ }
+ btn.disabled=true;
+ authMessage('جاري التحقق من الكود...');
+ try{
+  await ensureDb();
+  const {data,error}=await db.rpc('login_student',{p_student_code:code});
+  if(error) throw error;
+  if(!data || data.status!=='ok' || !data.profile){
+   throw new Error('كود الطالب غير صحيح أو غير مسجل.');
+  }
+  localStorage.setItem('exam_student_code',code);
+  await openStudent(data.profile);
+ }catch(e){
+  console.error('Login error:', e);
+  authMessage(e.message || 'تعذر تسجيل الدخول. تأكد من صحة الكود أو اتصال الإنترنت.');
+ }finally{
+  btn.disabled=false;
+ }
+}
+
 function continueAfterRegister(){if(pendingProfile)openStudent(pendingProfile);}
 async function openStudent(p){profile=p;user={id:p.id};document.getElementById('authView').classList.add('hidden');document.getElementById('studentView').classList.remove('hidden');document.getElementById('topUser').classList.remove('hidden');renderProfile();await refreshStudentBadges();if(badgeRefreshHandle)clearInterval(badgeRefreshHandle);badgeRefreshHandle=setInterval(refreshStudentBadges,30000);await loadExams();await loadMyResults();}
 function renderProfile(){
@@ -1155,7 +1201,7 @@ async function loadLeaderboard(){
  }).join('')||'<p class="muted">لا توجد نتائج كافية لعرض الترتيب.</p>';
 }
 
-/* دالة تحميل وعرض كتب المكتبة (الاسم + الصورة + زر التحميل المباشر) */
+/* دالة تحميل وعرض كتب المكتبة */
 async function loadLibrary(){
  const box = document.getElementById('libraryList');
  box.innerHTML = '<p class="muted">جارٍ تحميل الكتب والمذكرات...</p>';
@@ -1179,7 +1225,6 @@ async function loadLibrary(){
  `).join('');
 }
 
-/* دالة التحميل المباشر الآمنة لتجنب صفحات المتصفح الفارغة */
 async function downloadPdf(url, filename) {
  try {
   toast('جاري بدء تحميل الملف...');

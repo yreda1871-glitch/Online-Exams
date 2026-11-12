@@ -232,7 +232,6 @@ button{cursor:pointer;border:0}
   flex-shrink: 0;
 }
 
-/* Progress bar inside stats */
 .stat-progress-bar {
   width: 80px;
   height: 8px;
@@ -589,7 +588,6 @@ th{background:var(--light-blue);color:var(--navy-dark);font-weight:700}
 .footer{text-align:center;color:var(--text-muted);font-size:12px;padding:24px 10px}
 .toast{position:fixed;bottom:20px;left:20px;background:var(--navy-dark);color:white;padding:14px 20px;border-radius:14px;display:none;z-index:30;max-width:90%;box-shadow:0 8px 24px rgba(0,0,0,0.2)}
 
-/* Code reveal & extra UI elements */
 .code-reveal{margin-top:18px;padding:22px;border:1px solid var(--border-line);border-radius:20px;background:var(--light-blue);text-align:center}
 .code-reveal h3{color:var(--navy-dark);margin:0 0 8px;font-size:20px;font-weight:700}.code-reveal p{color:var(--text-muted);line-height:1.8;font-size:14px}
 .code-number{font-size:38px;letter-spacing:8px;font-weight:900;color:var(--accent-blue);background:#fff;border:2px dashed var(--accent-blue);border-radius:14px;padding:14px;margin:16px 0;direction:ltr}
@@ -613,7 +611,6 @@ button,.btn{touch-action:manipulation}input,textarea,select{font-size:16px!impor
   .wrap{padding:0 12px;margin:10px auto 0}
   .dashboard{display:flex;flex-direction:column;gap:12px}
   
-  /* Bottom Navigation for Mobile */
   .side{
     position:fixed;
     left:10px;
@@ -792,7 +789,7 @@ button,.btn{touch-action:manipulation}input,textarea,select{font-size:16px!impor
     <div id="leaderList" class="leaders-container">سيتم عرض الترتيب بعد تفعيل دالة المتفوقين الآمنة.</div>
    </div>
    
-   <!-- قسم المكتبة (بدلاً من المحادثة) -->
+   <!-- قسم المكتبة -->
    <div id="libraryPage" class="hidden">
     <div class="pagehead">
       <h2>📚 المكتبة الدراسية</h2>
@@ -961,7 +958,7 @@ async function loadExams(){
 
  document.getElementById('homeCompleted').innerHTML=`${completed.length} <span style="font-size:14px;color:var(--text-muted);font-weight:600;">(المجموع: <span id="homeTotalScore" style="color:var(--accent-blue);">${totalScore}</span>)</span>`;
  document.getElementById('homeAverage').textContent=avg.toFixed(1)+'%';
- document.getElementById('homeAverageFill').style.width=Math.min(100, Math.max(0, avg))+'%';
+ document.getElementById('homeAverageFill'].style.width=Math.min(100, Math.max(0, avg))+'%';
  document.getElementById('homeAvailable').textContent=examCache.length-completed.length;
 }
 let activeExam = null;
@@ -1158,7 +1155,7 @@ async function loadLeaderboard(){
  }).join('')||'<p class="muted">لا توجد نتائج كافية لعرض الترتيب.</p>';
 }
 
-/* دالة تحميل وعرض كتب المكتبة (الاسم + الصورة + تحميل) */
+/* دالة تحميل وعرض كتب المكتبة (الاسم + الصورة + زر التحميل المباشر) */
 async function loadLibrary(){
  const box = document.getElementById('libraryList');
  box.innerHTML = '<p class="muted">جارٍ تحميل الكتب والمذكرات...</p>';
@@ -1175,11 +1172,30 @@ async function loadLibrary(){
   <article class="book-card">
    <h3 class="book-card-title">${esc(b.title)}</h3>
    <img src="${esc(b.cover_url)}" alt="${esc(b.title)}" class="book-card-cover" loading="lazy">
-   <a href="${esc(b.pdf_url)}" target="_blank" download="${esc(b.title)}.pdf" class="btn book-card-btn">
+   <button onclick="downloadPdf('${esc(b.pdf_url)}', '${esc(b.title)}.pdf')" class="btn book-card-btn">
     <span>📥</span> تحميل الكتاب
-   </a>
+   </button>
   </article>
  `).join('');
+}
+
+/* دالة التحميل المباشر الآمنة لتجنب صفحات المتصفح الفارغة */
+async function downloadPdf(url, filename) {
+ try {
+  toast('جاري بدء تحميل الملف...');
+  const response = await fetch(url);
+  const blob = await response.blob();
+  const blobUrl = window.URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = blobUrl;
+  a.download = filename;
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  window.URL.revokeObjectURL(blobUrl);
+ } catch (e) {
+  window.open(url, '_blank');
+ }
 }
 
 function esc(v){return String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}

@@ -1004,7 +1004,7 @@ async function loadExams(){
 
  document.getElementById('homeCompleted').innerHTML=`${completed.length} <span style="font-size:14px;color:var(--text-muted);font-weight:600;">(المجموع: <span id="homeTotalScore" style="color:var(--accent-blue);">${totalScore}</span>)</span>`;
  document.getElementById('homeAverage').textContent=avg.toFixed(1)+'%';
- document.getElementById('homeAverageFill'].style.width=Math.min(100, Math.max(0, avg))+'%';
+ document.getElementById('homeAverageFill').style.width=Math.min(100, Math.max(0, avg))+'%';
  document.getElementById('homeAvailable').textContent=examCache.length-completed.length;
 }
 let activeExam = null;

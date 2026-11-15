@@ -1226,20 +1226,41 @@ async function loadLibrary(){
 }
 
 async function downloadPdf(url, filename) {
+ toast('جاري بدء تحميل الكتاب...');
+ const safeName = (filename || 'book.pdf').replace(/[\\/:*?"<>|]/g, '_');
+ let finalUrl = url;
+ if (url.includes('supabase.co') && !url.includes('download=')) {
+  finalUrl += (url.includes('?') ? '&' : '?') + 'download=' + encodeURIComponent(safeName);
+ }
+
+ // الكشف عما إذا كان الموقع يعمل داخل تطبيق APK (Android WebView)
+ const ua = navigator.userAgent || '';
+ const isWebView = /; wv\)/i.test(ua) || (window.Android !== undefined);
+
+ if (isWebView) {
+  // في تطبيق الأندرويد: نفتح الرابط المباشر ليلتقطه مدير تحميلات الهاتف أو المتصفح الخارجي
+  // لأن روابط blob: المؤقتة لا يعمل تحميلها في تطبيقات الويب المحولة إلى APK
+  const win = window.open(finalUrl, '_system');
+  if (!win) {
+   window.location.href = finalUrl;
+  }
+  return;
+ }
+
+ // في المتصفحات العادية (Chrome / Safari)
  try {
-  toast('جاري بدء تحميل الملف...');
-  const response = await fetch(url);
+  const response = await fetch(finalUrl);
   const blob = await response.blob();
   const blobUrl = window.URL.createObjectURL(blob);
   const a = document.createElement('a');
   a.href = blobUrl;
-  a.download = filename;
+  a.download = safeName;
   document.body.appendChild(a);
   a.click();
   a.remove();
-  window.URL.revokeObjectURL(blobUrl);
+  setTimeout(() => window.URL.revokeObjectURL(blobUrl), 1500);
  } catch (e) {
-  window.open(url, '_blank');
+  window.open(finalUrl, '_blank');
  }
 }
 

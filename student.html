@@ -190,7 +190,7 @@ button{cursor:pointer;border:0}
 /* Dashboard UI */
 .dashboard{display:grid;grid-template-columns:225px 1fr;gap:20px;align-items:start}
 
-/* Navy Floating Sidebar matching screenshot */
+/* Navy Floating Sidebar */
 .side{
   background: linear-gradient(180deg, #092042 0%, #0D2C59 100%);
   border-radius:20px;
@@ -247,7 +247,7 @@ button{cursor:pointer;border:0}
 
 .main{min-width:0}
 
-/* Welcome Banner matching screenshot */
+/* Welcome Banner */
 .welcome{
   background: linear-gradient(115deg, #071936 0%, #0F3468 55%, #16498C 100%);
   border-radius:20px;
@@ -287,7 +287,7 @@ button{cursor:pointer;border:0}
   filter: drop-shadow(0 4px 12px rgba(251, 191, 36, 0.45));
 }
 
-/* Stats Cards matching screenshot (3 cards) */
+/* Stats Cards */
 .cards{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-bottom:22px}
 .stat{
   background:white;
@@ -339,7 +339,7 @@ button{cursor:pointer;border:0}
   transition: width 0.4s ease;
 }
 
-/* Section Header matching screenshot */
+/* Section Header */
 .section-bar{
   display:flex;
   justify-content:space-between;
@@ -373,7 +373,7 @@ button{cursor:pointer;border:0}
   box-shadow:0 4px 10px rgba(24, 119, 242, 0.25);
 }
 
-/* Exam Cards matching screenshot */
+/* Exam Cards */
 .examgrid{display:grid;grid-template-columns:repeat(2,1fr);gap:16px}
 .examcard{
   background:white;
@@ -749,7 +749,7 @@ th{background:var(--light-blue);color:var(--navy-dark);font-weight:700}
 .rank-2 .rank-badge-num { background: #E2E8F0; color: #1E293B; border: 1px solid #94A3B8; }
 .rank-3 .rank-badge-num { background: #D7CCC8; color: #4E342E; border: 1px solid #A1887F; }
 
-/* Dark Navy Footer matching screenshot */
+/* Dark Navy Footer */
 .site-footer{
   background: linear-gradient(90deg, #06152D 0%, #0C254B 50%, #06152D 100%);
   color:#E2E8F0;
@@ -1189,17 +1189,22 @@ async function login(){
 
 function continueAfterRegister(){if(pendingProfile)openStudent(pendingProfile);}
 async function openStudent(p){profile=p;user={id:p.id};document.getElementById('authView').classList.add('hidden');document.getElementById('studentView').classList.remove('hidden');document.getElementById('topUser').classList.remove('hidden');renderProfile();await refreshStudentBadges();if(badgeRefreshHandle)clearInterval(badgeRefreshHandle);badgeRefreshHandle=setInterval(refreshStudentBadges,30000);await loadExams();await loadMyResults();}
+
 function renderProfile(){
- const name=profile.full_name||'الطالب',avatar=profile.avatar_url||fallbackAvatar;
- document.getElementById('welcomeName').innerHTML='أهلاً بك، <span class="gold-name">'+esc(name)+'</span>';
+ const fullName = (profile.full_name || 'الطالب').trim();
+ // عرض الاسم الثلاثي فقط في الترحيب العلوي لإزالة اللقب الرابع الزائد
+ const shortWelcomeName = fullName.split(/\s+/).slice(0, 3).join(' ');
+ const avatar = profile.avatar_url || fallbackAvatar;
+ document.getElementById('welcomeName').innerHTML='أهلاً بك، <span class="gold-name">'+esc(shortWelcomeName)+'</span>';
  document.getElementById('topAvatar').src=avatar;
  document.getElementById('profileAvatar').src=avatar;
  const hasPhoto = Boolean(profile.avatar_url && String(profile.avatar_url).trim());
- document.getElementById('profileName').innerHTML=esc(name)+(hasPhoto?' <span class="verified-mark" title="حساب موثّق بالصورة" aria-label="حساب موثّق">✓</span>':'');
+ document.getElementById('profileName').innerHTML=esc(fullName)+(hasPhoto?' <span class="verified-mark" title="حساب موثّق بالصورة" aria-label="حساب موثّق">✓</span>':'');
  document.getElementById('profileStudentCode').textContent=profile.student_code||'------';
  const bio = profile.bio || 'لا توجد نبذة تعريفية بعد. اضغط على زر الإعدادات لإضافة وصف شخصي.';
  document.getElementById('profileBio').textContent = bio;
 }
+
 function chooseAvatar(){document.getElementById('profilePhotoInput').click();}
 async function changeProfilePhoto(input){const file=input.files&&input.files[0];if(!file)return;if(!['image/jpeg','image/png','image/webp'].includes(file.type)){toast('اختر صورة JPG أو PNG أو WEBP.');input.value='';return;}if(file.size>5*1024*1024){toast('حجم الصورة يجب ألا يتجاوز 5 ميجابايت.');input.value='';return;}try{toast('جاري رفع الصورة...');const ext=file.type==='image/png'?'png':file.type==='image/webp'?'webp':'jpg';const path=profile.id+'/'+crypto.randomUUID()+'.'+ext;const {error:upErr}=await db.storage.from('avatars').upload(path,file,{upsert:false,contentType:file.type,cacheControl:'3600'});if(upErr)throw upErr;const {data:urlData}=db.storage.from('avatars').getPublicUrl(path);const {data,error}=await db.rpc('update_student_avatar',{p_student_code:profile.student_code,p_avatar_url:urlData.publicUrl});if(error)throw error;if(!data||data.status!=='updated')throw new Error('تعذر حفظ الصورة في الملف الشخصي.');profile.avatar_url=data.avatar_url;renderProfile();toast('تم تغيير صورتك الشخصية بنجاح.');}catch(e){toast('تعذر تغيير الصورة: '+(e.message||'خطأ غير معروف'));}finally{input.value='';}}
 async function copyStudentCode(){const code=profile?.student_code||pendingProfile?.student_code||document.getElementById('profileStudentCode')?.textContent;if(!code||code==='------'){toast('الكود غير متاح');return;}try{await navigator.clipboard.writeText(code);toast('تم نسخ كود الطالب.');}catch(e){const t=document.createElement('textarea');t.value=code;document.body.appendChild(t);t.select();document.execCommand('copy');t.remove();toast('تم نسخ الكود.');}}
@@ -1271,8 +1276,6 @@ async function refreshStudentBadges(){
 }
 async function markStudentSeen(fn){if(!profile?.student_code)return;const {error}=await db.rpc(fn,{p_student_code:profile.student_code});if(error){console.warn('تعذر تحديث حالة القراءة:',error.message);return;}await refreshStudentBadges();}
 
-const cardIcons = ['🏛️', '📖', '⚖️', '🧮', '📊', '👥', '🎓', '📜'];
-
 async function loadExams(){
  const {data,error}=await db.from('exams').select('id,title,description,duration_minutes,total_marks,created_at,subjects(name),exam_questions(id)').eq('published',true).eq('target_year','الأولى').eq('target_department','اللغة العربية').order('created_at',{ascending:false});
  if(error){document.getElementById('homeExams').innerHTML='<div class="panel">تعذر تحميل الامتحانات: '+esc(error.message)+'</div>';return}
@@ -1282,13 +1285,14 @@ async function loadExams(){
  attempts=mine||[];
  const html=examCache.map((e, idx)=>{
   const done=attempts.find(a=>a.exam_id===e.id&&a.completed);
-  const isGreenTheme = idx % 2 === 1;
   const qCount = e.exam_questions?.length || 0;
   const dur = e.duration_minutes || Math.ceil((qCount * 30) / 60) || 30;
-  const iconSymbol = done ? '✓' : cardIcons[idx % cardIcons.length];
-  const tagClass = done ? 'done' : (isGreenTheme ? 'mint' : 'sky');
+  // توحيد علامة الامتحانات لتكون كلها كتب 📖
+  const iconSymbol = done ? '✓' : '📖';
+  const tagClass = done ? 'done' : 'mint';
   const tagLabel = done ? 'تم الحل' : 'متاح';
-  const btnClass = isGreenTheme ? 'btn green exam-action-btn' : 'btn exam-action-btn';
+  // توحيد لون زر ابدأ الامتحان ليكون كله أخضر
+  const btnClass = 'btn green exam-action-btn';
 
   return `<article class="examcard">
    <div class="examtop">

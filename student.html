@@ -749,6 +749,118 @@ th{background:var(--light-blue);color:var(--navy-dark);font-weight:700}
 .rank-2 .rank-badge-num { background: #E2E8F0; color: #1E293B; border: 1px solid #94A3B8; }
 .rank-3 .rank-badge-num { background: #D7CCC8; color: #4E342E; border: 1px solid #A1887F; }
 
+/* تصميم الكارت الذهبي الملكي المنبثق للمتصدرين */
+.royal-gold-modal {
+  position: fixed;
+  inset: 0;
+  z-index: 200;
+  background: rgba(7, 25, 51, 0.85);
+  backdrop-filter: blur(6px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+  animation: fadeInModal 0.3s ease;
+}
+@keyframes fadeInModal {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+.royal-gold-card {
+  width: 100%;
+  max-width: 420px;
+  background: linear-gradient(135deg, #FFF8E7 0%, #FCE7A3 45%, #E5BE52 100%);
+  border: 3px solid #F59E0B;
+  border-radius: 28px;
+  padding: 30px 24px;
+  text-align: center;
+  position: relative;
+  box-shadow: 0 20px 50px rgba(245, 158, 11, 0.45);
+  animation: scaleUpCard 0.35s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+@keyframes scaleUpCard {
+  from { transform: scale(0.85); opacity: 0; }
+  to { transform: scale(1); opacity: 1; }
+}
+.royal-close-btn {
+  position: absolute;
+  top: 14px;
+  left: 14px;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: rgba(15, 23, 42, 0.1);
+  color: #0F172A;
+  border: 1.5px solid #D97706;
+  font-size: 16px;
+  font-weight: 900;
+  display: grid;
+  place-items: center;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+.royal-close-btn:hover {
+  background: #D97706;
+  color: #FFF;
+}
+.royal-crown {
+  font-size: 40px;
+  margin-bottom: 6px;
+  filter: drop-shadow(0 2px 6px rgba(0,0,0,0.15));
+}
+.royal-title {
+  font-size: 20px;
+  font-weight: 900;
+  color: #78350F;
+  margin: 0 0 16px;
+}
+.royal-avatar-box {
+  width: 90px;
+  height: 90px;
+  margin: 0 auto 14px;
+  border-radius: 50%;
+  border: 3px solid #FFF;
+  box-shadow: 0 8px 20px rgba(120, 53, 15, 0.25);
+  overflow: hidden;
+  background: #FFF;
+}
+.royal-avatar-box img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+.royal-name {
+  font-size: 22px;
+  font-weight: 950;
+  color: #451A03;
+  margin: 0 0 6px;
+}
+.royal-stats-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+  margin: 16px 0 20px;
+}
+.royal-stat-item {
+  background: rgba(255, 255, 255, 0.65);
+  border: 1px solid rgba(217, 119, 6, 0.3);
+  border-radius: 14px;
+  padding: 10px;
+}
+.royal-stat-item small {
+  display: block;
+  font-size: 11px;
+  color: #92400E;
+  font-weight: 700;
+}
+.royal-stat-item strong {
+  display: block;
+  font-size: 16px;
+  color: #451A03;
+  font-weight: 900;
+  margin-top: 2px;
+}
+
 /* Dark Navy Footer */
 .site-footer{
   background: linear-gradient(90deg, #06152D 0%, #0C254B 50%, #06152D 100%);
@@ -1107,7 +1219,80 @@ button,.btn{touch-action:manipulation}input,textarea,select{font-size:16px!impor
  </div>
 </div>
 
+<!-- حاوية الكارت الذهبي الملكي للمتصدرين -->
+<div id="royalCardModalContainer"></div>
+
 <script>
+// --- نظام الأصوات التفاعلي (Web Audio API - بدون الحاجة لملفات خارجية) ---
+const audioCtx = window.AudioContext || window.webkitAudioContext ? new (window.AudioContext || window.webkitAudioContext)() : null;
+
+function playTouchSound() {
+  if (!audioCtx) return;
+  try {
+    if (audioCtx.state === 'suspended') audioCtx.resume();
+    const osc = audioCtx.createOscillator();
+    const gain = audioCtx.createGain();
+    osc.type = 'sine';
+    osc.frequency.setValueAtTime(600, audioCtx.currentTime);
+    osc.frequency.exponentialRampToValueAtTime(300, audioCtx.currentTime + 0.05);
+    gain.gain.setValueAtTime(0.1, audioCtx.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.05);
+    osc.connect(gain);
+    gain.connect(audioCtx.destination);
+    osc.start();
+    osc.stop(audioCtx.currentTime + 0.05);
+  } catch(e) {}
+}
+
+function playSuccessSound() {
+  if (!audioCtx) return;
+  try {
+    if (audioCtx.state === 'suspended') audioCtx.resume();
+    const now = audioCtx.currentTime;
+    [523.25, 659.25, 783.99, 1046.50].forEach((freq, i) => {
+      const osc = audioCtx.createOscillator();
+      const gain = audioCtx.createGain();
+      osc.type = 'triangle';
+      osc.frequency.setValueAtTime(freq, now + i * 0.1);
+      gain.gain.setValueAtTime(0.15, now + i * 0.1);
+      gain.gain.exponentialRampToValueAtTime(0.001, now + i * 0.1 + 0.25);
+      osc.connect(gain);
+      gain.connect(audioCtx.destination);
+      osc.start(now + i * 0.1);
+      osc.stop(now + i * 0.1 + 0.25);
+    });
+  } catch(e) {}
+}
+
+function playFailSound() {
+  if (!audioCtx) return;
+  try {
+    if (audioCtx.state === 'suspended') audioCtx.resume();
+    const now = audioCtx.currentTime;
+    [300, 240, 180].forEach((freq, i) => {
+      const osc = audioCtx.createOscillator();
+      const gain = audioCtx.createGain();
+      osc.type = 'sawtooth';
+      osc.frequency.setValueAtTime(freq, now + i * 0.18);
+      gain.gain.setValueAtTime(0.12, now + i * 0.18);
+      gain.gain.exponentialRampToValueAtTime(0.001, now + i * 0.18 + 0.3);
+      osc.connect(gain);
+      gain.connect(audioCtx.destination);
+      osc.start(now + i * 0.18);
+      osc.stop(now + i * 0.18 + 0.3);
+    });
+  } catch(e) {}
+}
+
+// تفعيل أصوات اللمس التلقائي على كل الأزرار والعناصر القابلة للنقر في المنصة
+document.addEventListener('click', (e) => {
+  const target = e.target.closest('button, .btn, .exam-option, .nav button, .book-card');
+  if (target) {
+    playTouchSound();
+  }
+}, { passive: true });
+
+
 const SUPABASE_URL="https://bouihbsnuuxqeityyrgl.supabase.co";
 const SUPABASE_ANON_KEY="sb_publishable_Ug3xBkJESfI973ZpOeXLFA_wjPoExD-";
 let db=null;
@@ -1188,11 +1373,61 @@ async function login(){
 }
 
 function continueAfterRegister(){if(pendingProfile)openStudent(pendingProfile);}
-async function openStudent(p){profile=p;user={id:p.id};document.getElementById('authView').classList.add('hidden');document.getElementById('studentView').classList.remove('hidden');document.getElementById('topUser').classList.remove('hidden');renderProfile();await refreshStudentBadges();if(badgeRefreshHandle)clearInterval(badgeRefreshHandle);badgeRefreshHandle=setInterval(refreshStudentBadges,30000);await loadExams();await loadMyResults();}
+async function openStudent(p){profile=p;user={id:p.id};document.getElementById('authView').classList.add('hidden');document.getElementById('studentView').classList.remove('hidden');document.getElementById('topUser').classList.remove('hidden');renderProfile();await refreshStudentBadges();if(badgeRefreshHandle)clearInterval(badgeRefreshHandle);badgeRefreshHandle=setInterval(refreshStudentBadges,30000);await loadExams();await loadMyResults();triggerRoyalCardWelcomeOnce();}
+
+// عرض الكارت الذهبي الملكي تلقائياً فور فتح لوحة المتصدرين أو أول تسجيل دخول للمنصة
+function triggerRoyalCardWelcomeOnce() {
+  if(!profile) return;
+  // إظهار الكارت الملكي تلقائياً عند أول فتح للمنصة أو المتصدرين
+  setTimeout(() => {
+    showRoyalCardModal();
+  }, 800);
+}
+
+function showRoyalCardModal() {
+  const container = document.getElementById('royalCardModalContainer');
+  if(!container || !profile) return;
+  
+  const completedCount = attempts.filter(a=>a.completed).length;
+  const avgPct = completedCount > 0 ? (attempts.filter(a=>a.completed).reduce((s,a)=>s+Number(a.percentage||0),0)/completedCount).toFixed(1) : '0.0';
+  const totalScr = attempts.filter(a=>a.completed).reduce((s,a)=>s+Number(a.score||0),0);
+  
+  container.innerHTML = `
+    <div class="royal-gold-modal" id="royalModalBackdrop" onclick="if(event.target === this) closeRoyalCardModal()">
+      <div class="royal-gold-card">
+        <button class="royal-close-btn" onclick="closeRoyalCardModal()" title="إغلاق الكارت ورؤية لوحة المتصدرين">✕</button>
+        <div class="royal-crown">👑</div>
+        <h3 class="royal-title">بطاقة المتصدر الملكية</h3>
+        <div class="royal-avatar-box">
+          <img src="${esc(profile.avatar_url || fallbackAvatar)}" onerror="this.src='${fallbackAvatar}'" alt="صورة الطالب">
+        </div>
+        <h2 class="royal-name">${esc(profile.full_name)}</h2>
+        <p class="muted" style="font-size:12px;color:#78350F;margin:0 0 10px;">كود الطالب: <span dir="ltr" style="font-weight:850;">${esc(profile.student_code)}</span></p>
+        
+        <div class="royal-stats-grid">
+          <div class="royal-stat-item">
+            <small>متوسط النجاح</small>
+            <strong>${avgPct}%</strong>
+          </div>
+          <div class="royal-stat-item">
+            <small>إجمالي الدرجات</small>
+            <strong>${totalScr}</strong>
+          </div>
+        </div>
+        
+        <button class="btn gold" style="width:100%;font-weight:900;" onclick="closeRoyalCardModal()">استعراض قائمة المتصدرين ⭐</button>
+      </div>
+    </div>
+  `;
+}
+
+function closeRoyalCardModal() {
+  const container = document.getElementById('royalCardModalContainer');
+  if(container) container.innerHTML = '';
+}
 
 function renderProfile(){
  const fullName = (profile.full_name || 'الطالب').trim();
- // عرض الاسم الثلاثي فقط في الترحيب العلوي لإزالة اللقب الرابع الزائد
  const shortWelcomeName = fullName.split(/\s+/).slice(0, 3).join(' ');
  const avatar = profile.avatar_url || fallbackAvatar;
  document.getElementById('welcomeName').innerHTML='أهلاً بك، <span class="gold-name">'+esc(shortWelcomeName)+'</span>';
@@ -1254,7 +1489,11 @@ function showPage(page,btn){
  ['home','exams','profile','leaders','library'].forEach(p=>document.getElementById(p+'Page').classList.toggle('hidden',p!==page));
  document.querySelectorAll('.nav button').forEach(b=>b.classList.remove('active'));if(btn)btn.classList.add('active');
  if(page==='profile')loadMyResults();
- if(page==='leaders')loadLeaderboard();
+ if(page==='leaders'){
+   loadLeaderboard();
+   // عند فتح صفحة المتصدرين يظهر الكارت الذهبي الملكي مع زر الإغلاق X
+   showRoyalCardModal();
+ }
  if(page==='exams'){markStudentSeen('mark_student_exams_seen');loadExams();}
  if(page==='library')loadLibrary();
 }
@@ -1287,11 +1526,9 @@ async function loadExams(){
   const done=attempts.find(a=>a.exam_id===e.id&&a.completed);
   const qCount = e.exam_questions?.length || 0;
   const dur = e.duration_minutes || Math.ceil((qCount * 30) / 60) || 30;
-  // توحيد علامة الامتحانات لتكون كلها كتب 📖
   const iconSymbol = done ? '✓' : '📖';
   const tagClass = done ? 'done' : 'mint';
   const tagLabel = done ? 'تم الحل' : 'متاح';
-  // توحيد لون زر ابدأ الامتحان ليكون كله أخضر
   const btnClass = 'btn green exam-action-btn';
 
   return `<article class="examcard">
@@ -1441,6 +1678,15 @@ async function submitCurrentExam(auto=false){
   if(!data||!['submitted','already_submitted'].includes(data.status))throw new Error('تعذر تسليم الإجابات: '+(data?.status||'استجابة غير صحيحة'));
   clearInterval(examTimerHandle);
   localStorage.removeItem('exam_answers_'+activeExam.attempt_id);
+  
+  // تشغيل صوت الاحتفال لو نجح (النسبة >= 50%) أو صوت حزين لو سقط (< 50%)
+  const percentage = Number(data.percentage || 0);
+  if (percentage >= 50) {
+    playSuccessSound();
+  } else {
+    playFailSound();
+  }
+
   showExamResult(data);
   await loadExams();await loadMyResults();
  }catch(e){toast('حدث خطأ أثناء التسليم: '+(e.message||'خطأ غير معروف'));btn.classList.remove('hidden');btn.disabled=false;btn.textContent='إعادة محاولة التسليم';btn.onclick=()=>submitCurrentExam(true);}
@@ -1449,7 +1695,12 @@ function showExamResult(result){
  examReviewMode=true;
  document.getElementById('examModalSub').textContent='تم حفظ إجاباتك وتصحيح الامتحان بنجاح';
  document.getElementById('examTimer').textContent='انتهى';
- document.getElementById('examModalBody').innerHTML=`<div class="exam-result"><div style="font-size:42px">🎉</div><h2>انتهى الامتحان</h2><p>درجتك النهائية</p><strong>${Number(result.score||0)} / ${Number(result.total_marks||0)}</strong><p style="font-size:20px;color:var(--accent-blue);font-weight:bold">${Number(result.percentage||0).toFixed(1)}%</p><p class="muted">تم حفظ نتيجتك في حسابك.</p></div>`;
+ const pct = Number(result.percentage||0);
+ const isSuccess = pct >= 50;
+ const emoji = isSuccess ? '🎉' : '💔';
+ const statusText = isSuccess ? 'مبروك! لقد نجحت في الامتحان' : 'عفواً، لم تحقق نسبة النجاح';
+ 
+ document.getElementById('examModalBody').innerHTML=`<div class="exam-result"><div style="font-size:42px">${emoji}</div><h2>${statusText}</h2><p>درجتك النهائية</p><strong>${Number(result.score||0)} / ${Number(result.total_marks||0)}</strong><p style="font-size:20px;color:${isSuccess?'var(--emerald-green)':'var(--red-accent)'};font-weight:bold">${pct.toFixed(1)}%</p><p class="muted">تم حفظ نتيجتك في حسابك.</p></div>`;
  document.getElementById('examProgress').textContent='تم التسليم';
  document.getElementById('prevQuestionBtn').classList.add('hidden');document.getElementById('nextQuestionBtn').classList.add('hidden');
  document.getElementById('submitExamBtn').classList.remove('hidden');document.getElementById('submitExamBtn').textContent='إغلاق';document.getElementById('submitExamBtn').disabled=false;document.getElementById('submitExamBtn').onclick=closeExamModal;

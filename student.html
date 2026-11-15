@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+object:text{name=student.html}<!DOCTYPE html>
 <html lang="ar" dir="rtl">
 <head>
 <meta charset="UTF-8">
@@ -434,7 +434,7 @@ table{width:100%;border-collapse:collapse;min-width:500px}
 th,td{text-align:right;padding:14px;border-bottom:1px solid var(--border-line);font-size:14px}
 th{background:var(--light-blue);color:var(--navy-dark);font-weight:700}
 
-/* Leaderboard */
+/* Leaderboard & Shimmer Effect */
 .leaderboard-title {
   text-align: center;
   font-size: 28px;
@@ -467,10 +467,49 @@ th{background:var(--light-blue);color:var(--navy-dark);font-weight:700}
   border: 1px solid #E2E8F0;
   direction: ltr;
 }
+
+/* تنسيقات المتفوقين الأوائل مع تأثير اللمعان المتحرك (Shimmer) */
+.leader-card.rank-1,
+.leader-card.rank-2,
+.leader-card.rank-3 {
+  overflow: hidden;
+  position: relative;
+}
+
+.leader-card.rank-1::before,
+.leader-card.rank-2::before,
+.leader-card.rank-3::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: -150%;
+  width: 60%;
+  height: 100%;
+  background: linear-gradient(
+    120deg,
+    rgba(255, 255, 255, 0) 0%,
+    rgba(255, 255, 255, 0.65) 50%,
+    rgba(255, 255, 255, 0) 100%
+  );
+  transform: skewX(-25deg);
+  pointer-events: none;
+  z-index: 1;
+}
+
+.leader-card.rank-1::before {
+  animation: topShine 2.6s infinite ease-in-out;
+}
+.leader-card.rank-2::before {
+  animation: topShine 3.2s infinite ease-in-out 0.4s;
+}
+.leader-card.rank-3::before {
+  animation: topShine 3.8s infinite ease-in-out 0.8s;
+}
+
 .leader-card.rank-1 {
   background: linear-gradient(135deg, #FFF7D6 0%, #F7DC8B 50%, #E7BE4A 100%);
   border: 2px solid #E5C158;
-  box-shadow: 0 6px 20px rgba(229, 184, 66, 0.25);
+  animation: goldGlow 2.6s infinite alternate;
 }
 .leader-card.rank-2 {
   background: linear-gradient(135deg, #F1F5F9 0%, #E2E8F0 50%, #CBD5E1 100%);
@@ -482,11 +521,23 @@ th{background:var(--light-blue);color:var(--navy-dark);font-weight:700}
   border: 2px solid #C49A78;
   box-shadow: 0 6px 20px rgba(196, 154, 120, 0.2);
 }
+
+@keyframes topShine {
+  0% { left: -150%; }
+  55%, 100% { left: 180%; }
+}
+
+@keyframes goldGlow {
+  from { box-shadow: 0 6px 20px rgba(229, 184, 66, 0.25); }
+  to { box-shadow: 0 8px 28px rgba(245, 158, 11, 0.55); }
+}
+
 .leader-left-sec {
   display: flex;
   flex-direction: column;
   align-items: flex-start;
   text-align: left;
+  z-index: 2;
 }
 .leader-pct-title {
   font-size: 18px;
@@ -511,6 +562,7 @@ th{background:var(--light-blue);color:var(--navy-dark);font-weight:700}
   flex: 1;
   padding: 0 10px;
   direction: rtl;
+  z-index: 2;
 }
 .leader-name {
   font-size: 17px;
@@ -534,6 +586,7 @@ th{background:var(--light-blue);color:var(--navy-dark);font-weight:700}
   position: relative;
   display: flex;
   align-items: center;
+  z-index: 2;
 }
 .leader-avatar-wrapper {
   position: relative;
@@ -558,15 +611,15 @@ th{background:var(--light-blue);color:var(--navy-dark);font-weight:700}
 }
 .crown-icon {
   position: absolute;
-  top: -14px;
+  top: -10px;
   left: 50%;
   transform: translateX(-50%);
-  font-size: 18px;
-  z-index: 2;
+  font-size: 16px;
+  z-index: 3;
 }
 .rank-badge-num {
   position: absolute;
-  right: -22px;
+  right: -14px;
   top: 50%;
   transform: translateY(-50%);
   width: 26px;
@@ -579,6 +632,7 @@ th{background:var(--light-blue);color:var(--navy-dark);font-weight:700}
   font-size: 13px;
   color: #334155;
   box-shadow: 0 2px 6px rgba(0,0,0,0.15);
+  z-index: 3;
 }
 .rank-1 .rank-badge-num { background: #FFE082; color: #5D4037; border: 1px solid #FFC107; }
 .rank-2 .rank-badge-num { background: #E2E8F0; color: #1E293B; border: 1px solid #94A3B8; }
@@ -1226,41 +1280,20 @@ async function loadLibrary(){
 }
 
 async function downloadPdf(url, filename) {
- toast('جاري بدء تحميل الكتاب...');
- const safeName = (filename || 'book.pdf').replace(/[\\/:*?"<>|]/g, '_');
- let finalUrl = url;
- if (url.includes('supabase.co') && !url.includes('download=')) {
-  finalUrl += (url.includes('?') ? '&' : '?') + 'download=' + encodeURIComponent(safeName);
- }
-
- // الكشف عما إذا كان الموقع يعمل داخل تطبيق APK (Android WebView)
- const ua = navigator.userAgent || '';
- const isWebView = /; wv\)/i.test(ua) || (window.Android !== undefined);
-
- if (isWebView) {
-  // في تطبيق الأندرويد: نفتح الرابط المباشر ليلتقطه مدير تحميلات الهاتف أو المتصفح الخارجي
-  // لأن روابط blob: المؤقتة لا يعمل تحميلها في تطبيقات الويب المحولة إلى APK
-  const win = window.open(finalUrl, '_system');
-  if (!win) {
-   window.location.href = finalUrl;
-  }
-  return;
- }
-
- // في المتصفحات العادية (Chrome / Safari)
  try {
-  const response = await fetch(finalUrl);
+  toast('جاري بدء تحميل الملف...');
+  const response = await fetch(url);
   const blob = await response.blob();
   const blobUrl = window.URL.createObjectURL(blob);
   const a = document.createElement('a');
   a.href = blobUrl;
-  a.download = safeName;
+  a.download = filename;
   document.body.appendChild(a);
   a.click();
   a.remove();
-  setTimeout(() => window.URL.revokeObjectURL(blobUrl), 1500);
+  window.URL.revokeObjectURL(blobUrl);
  } catch (e) {
-  window.open(finalUrl, '_blank');
+  window.open(url, '_blank');
  }
 }
 

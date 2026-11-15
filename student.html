@@ -749,7 +749,7 @@ th{background:var(--light-blue);color:var(--navy-dark);font-weight:700}
 .rank-2 .rank-badge-num { background: #E2E8F0; color: #1E293B; border: 1px solid #94A3B8; }
 .rank-3 .rank-badge-num { background: #D7CCC8; color: #4E342E; border: 1px solid #A1887F; }
 
-/* تصميم الكارت الذهبي الملكي (مطابق للصورة تماماً) */
+/* تصميم الكرت الذهبي الملكي (يأتي من بعيد، يلف لفتين، لمعان، وصوت) */
 .royal-gold-modal {
   position: fixed;
   inset: 0;
@@ -766,6 +766,7 @@ th{background:var(--light-blue);color:var(--navy-dark);font-weight:700}
   from { opacity: 0; }
   to { opacity: 1; }
 }
+
 .royal-gold-card {
   width: 100%;
   max-width: 440px;
@@ -776,12 +777,49 @@ th{background:var(--light-blue);color:var(--navy-dark);font-weight:700}
   text-align: center;
   position: relative;
   box-shadow: 0 25px 60px rgba(245, 158, 11, 0.5), inset 0 0 30px rgba(245, 158, 11, 0.25);
-  animation: scaleUpCard 0.35s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  animation: victoryCardIn 1.2s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+  overflow: hidden;
 }
-@keyframes scaleUpCard {
-  from { transform: scale(0.85); opacity: 0; }
-  to { transform: scale(1); opacity: 1; }
+
+/* حركة المجيء من بعيد مع لفتين (720 درجة) ولمعان */
+@keyframes victoryCardIn {
+  0% {
+    transform: scale(0.1) translateZ(-1000px) rotate(0deg);
+    opacity: 0;
+  }
+  70% {
+    transform: scale(1.05) translateZ(0px) rotate(720deg);
+    opacity: 1;
+  }
+  100% {
+    transform: scale(1) translateZ(0px) rotate(720deg);
+    opacity: 1;
+  }
 }
+
+/* تأثير لمعان متحرك على الكرت */
+.royal-gold-card::after {
+  content: "";
+  position: absolute;
+  top: -50%;
+  left: -50%;
+  width: 200%;
+  height: 200%;
+  background: linear-gradient(
+    60deg,
+    transparent 40%,
+    rgba(255, 255, 255, 0.4) 50%,
+    transparent 60%
+  );
+  transform: rotate(30deg);
+  animation: cardShineEffect 2.5s infinite linear;
+  pointer-events: none;
+}
+@keyframes cardShineEffect {
+  0% { transform: translateX(-100%) rotate(30deg); }
+  100% { transform: translateX(100%) rotate(30deg); }
+}
+
 .royal-close-btn {
   position: absolute;
   top: 14px;
@@ -803,13 +841,6 @@ th{background:var(--light-blue);color:var(--navy-dark);font-weight:700}
 }
 .royal-close-btn:hover {
   transform: scale(1.1);
-}
-.royal-header-img {
-  width: 100%;
-  max-height: 85px;
-  object-fit: contain;
-  margin-bottom: -5px;
-  filter: drop-shadow(0 4px 10px rgba(245, 158, 11, 0.4));
 }
 .royal-avatar-container {
   position: relative;
@@ -1209,7 +1240,7 @@ button,.btn{touch-action:manipulation}input,textarea,select{font-size:16px!impor
     <div class="section-bar">
       <div class="section-title-wrap"><h2>لوحة المتصدرين 🏆</h2></div>
       <div style="display:flex;gap:8px;">
-        <button class="btn small gold" onclick="showRoyalCardModal()" style="font-weight:800;">👑 كرت الحساب الملكي</button>
+        <button class="btn small gold" onclick="triggerRoyalCardForWinner()" style="font-weight:800;">👑 كرت المتصدر الأول</button>
         <button class="btn small" onclick="loadLeaderboard()">تحديث</button>
       </div>
     </div>
@@ -1269,7 +1300,7 @@ button,.btn{touch-action:manipulation}input,textarea,select{font-size:16px!impor
  </div>
 </div>
 
-<!-- حاوية الكارت الذهبي الملكي المطابق للصورة -->
+<!-- حاوية الكارت الذهبي الملكي للمتصدر الأول -->
 <div id="royalCardModalContainer"></div>
 
 <script>
@@ -1334,6 +1365,27 @@ function playFailSound() {
   } catch(e) {}
 }
 
+// صوت احتفالي خاص بظهور الكرت الملكي القادم من بعيد
+function playVictoryRoyalSound() {
+  if (!audioCtx) return;
+  try {
+    if (audioCtx.state === 'suspended') audioCtx.resume();
+    const now = audioCtx.currentTime;
+    [400, 600, 800, 1200].forEach((freq, i) => {
+      const osc = audioCtx.createOscillator();
+      const gain = audioCtx.createGain();
+      osc.type = 'sine';
+      osc.frequency.setValueAtTime(freq, now + i * 0.12);
+      gain.gain.setValueAtTime(0.2, now + i * 0.12);
+      gain.gain.exponentialRampToValueAtTime(0.001, now + i * 0.12 + 0.3);
+      osc.connect(gain);
+      gain.connect(audioCtx.destination);
+      osc.start(now + i * 0.12);
+      osc.stop(now + i * 0.12 + 0.3);
+    });
+  } catch(e) {}
+}
+
 document.addEventListener('click', (e) => {
   const target = e.target.closest('button, .btn, .exam-option, .nav button, .book-card');
   if (target) {
@@ -1366,7 +1418,7 @@ async function ensureDb(){
  db=window.supabase.createClient(SUPABASE_URL,SUPABASE_ANON_KEY);
  return db;
 }
-let user=null,profile=null,attempts=[],examCache=[],badgeRefreshHandle=null;
+let user=null,profile=null,attempts=[],examCache=[],badgeRefreshHandle=null, cachedLeaderboard = [];
 const fallbackAvatar='data:image/svg+xml;charset=UTF-8,'+encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" width="100" height="100"><rect width="100" height="100" rx="50" fill="#CBD5E1"/><circle cx="50" cy="38" r="18" fill="#64748B"/><path d="M18 94c3-21 15-31 32-31s29 10 32 31" fill="#64748B"/></svg>');
 function toast(t){let x=document.getElementById('toast');x.textContent=t;x.style.display='block';setTimeout(()=>x.style.display='none',3000)}
 function authMessage(t,ok=false){let x=document.getElementById('authMsg');x.className=ok?'ok':'err';x.textContent=t}
@@ -1436,15 +1488,30 @@ async function openStudent(p){
  await loadMyResults();
 }
 
-// دالة عرض الكارت الذهبي الملكي المطابق للصورة (خاص بحسابك فقط وعند الدخول للمتصدرين)
-function showRoyalCardModal() {
+let autoCloseRoyalTimer = null;
+
+// دالة عرض الكرت الملكي الخاص بالمتصدر الأول مع الحركة والصوت والاختفاء التلقائي بعد 3 ثوانٍ
+async function triggerRoyalCardForWinner() {
   const container = document.getElementById('royalCardModalContainer');
-  if(!container || !profile) return;
-  
-  const completedCount = attempts.filter(a=>a.completed).length;
-  const avgPct = completedCount > 0 ? (attempts.filter(a=>a.completed).reduce((s,a)=>s+Number(a.percentage||0),0)/completedCount).toFixed(1) : '0.0';
-  const totalScr = attempts.filter(a=>a.completed).reduce((s,a)=>s+Number(a.score||0),0);
-  
+  if(!container) return;
+
+  // جلب قائمة المتصدرين إذا لم تكن مخزنة لجلب بيانات المركز الأول بدقة
+  if (!cachedLeaderboard || cachedLeaderboard.length === 0) {
+    const {data} = await db.rpc('get_student_leaderboard');
+    if (data && data.length > 0) {
+      cachedLeaderboard = data;
+    }
+  }
+
+  const winner = cachedLeaderboard.length > 0 ? cachedLeaderboard[0] : {
+    full_name: profile.full_name,
+    avatar_url: profile.avatar_url,
+    total_score: 0,
+    average_percentage: 0
+  };
+
+  playVictoryRoyalSound();
+
   container.innerHTML = `
     <div class="royal-gold-modal" id="royalModalBackdrop" onclick="if(event.target === this) closeRoyalCardModal()">
       <div class="royal-gold-card">
@@ -1452,28 +1519,28 @@ function showRoyalCardModal() {
         
         <div style="font-size:36px; margin-bottom:2px;">👑</div>
         <div style="font-size:22px; font-weight:950; color:#FBBF24; letter-spacing:1px; margin-bottom:12px; text-shadow:0 2px 8px rgba(245,158,11,0.5);">Victory</div>
-        <div style="background:linear-gradient(90deg, transparent, #F59E0B, transparent); color:#FFF; font-size:14px; font-weight:800; padding:6px; margin-bottom:16px; border-radius:8px;">ملف حسابي الملكي</div>
+        <div style="background:linear-gradient(90deg, transparent, #F59E0B, transparent); color:#FFF; font-size:14px; font-weight:800; padding:6px; margin-bottom:16px; border-radius:8px;">🥇 بطل لوحة المتصدرين الأول</div>
 
         <div class="royal-avatar-container">
           <div class="royal-wreath-bg"></div>
           <div class="royal-avatar-box">
-            <img src="${esc(profile.avatar_url || fallbackAvatar)}" onerror="this.src='${fallbackAvatar}'" alt="صورة الطالب">
+            <img src="${esc(winner.avatar_url || fallbackAvatar)}" onerror="this.src='${fallbackAvatar}'" alt="صورة المتصدر الأول">
           </div>
         </div>
 
         <div class="royal-name-pill" style="margin: 12px auto 16px auto;">
           <span>👑</span>
-          <span>${esc(profile.full_name)}</span>
+          <span>${esc(winner.full_name)}</span>
         </div>
 
         <div class="royal-stats-grid">
           <div class="royal-stat-box">
             <small>📊 إجمالي الدرجات</small>
-            <strong>${totalScr}</strong>
+            <strong>${winner.total_score ?? 0}</strong>
           </div>
           <div class="royal-stat-box">
             <small>⭐ متوسط النجاح</small>
-            <strong>${avgPct}%</strong>
+            <strong>${Number(winner.average_percentage || 0).toFixed(1)}%</strong>
           </div>
         </div>
 
@@ -1483,9 +1550,16 @@ function showRoyalCardModal() {
       </div>
     </div>
   `;
+
+  // اختفاء تلقائي بعد 3 ثوانٍ
+  if(autoCloseRoyalTimer) clearTimeout(autoCloseRoyalTimer);
+  autoCloseRoyalTimer = setTimeout(() => {
+    closeRoyalCardModal();
+  }, 3000);
 }
 
 function closeRoyalCardModal() {
+  if(autoCloseRoyalTimer) clearTimeout(autoCloseRoyalTimer);
   const container = document.getElementById('royalCardModalContainer');
   if(container) container.innerHTML = '';
 }
@@ -1555,8 +1629,8 @@ function showPage(page,btn){
  if(page==='profile')loadMyResults();
  if(page==='leaders'){
    loadLeaderboard();
-   // ظهور الكرت الملكي حصرياً عند فتح صفحة المتصدرين فقط
-   showRoyalCardModal();
+   // ظهور الكرت الملكي للمتصدر الأول حصرياً عند الضغط على صفحة المتصدرين
+   triggerRoyalCardForWinner();
  }
  if(page==='exams'){markStudentSeen('mark_student_exams_seen');loadExams();}
  if(page==='library')loadLibrary();
@@ -1804,6 +1878,8 @@ async function loadLeaderboard(){
   box.innerHTML='<p class="muted">لا توجد نتائج كافية لعرض الترتيب.</p>';
   return;
  }
+
+ cachedLeaderboard = data;
 
  box.innerHTML=data.map((x,i)=>{
    const rank = i + 1;

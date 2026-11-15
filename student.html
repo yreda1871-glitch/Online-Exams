@@ -749,7 +749,7 @@ th{background:var(--light-blue);color:var(--navy-dark);font-weight:700}
 .rank-2 .rank-badge-num { background: #E2E8F0; color: #1E293B; border: 1px solid #94A3B8; }
 .rank-3 .rank-badge-num { background: #D7CCC8; color: #4E342E; border: 1px solid #A1887F; }
 
-/* تصميم الكارت الذهبي الملكي المنبثق للمتصدرين */
+/* تصميم الكارت الذهبي الملكي المنبثق لصاحب الحساب */
 .royal-gold-modal {
   position: fixed;
   inset: 0;
@@ -1219,11 +1219,11 @@ button,.btn{touch-action:manipulation}input,textarea,select{font-size:16px!impor
  </div>
 </div>
 
-<!-- حاوية الكارت الذهبي الملكي للمتصدرين -->
+<!-- حاوية الكارت الذهبي الملكي لصاحب الحساب -->
 <div id="royalCardModalContainer"></div>
 
 <script>
-// --- نظام الأصوات التفاعلي (Web Audio API - بدون الحاجة لملفات خارجية) ---
+// --- نظام الأصوات التفاعلي (Web Audio API) ---
 const audioCtx = window.AudioContext || window.webkitAudioContext ? new (window.AudioContext || window.webkitAudioContext)() : null;
 
 function playTouchSound() {
@@ -1284,7 +1284,6 @@ function playFailSound() {
   } catch(e) {}
 }
 
-// تفعيل أصوات اللمس التلقائي على كل الأزرار والعناصر القابلة للنقر في المنصة
 document.addEventListener('click', (e) => {
   const target = e.target.closest('button, .btn, .exam-option, .nav button, .book-card');
   if (target) {
@@ -1375,10 +1374,9 @@ async function login(){
 function continueAfterRegister(){if(pendingProfile)openStudent(pendingProfile);}
 async function openStudent(p){profile=p;user={id:p.id};document.getElementById('authView').classList.add('hidden');document.getElementById('studentView').classList.remove('hidden');document.getElementById('topUser').classList.remove('hidden');renderProfile();await refreshStudentBadges();if(badgeRefreshHandle)clearInterval(badgeRefreshHandle);badgeRefreshHandle=setInterval(refreshStudentBadges,30000);await loadExams();await loadMyResults();triggerRoyalCardWelcomeOnce();}
 
-// عرض الكارت الذهبي الملكي تلقائياً فور فتح لوحة المتصدرين أو أول تسجيل دخول للمنصة
+// عرض الكارت الذهبي الملكي الخاص بـ (صاحب الحساب الحالي) تلقائياً عند فتح المتصدرين أو أول تسجيل دخول
 function triggerRoyalCardWelcomeOnce() {
   if(!profile) return;
-  // إظهار الكارت الملكي تلقائياً عند أول فتح للمنصة أو المتصدرين
   setTimeout(() => {
     showRoyalCardModal();
   }, 800);
@@ -1397,7 +1395,7 @@ function showRoyalCardModal() {
       <div class="royal-gold-card">
         <button class="royal-close-btn" onclick="closeRoyalCardModal()" title="إغلاق الكارت ورؤية لوحة المتصدرين">✕</button>
         <div class="royal-crown">👑</div>
-        <h3 class="royal-title">بطاقة المتصدر الملكية</h3>
+        <h3 class="royal-title">ملف حسابي الملكي</h3>
         <div class="royal-avatar-box">
           <img src="${esc(profile.avatar_url || fallbackAvatar)}" onerror="this.src='${fallbackAvatar}'" alt="صورة الطالب">
         </div>
@@ -1491,7 +1489,7 @@ function showPage(page,btn){
  if(page==='profile')loadMyResults();
  if(page==='leaders'){
    loadLeaderboard();
-   // عند فتح صفحة المتصدرين يظهر الكارت الذهبي الملكي مع زر الإغلاق X
+   // عند الانتقال لصفحة المتصدرين، يظهر كارت حسابك الشخصي الذهبي الملكي مع زر الإغلاق X
    showRoyalCardModal();
  }
  if(page==='exams'){markStudentSeen('mark_student_exams_seen');loadExams();}
@@ -1679,7 +1677,6 @@ async function submitCurrentExam(auto=false){
   clearInterval(examTimerHandle);
   localStorage.removeItem('exam_answers_'+activeExam.attempt_id);
   
-  // تشغيل صوت الاحتفال لو نجح (النسبة >= 50%) أو صوت حزين لو سقط (< 50%)
   const percentage = Number(data.percentage || 0);
   if (percentage >= 50) {
     playSuccessSound();

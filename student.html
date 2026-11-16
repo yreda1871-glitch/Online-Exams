@@ -972,6 +972,25 @@ button,.btn{touch-action:manipulation}input,textarea,select{font-size:16px!impor
 .notif-card{display:flex;align-items:center;gap:14px;background:var(--light-blue);border:1px solid var(--border-line);border-radius:18px;padding:14px 18px;margin-bottom:16px;line-height:1.6}
 .notif-card .btn{margin-right:auto;flex-shrink:0}
 
+/* Study buddy (avatar الترحيب) */
+.buddy{display:flex;align-items:flex-end;gap:12px;margin-bottom:16px;animation:buddyIn .7s cubic-bezier(.2,1.3,.4,1)}
+@keyframes buddyIn{from{opacity:0;transform:translateY(-26px) scale(.9)}to{opacity:1;transform:none}}
+.buddy-avatar{flex-shrink:0;width:104px;animation:buddyBob 3s ease-in-out infinite}
+.buddy-avatar svg{width:100%;height:auto;display:block;filter:drop-shadow(0 6px 10px rgba(7,25,54,.2))}
+@keyframes buddyBob{50%{transform:translateY(-4px)}}
+.buddy-arm{transform-origin:92px 110px;animation:buddyWave .6s ease-in-out infinite alternate}
+@keyframes buddyWave{from{transform:rotate(-14deg)}to{transform:rotate(16deg)}}
+.buddy-eyes{transform-origin:60px 65px;animation:buddyBlink 4s infinite}
+@keyframes buddyBlink{0%,92%,100%{transform:scaleY(1)}95%{transform:scaleY(.1)}}
+.buddy-bubble{position:relative;flex:1;min-width:0;background:#fff;border:1px solid var(--border-line);border-radius:20px 20px 6px 20px;padding:16px 18px 14px;box-shadow:0 8px 22px rgba(15,23,42,.08)}
+.buddy-bubble::before{content:"";position:absolute;right:-8px;bottom:20px;width:14px;height:14px;background:#fff;border-top:1px solid var(--border-line);border-right:1px solid var(--border-line);transform:rotate(45deg)}
+.buddy-text{font-size:16px;font-weight:800;color:var(--navy-dark);line-height:1.9;min-height:60px;padding-left:22px}
+.buddy-actions{display:flex;gap:8px;margin-top:10px;flex-wrap:wrap}
+.buddy-close{position:absolute;top:8px;left:10px;width:26px;height:26px;border-radius:50%;background:var(--light-blue);color:var(--text-muted);font-size:12px;display:grid;place-items:center}
+.buddy-close:hover{background:var(--border-line)}
+@media(max-width:740px){.buddy-avatar{width:78px}.buddy-text{font-size:14px;min-height:52px}.buddy-bubble{padding:14px 14px 12px}}
+@media(prefers-reduced-motion:reduce){.buddy,.buddy-avatar,.buddy-arm,.buddy-eyes{animation:none}}
+
 /* Mobile Responsive Styling */
 @media(max-width:850px){
   .library-grid { grid-template-columns: repeat(2, 1fr); gap: 14px; }
@@ -1110,6 +1129,30 @@ button,.btn{touch-action:manipulation}input,textarea,select{font-size:16px!impor
   <section class="main">
    <!-- الصفحة الرئيسية -->
    <div id="homePage">
+    <div id="buddy" class="buddy hidden" role="status" aria-live="polite">
+      <div class="buddy-avatar"><svg viewBox="0 0 120 140" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+       <path d="M22 140C22 108 40 96 60 96C80 96 98 108 98 140Z" fill="#1877F2"/>
+       <path d="M49 96L60 114L71 96Z" fill="#fff"/>
+       <rect x="52" y="82" width="16" height="16" rx="6" fill="#E8B27D"/>
+       <g class="buddy-arm"><path d="M92 110C104 100 108 86 104 72" stroke="#1877F2" stroke-width="13" stroke-linecap="round" fill="none"/><circle cx="104" cy="66" r="8.5" fill="#E8B27D"/></g>
+       <circle cx="34" cy="64" r="5" fill="#E8B27D"/><circle cx="86" cy="64" r="5" fill="#E8B27D"/>
+       <circle cx="60" cy="62" r="26" fill="#F1C27D"/>
+       <path d="M34 60C32 42 46 34 60 34C74 34 88 42 86 60C80 50 70 47 60 47C50 47 40 50 34 60Z" fill="#2B1B12"/>
+       <polygon points="60,12 102,27 60,42 18,27" fill="#0D2B56"/>
+       <path d="M38 35V45C48 52 72 52 82 45V35L60 43Z" fill="#133B74"/>
+       <line x1="97" y1="28" x2="97" y2="47" stroke="#F59E0B" stroke-width="2.5"/><circle cx="97" cy="50" r="3.5" fill="#F59E0B"/>
+       <g class="buddy-eyes"><ellipse cx="50" cy="65" rx="3.2" ry="4.2" fill="#1E293B"/><ellipse cx="70" cy="65" rx="3.2" ry="4.2" fill="#1E293B"/></g>
+       <circle cx="43" cy="73" r="4" fill="#F9A8A8" opacity=".55"/><circle cx="77" cy="73" r="4" fill="#F9A8A8" opacity=".55"/>
+       <path d="M50 74Q60 85 70 74" stroke="#9A3412" stroke-width="3" fill="none" stroke-linecap="round"/>
+      </svg></div>
+      <div class="buddy-bubble">
+        <button class="buddy-close" onclick="closeBuddy()" aria-label="إغلاق">✕</button>
+        <div id="buddyText" class="buddy-text"></div>
+        <div class="buddy-actions">
+          <button id="buddyGo" class="btn green small" onclick="buddyGo()">يلا نبدأ ▶</button>
+        </div>
+      </div>
+    </div>
     <div id="notifCard" class="notif-card hidden">
       <span style="font-size:28px">🔔</span>
       <div><b>فعّل إشعارات الامتحانات</b><br><span class="muted">هنبلغك على المتصفح فور نزول امتحان جديد.</span></div>
@@ -1498,6 +1541,7 @@ async function openStudent(p){
  renderNotifCard();
  checkNewExams();
  subscribeExamsLive();
+ showBuddy();
 }
 
 let autoCloseRoyalTimer = null;
@@ -2022,6 +2066,35 @@ function subscribeExamsLive(){
   examsChannel=db.channel('exams-live').on('postgres_changes',{event:'*',schema:'public',table:'exams'},()=>checkNewExams()).subscribe();
  }catch(e){}
 }
+/* ===== أفاتار الترحيب (طالب جامعي) ===== */
+let buddyTimer=null,buddyAuto=null,buddyMsg='',buddyOpen=0;
+function showBuddy(){
+ const el=document.getElementById('buddy');if(!el||!profile)return;
+ const name=(profile.full_name||'يا صاحبي').trim().split(/\s+/)[0];
+ const done=new Set((attempts||[]).filter(a=>a.completed).map(a=>a.exam_id));
+ buddyOpen=(examCache||[]).filter(e=>!done.has(e.id)).length;
+ const h=new Date().getHours();
+ const tail=h<5?' (لسه صاحي؟ 🌙)':h<12?' صباح الفل ☀️':'';
+ if(buddyOpen>0) buddyMsg=`نورت يا ${name} 👋${tail} جاهز للامتحان النهاردة؟ عندك ${buddyOpen} ${buddyOpen===1?'امتحان':'امتحانات'} متاحة.`;
+ else if(!(examCache||[]).length) buddyMsg=`نورت يا ${name} 👋${tail} مفيش امتحانات حالياً، استغل الوقت وذاكر 📚`;
+ else buddyMsg=`عاش يا ${name}! 🎉 خلّصت كل الامتحانات المتاحة. أنا فخور بيك!`;
+ document.getElementById('buddyGo').classList.toggle('hidden',buddyOpen===0);
+ el.classList.remove('hidden');
+ typeBuddy(buddyMsg);
+ clearTimeout(buddyAuto);buddyAuto=setTimeout(closeBuddy,15000);
+}
+function typeBuddy(text){
+ const box=document.getElementById('buddyText');clearInterval(buddyTimer);
+ if(window.matchMedia&&matchMedia('(prefers-reduced-motion:reduce)').matches){box.textContent=text;return}
+ const chars=Array.from(text);let i=0;box.textContent='';
+ buddyTimer=setInterval(()=>{i++;box.textContent=chars.slice(0,i).join('');if(i>=chars.length)clearInterval(buddyTimer)},35);
+}
+function closeBuddy(){
+ clearInterval(buddyTimer);clearTimeout(buddyAuto);
+ const el=document.getElementById('buddy');if(el)el.classList.add('hidden');
+}
+function buddyGo(){closeBuddy();showPage('exams',document.querySelectorAll('.nav button')[1])}
+
 setInterval(checkNewExams,30000);
 
 restoreStudent();

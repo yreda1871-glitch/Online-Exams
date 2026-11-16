@@ -972,24 +972,68 @@ button,.btn{touch-action:manipulation}input,textarea,select{font-size:16px!impor
 .notif-card{display:flex;align-items:center;gap:14px;background:var(--light-blue);border:1px solid var(--border-line);border-radius:18px;padding:14px 18px;margin-bottom:16px;line-height:1.6}
 .notif-card .btn{margin-right:auto;flex-shrink:0}
 
-/* Study buddy (avatar الترحيب) */
-.buddy{display:flex;align-items:flex-end;gap:12px;margin-bottom:16px;animation:buddyIn .7s cubic-bezier(.2,1.3,.4,1)}
-@keyframes buddyIn{from{opacity:0;transform:translateY(-26px) scale(.9)}to{opacity:1;transform:none}}
-.buddy-avatar{flex-shrink:0;width:104px;animation:buddyBob 3s ease-in-out infinite}
-.buddy-avatar svg{width:100%;height:auto;display:block;filter:drop-shadow(0 6px 10px rgba(7,25,54,.2))}
+/* ===== Study buddy: الأفاتار العائم فوق كل الصفحات ===== */
+.buddy{position:fixed;top:calc(12px + env(safe-area-inset-top,0px));left:0;right:0;margin-inline:auto;width:min(640px,calc(100% - 20px));z-index:300;display:flex;align-items:flex-end;gap:8px;pointer-events:none}
+.buddy.in{animation:buddyIn .6s cubic-bezier(.2,1.25,.4,1) both}
+.buddy.out{animation:buddyOut .33s ease-in both}
+@keyframes buddyIn{from{opacity:0;transform:translateY(-34px) scale(.93)}to{opacity:1;transform:none}}
+@keyframes buddyOut{to{opacity:0;transform:translateY(-26px) scale(.95)}}
+.buddy.tone-info{--bd-c:#1877F2;--bd-bg:#EBF4FF}
+.buddy.tone-success{--bd-c:#16A34A;--bd-bg:#DCFCE7}
+.buddy.tone-warn{--bd-c:#F59E0B;--bd-bg:#FEF3C7}
+.buddy.tone-gold{--bd-c:#D4AF37;--bd-bg:#FEF3C7}
+.buddy-avatar{flex-shrink:0;width:96px;margin-bottom:-6px;animation:buddyBob 3s ease-in-out infinite;pointer-events:auto}
+.buddy-avatar svg{width:100%;height:auto;display:block;filter:drop-shadow(0 8px 12px rgba(7,25,54,.28))}
 @keyframes buddyBob{50%{transform:translateY(-4px)}}
 .buddy-arm{transform-origin:92px 110px;animation:buddyWave .6s ease-in-out infinite alternate}
 @keyframes buddyWave{from{transform:rotate(-14deg)}to{transform:rotate(16deg)}}
 .buddy-eyes{transform-origin:60px 65px;animation:buddyBlink 4s infinite}
 @keyframes buddyBlink{0%,92%,100%{transform:scaleY(1)}95%{transform:scaleY(.1)}}
-.buddy-bubble{position:relative;flex:1;min-width:0;background:#fff;border:1px solid var(--border-line);border-radius:20px 20px 6px 20px;padding:16px 18px 14px;box-shadow:0 8px 22px rgba(15,23,42,.08)}
-.buddy-bubble::before{content:"";position:absolute;right:-8px;bottom:20px;width:14px;height:14px;background:#fff;border-top:1px solid var(--border-line);border-right:1px solid var(--border-line);transform:rotate(45deg)}
-.buddy-text{font-size:16px;font-weight:800;color:var(--navy-dark);line-height:1.9;min-height:60px;padding-left:22px}
+.buddy .m-smile,.buddy .m-big,.buddy .m-sad,.buddy .b-sad,.buddy .tear,.buddy .spark{display:none}
+.buddy.mood-happy .m-smile,.buddy.mood-tip .m-smile{display:inline}
+.buddy.mood-cheer .m-big,.buddy.mood-cheer .spark{display:inline}
+.buddy.mood-sad .m-sad,.buddy.mood-sad .b-sad,.buddy.mood-sad .tear{display:inline}
+.buddy.mood-sad .buddy-arm{animation:none;transform:rotate(58deg)}
+.buddy.mood-cheer .buddy-arm{animation-duration:.35s}
+.buddy .spark{animation:buddySpark 1s ease-in-out infinite alternate;transform-origin:60px 40px}
+@keyframes buddySpark{from{opacity:.4;transform:scale(.92)}to{opacity:1;transform:scale(1.08)}}
+.buddy .tear{animation:buddyTear 1.8s ease-in infinite}
+@keyframes buddyTear{0%{transform:translateY(0);opacity:1}100%{transform:translateY(14px);opacity:0}}
+.buddy-bubble{position:relative;flex:1;min-width:0;pointer-events:auto;background:#fff;border:1px solid var(--border-line);border-radius:20px 20px 6px 20px;padding:14px 16px 16px;box-shadow:0 16px 38px rgba(15,23,42,.22),0 2px 6px rgba(15,23,42,.06);overflow:hidden}
+.buddy-bubble::before{content:"";position:absolute;right:-7px;bottom:18px;width:13px;height:13px;background:#fff;border-top:1px solid var(--border-line);border-right:1px solid var(--border-line);transform:rotate(45deg)}
+.buddy-title{display:inline-flex;align-items:center;gap:6px;font-size:12.5px;font-weight:800;color:var(--bd-c,#1877F2);background:var(--bd-bg,#EBF4FF);padding:3px 12px;border-radius:999px;margin-bottom:6px}
+.buddy-text{font-size:15.5px;font-weight:700;color:var(--navy-dark);line-height:1.85;min-height:28px;padding-left:26px}
 .buddy-actions{display:flex;gap:8px;margin-top:10px;flex-wrap:wrap}
-.buddy-close{position:absolute;top:8px;left:10px;width:26px;height:26px;border-radius:50%;background:var(--light-blue);color:var(--text-muted);font-size:12px;display:grid;place-items:center}
+.buddy-close{position:absolute;top:9px;left:10px;width:26px;height:26px;border-radius:50%;background:var(--light-blue);color:var(--text-muted);font-size:12px;display:grid;place-items:center;border:0;cursor:pointer}
 .buddy-close:hover{background:var(--border-line)}
-@media(max-width:740px){.buddy-avatar{width:78px}.buddy-text{font-size:14px;min-height:52px}.buddy-bubble{padding:14px 14px 12px}}
-@media(prefers-reduced-motion:reduce){.buddy,.buddy-avatar,.buddy-arm,.buddy-eyes{animation:none}}
+.buddy-bar{position:absolute;left:0;right:0;bottom:0;height:4px;background:var(--bd-c,#1877F2);transform-origin:right center;animation:buddyBar var(--dur,8s) linear forwards}
+@keyframes buddyBar{from{transform:scaleX(1)}to{transform:scaleX(0)}}
+.buddy-bubble:hover .buddy-bar{animation-play-state:paused}
+@media(max-width:740px){.buddy-avatar{width:72px}.buddy-text{font-size:14px}.buddy-bubble{padding:12px 13px 15px}}
+@media(prefers-reduced-motion:reduce){.buddy.in,.buddy.out,.buddy-avatar,.buddy-arm,.buddy-eyes,.buddy .spark,.buddy .tear{animation:none}.buddy.in{opacity:1}}
+
+/* ===== اكتمال الملف الشخصي ===== */
+.profile-avatar-container{position:relative}
+.profile-avatar-container.no-photo .profilebig{animation:pcPulse 2.2s ease-out infinite}
+.profile-avatar-container.no-photo::after{content:"+ 📷";position:absolute;bottom:-4px;left:-4px;background:var(--accent-blue);color:#fff;font-size:12px;font-weight:800;padding:3px 9px;border-radius:999px;border:2px solid #fff;box-shadow:0 4px 10px rgba(24,119,242,.35)}
+@keyframes pcPulse{0%{box-shadow:0 0 0 0 rgba(24,119,242,.45)}100%{box-shadow:0 0 0 16px rgba(24,119,242,0)}}
+.pc-card{background:var(--card-bg);border:1px solid var(--border-line);border-radius:22px;padding:18px 20px;margin-top:16px;box-shadow:0 6px 18px rgba(15,23,42,.05)}
+.pc-head{display:flex;align-items:center;justify-content:space-between;gap:12px}
+.pc-head h3{margin:0;font-size:17px;font-weight:800;color:var(--navy-dark)}
+.pc-head small{color:var(--text-muted);font-size:12.5px}
+.pc-pct{font-size:22px;font-weight:900;color:var(--accent-blue)}
+.pc-bar{height:9px;background:var(--border-line);border-radius:999px;overflow:hidden;margin:12px 0 14px}
+.pc-bar span{display:block;height:100%;width:0;border-radius:999px;background:linear-gradient(90deg,#1D7BF2,#38BDF8);transition:width .6s ease}
+.pc-items{display:grid;grid-template-columns:repeat(2,1fr);gap:10px}
+.pc-item{display:flex;align-items:center;gap:10px;text-align:right;border:1px solid var(--border-line);background:#F8FAFC;border-radius:14px;padding:11px 12px;cursor:pointer;font-family:inherit;transition:transform .15s,border-color .15s}
+.pc-item:hover{transform:translateY(-1px);border-color:var(--accent-blue)}
+.pc-item .pc-ico{flex-shrink:0;width:30px;height:30px;border-radius:50%;display:grid;place-items:center;font-size:14px;font-weight:900;background:#fff;border:2px solid var(--border-line);color:var(--text-muted)}
+.pc-item b{display:block;font-size:13.5px;color:var(--navy-dark)}
+.pc-item small{display:block;font-size:11.5px;color:var(--text-muted)}
+.pc-item.done{background:var(--emerald-bg);border-color:#BBF7D0;cursor:default}
+.pc-item.done:hover{transform:none;border-color:#BBF7D0}
+.pc-item.done .pc-ico{background:var(--emerald-bright);border-color:var(--emerald-bright);color:#fff}
+@media(max-width:560px){.pc-items{grid-template-columns:1fr}}
 
 /* Mobile Responsive Styling */
 @media(max-width:850px){
@@ -1129,30 +1173,6 @@ button,.btn{touch-action:manipulation}input,textarea,select{font-size:16px!impor
   <section class="main">
    <!-- الصفحة الرئيسية -->
    <div id="homePage">
-    <div id="buddy" class="buddy hidden" role="status" aria-live="polite">
-      <div class="buddy-avatar"><svg viewBox="0 0 120 140" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
-       <path d="M22 140C22 108 40 96 60 96C80 96 98 108 98 140Z" fill="#1877F2"/>
-       <path d="M49 96L60 114L71 96Z" fill="#fff"/>
-       <rect x="52" y="82" width="16" height="16" rx="6" fill="#E8B27D"/>
-       <g class="buddy-arm"><path d="M92 110C104 100 108 86 104 72" stroke="#1877F2" stroke-width="13" stroke-linecap="round" fill="none"/><circle cx="104" cy="66" r="8.5" fill="#E8B27D"/></g>
-       <circle cx="34" cy="64" r="5" fill="#E8B27D"/><circle cx="86" cy="64" r="5" fill="#E8B27D"/>
-       <circle cx="60" cy="62" r="26" fill="#F1C27D"/>
-       <path d="M34 60C32 42 46 34 60 34C74 34 88 42 86 60C80 50 70 47 60 47C50 47 40 50 34 60Z" fill="#2B1B12"/>
-       <polygon points="60,12 102,27 60,42 18,27" fill="#0D2B56"/>
-       <path d="M38 35V45C48 52 72 52 82 45V35L60 43Z" fill="#133B74"/>
-       <line x1="97" y1="28" x2="97" y2="47" stroke="#F59E0B" stroke-width="2.5"/><circle cx="97" cy="50" r="3.5" fill="#F59E0B"/>
-       <g class="buddy-eyes"><ellipse cx="50" cy="65" rx="3.2" ry="4.2" fill="#1E293B"/><ellipse cx="70" cy="65" rx="3.2" ry="4.2" fill="#1E293B"/></g>
-       <circle cx="43" cy="73" r="4" fill="#F9A8A8" opacity=".55"/><circle cx="77" cy="73" r="4" fill="#F9A8A8" opacity=".55"/>
-       <path d="M50 74Q60 85 70 74" stroke="#9A3412" stroke-width="3" fill="none" stroke-linecap="round"/>
-      </svg></div>
-      <div class="buddy-bubble">
-        <button class="buddy-close" onclick="closeBuddy()" aria-label="إغلاق">✕</button>
-        <div id="buddyText" class="buddy-text"></div>
-        <div class="buddy-actions">
-          <button id="buddyGo" class="btn green small" onclick="buddyGo()">يلا نبدأ ▶</button>
-        </div>
-      </div>
-    </div>
     <div id="notifCard" class="notif-card hidden">
       <span style="font-size:28px">🔔</span>
       <div><b>فعّل إشعارات الامتحانات</b><br><span class="muted">هنبلغك على المتصفح فور نزول امتحان جديد.</span></div>
@@ -1266,6 +1286,11 @@ button,.btn{touch-action:manipulation}input,textarea,select{font-size:16px!impor
       </div>
      </div>
     </div>
+    <div id="profileChecklist" class="pc-card">
+     <div class="pc-head"><div><h3>اكتمال ملفك الشخصي</h3><small id="pcSub"></small></div><div class="pc-pct" id="pcPct">0%</div></div>
+     <div class="pc-bar"><span id="pcBar"></span></div>
+     <div id="pcItems" class="pc-items"></div>
+    </div>
     <input id="profilePhotoInput" class="hidden" type="file" accept="image/jpeg,image/png,image/webp" onchange="changeProfilePhoto(this)">
 
     <div class="cards">
@@ -1322,6 +1347,35 @@ button,.btn{touch-action:manipulation}input,textarea,select{font-size:16px!impor
 </footer>
 
 <div id="toast" class="toast"></div>
+<div id="buddy" class="buddy hidden" role="status" aria-live="polite">
+  <div class="buddy-avatar"><svg viewBox="0 0 120 140" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+   <path d="M22 140C22 108 40 96 60 96C80 96 98 108 98 140Z" fill="#1877F2"/>
+   <path d="M49 96L60 114L71 96Z" fill="#fff"/>
+   <rect x="52" y="82" width="16" height="16" rx="6" fill="#E8B27D"/>
+   <g class="buddy-arm"><path d="M92 110C104 100 108 86 104 72" stroke="#1877F2" stroke-width="13" stroke-linecap="round" fill="none"/><circle cx="104" cy="66" r="8.5" fill="#E8B27D"/></g>
+   <circle cx="34" cy="64" r="5" fill="#E8B27D"/><circle cx="86" cy="64" r="5" fill="#E8B27D"/>
+   <circle cx="60" cy="62" r="26" fill="#F1C27D"/>
+   <path d="M34 60C32 42 46 34 60 34C74 34 88 42 86 60C80 50 70 47 60 47C50 47 40 50 34 60Z" fill="#2B1B12"/>
+   <polygon points="60,12 102,27 60,42 18,27" fill="#0D2B56"/>
+   <path d="M38 35V45C48 52 72 52 82 45V35L60 43Z" fill="#133B74"/>
+   <line x1="97" y1="28" x2="97" y2="47" stroke="#F59E0B" stroke-width="2.5"/><circle cx="97" cy="50" r="3.5" fill="#F59E0B"/>
+   <g class="buddy-eyes"><ellipse cx="50" cy="65" rx="3.2" ry="4.2" fill="#1E293B"/><ellipse cx="70" cy="65" rx="3.2" ry="4.2" fill="#1E293B"/></g>
+   <path class="b-sad" d="M43 55L55 59M77 55L65 59" stroke="#2B1B12" stroke-width="2.6" stroke-linecap="round"/>
+   <circle cx="43" cy="73" r="4" fill="#F9A8A8" opacity=".55"/><circle cx="77" cy="73" r="4" fill="#F9A8A8" opacity=".55"/>
+   <path class="m-smile" d="M50 74Q60 85 70 74" stroke="#9A3412" stroke-width="3" fill="none" stroke-linecap="round"/>
+   <path class="m-big" d="M47 72Q60 92 73 72Z" fill="#9A3412" stroke="#9A3412" stroke-width="2" stroke-linejoin="round"/>
+   <path class="m-sad" d="M51 81Q60 72 69 81" stroke="#9A3412" stroke-width="3" fill="none" stroke-linecap="round"/>
+   <ellipse class="tear" cx="45" cy="72" rx="2.6" ry="3.6" fill="#60A5FA"/>
+   <g class="spark" fill="#FBBF24"><polygon points="14,40 17,47 24,48 18,53 20,60 14,56 8,60 10,53 4,48 11,47"/><polygon points="108,100 110,105 115,106 111,109 112,114 108,111 104,114 105,109 101,106 106,105" /><polygon points="106,16 108,20 112,21 109,24 110,28 106,26 102,28 103,24 100,21 104,20"/></g>
+  </svg></div>
+  <div class="buddy-bubble">
+    <button class="buddy-close" onclick="closeBuddy()" aria-label="إغلاق">✕</button>
+    <span id="buddyTitle" class="buddy-title hidden"></span>
+    <div id="buddyText" class="buddy-text"></div>
+    <div id="buddyActions" class="buddy-actions hidden"></div>
+    <div id="buddyBar" class="buddy-bar"></div>
+  </div>
+</div>
 
 <!-- نافذة إعدادات الملف الشخصي -->
 <div id="profileSettingsModal" class="exam-modal hidden" role="dialog" aria-modal="true">
@@ -1632,10 +1686,12 @@ function renderProfile(){
  document.getElementById('profileStudentCode').textContent=profile.student_code||'------';
  const bio = profile.bio || 'لا توجد نبذة تعريفية بعد. اضغط على زر الإعدادات لإضافة وصف شخصي.';
  document.getElementById('profileBio').textContent = bio;
+ document.querySelector('.profile-avatar-container')?.classList.toggle('no-photo',!hasPhoto);
+ renderChecklist();
 }
 
 function chooseAvatar(){document.getElementById('profilePhotoInput').click();}
-async function changeProfilePhoto(input){const file=input.files&&input.files[0];if(!file)return;if(!['image/jpeg','image/png','image/webp'].includes(file.type)){toast('اختر صورة JPG أو PNG أو WEBP.');input.value='';return;}if(file.size>5*1024*1024){toast('حجم الصورة يجب ألا يتجاوز 5 ميجابايت.');input.value='';return;}try{toast('جاري رفع الصورة...');const ext=file.type==='image/png'?'png':file.type==='image/webp'?'webp':'jpg';const path=profile.id+'/'+crypto.randomUUID()+'.'+ext;const {error:upErr}=await db.storage.from('avatars').upload(path,file,{upsert:false,contentType:file.type,cacheControl:'3600'});if(upErr)throw upErr;const {data:urlData}=db.storage.from('avatars').getPublicUrl(path);const {data,error}=await db.rpc('update_student_avatar',{p_student_code:profile.student_code,p_avatar_url:urlData.publicUrl});if(error)throw error;if(!data||data.status!=='updated')throw new Error('تعذر حفظ الصورة في الملف الشخصي.');profile.avatar_url=data.avatar_url;renderProfile();toast('تم تغيير صورتك الشخصية بنجاح.');}catch(e){toast('تعذر تغيير الصورة: '+(e.message||'خطأ غير معروف'));}finally{input.value='';}}
+async function changeProfilePhoto(input){const file=input.files&&input.files[0];if(!file)return;if(!['image/jpeg','image/png','image/webp'].includes(file.type)){toast('اختر صورة JPG أو PNG أو WEBP.');input.value='';return;}if(file.size>5*1024*1024){toast('حجم الصورة يجب ألا يتجاوز 5 ميجابايت.');input.value='';return;}try{toast('جاري رفع الصورة...');const ext=file.type==='image/png'?'png':file.type==='image/webp'?'webp':'jpg';const path=profile.id+'/'+crypto.randomUUID()+'.'+ext;const {error:upErr}=await db.storage.from('avatars').upload(path,file,{upsert:false,contentType:file.type,cacheControl:'3600'});if(upErr)throw upErr;const {data:urlData}=db.storage.from('avatars').getPublicUrl(path);const {data,error}=await db.rpc('update_student_avatar',{p_student_code:profile.student_code,p_avatar_url:urlData.publicUrl});if(error)throw error;if(!data||data.status!=='updated')throw new Error('تعذر حفظ الصورة في الملف الشخصي.');profile.avatar_url=data.avatar_url;renderProfile();toast('تم تغيير صورتك الشخصية بنجاح.');setTimeout(()=>profileBuddy('حلوة الصورة دي! 📸'),500);}catch(e){toast('تعذر تغيير الصورة: '+(e.message||'خطأ غير معروف'));}finally{input.value='';}}
 async function copyStudentCode(){const code=profile?.student_code||pendingProfile?.student_code||document.getElementById('profileStudentCode')?.textContent;if(!code||code==='------'){toast('الكود غير متاح');return;}try{await navigator.clipboard.writeText(code);toast('تم نسخ كود الطالب.');}catch(e){const t=document.createElement('textarea');t.value=code;document.body.appendChild(t);t.select();document.execCommand('copy');t.remove();toast('تم نسخ الكود.');}}
 
 function openProfileSettings(){
@@ -1667,7 +1723,7 @@ async function saveProfileSettings(){
   profile.bio=data.profile.bio ?? newBio;
   renderProfile();
   closeProfileSettings();
-  toast('تم حفظ بيانات الملف الشخصي بنجاح.');
+  toast('تم حفظ بيانات الملف الشخصي بنجاح.');setTimeout(()=>profileBuddy('تم الحفظ ✅'),500);
  }catch(e){
   console.error('save profile failed:',e);
   toast('تعذر حفظ البيانات: '+(e.message||'خطأ غير معروف'));
@@ -1682,9 +1738,9 @@ async function restoreStudent(){const code=localStorage.getItem('exam_student_co
 function showPage(page,btn){
  ['home','exams','profile','leaders','library'].forEach(p=>document.getElementById(p+'Page').classList.toggle('hidden',p!==page));
  document.querySelectorAll('.nav button').forEach(b=>b.classList.remove('active'));if(btn)btn.classList.add('active');
- if(page==='profile')loadMyResults();
+ if(page==='profile'){Promise.resolve(loadMyResults()).then(()=>setTimeout(()=>{if(!document.getElementById('profilePage').classList.contains('hidden'))profileBuddy();},350));}
  if(page==='leaders'){
-   loadLeaderboard();
+   Promise.resolve(loadLeaderboard()).then(()=>setTimeout(()=>{if(!document.getElementById('leadersPage').classList.contains('hidden'))leadersBuddy();},500));
    // ظهور الكرت الملكي للمتصدر الأول حصرياً عند الضغط على صفحة المتصدرين
    triggerRoyalCardForWinner();
  }
@@ -1795,7 +1851,7 @@ async function startExamNotice(id){
   if(data.status==='exam_unavailable')throw new Error('هذا الامتحان غير منشور أو لم يعد متاحًا.');
   if(data.status==='no_questions')throw new Error('الامتحان لا يحتوي على أسئلة بعد.');
   if(data.status!=='started')throw new Error('تعذر بدء الامتحان: '+data.status);
-  activeExam=data;try{examSelections=JSON.parse(localStorage.getItem('exam_answers_'+data.attempt_id)||'{}')||{};}catch(e){examSelections={};}examReviewMode=false;renderActiveExam();
+  activeExam=data;activeExam.__examId=id;try{examSelections=JSON.parse(localStorage.getItem('exam_answers_'+data.attempt_id)||'{}')||{};}catch(e){examSelections={};}examReviewMode=false;renderActiveExam();
  }catch(e){toast('تعذر فتح الامتحان: '+(e.message||'خطأ غير معروف'));}
  finally{btns.forEach(b=>b.disabled=false);}
 }
@@ -1890,6 +1946,8 @@ function showExamResult(result){
  document.getElementById('examTimer').textContent='انتهى';
  const pct = Number(result.percentage||0);
  const isSuccess = pct >= 50;
+ const _eid = activeExam && activeExam.__examId;
+ setTimeout(()=>examBuddy(pct,_eid),600);
  const emoji = isSuccess ? '🎉' : '💔';
  const statusText = isSuccess ? 'مبروك! لقد نجحت في الامتحان' : 'عفواً، لم تحقق نسبة النجاح';
  
@@ -1921,7 +1979,7 @@ async function loadMyResults(){
  const rows=(data||[]).filter(a=>a.completed).sort((a,b)=>new Date(b.finished_at||0)-new Date(a.finished_at||0));
  body.innerHTML=rows.map(a=>`<tr><td>${esc(a.exam_title||'امتحان')}</td><td>${a.score} / ${a.total_marks}</td><td>${Number(a.percentage||0).toFixed(1)}%</td><td>${date(a.finished_at)}</td><td><button class="btn outline small" style="color:var(--accent-blue);" onclick="showReviewNotice('${a.exam_id}')">عرض التصحيح</button></td></tr>`).join('')||'<tr><td colspan="5">لم تكمل أي امتحان بعد.</td></tr>';
  const avg=rows.length?rows.reduce((s,a)=>s+Number(a.percentage||0),0)/rows.length:0;
- document.getElementById('profileAverage').textContent=avg.toFixed(1)+'%';document.getElementById('profileCount').textContent=rows.length;document.getElementById('profileScores').textContent=rows.reduce((s,a)=>s+Number(a.score||0),0);
+ myDoneCount=rows.length;renderChecklist();document.getElementById('profileAverage').textContent=avg.toFixed(1)+'%';document.getElementById('profileCount').textContent=rows.length;document.getElementById('profileScores').textContent=rows.reduce((s,a)=>s+Number(a.score||0),0);
 }
 
 /* لوحة المتصدرين وعرض الترتيب الصحيح للمتصدر الأول */
@@ -2066,34 +2124,128 @@ function subscribeExamsLive(){
   examsChannel=db.channel('exams-live').on('postgres_changes',{event:'*',schema:'public',table:'exams'},()=>checkNewExams()).subscribe();
  }catch(e){}
 }
-/* ===== أفاتار الترحيب (طالب جامعي) ===== */
-let buddyTimer=null,buddyAuto=null,buddyMsg='',buddyOpen=0;
-function showBuddy(){
+/* ===== الأفاتار العائم (يظهر فوق كل الصفحات ويختفي تلقائياً) ===== */
+let buddyTyper=null,buddyHideT=null,myDoneCount=0;
+(function(){const bar=document.getElementById('buddyBar');if(bar)bar.addEventListener('animationend',()=>closeBuddy());})();
+function firstName(){return ((profile&&profile.full_name)||'يا صاحبي').trim().split(/\s+/)[0]}
+function goPage(p){showPage(p,document.querySelector(`.nav button[onclick^="showPage('${p}'"]`))}
+function buddySay(o){
  const el=document.getElementById('buddy');if(!el||!profile)return;
- const name=(profile.full_name||'يا صاحبي').trim().split(/\s+/)[0];
- const done=new Set((attempts||[]).filter(a=>a.completed).map(a=>a.exam_id));
- buddyOpen=(examCache||[]).filter(e=>!done.has(e.id)).length;
- const h=new Date().getHours();
- const tail=h<5?' (لسه صاحي؟ 🌙)':h<12?' صباح الفل ☀️':'';
- if(buddyOpen>0) buddyMsg=`نورت يا ${name} 👋${tail} جاهز للامتحان النهاردة؟ عندك ${buddyOpen} ${buddyOpen===1?'امتحان':'امتحانات'} متاحة.`;
- else if(!(examCache||[]).length) buddyMsg=`نورت يا ${name} 👋${tail} مفيش امتحانات حالياً، استغل الوقت وذاكر 📚`;
- else buddyMsg=`عاش يا ${name}! 🎉 خلّصت كل الامتحانات المتاحة. أنا فخور بيك!`;
- document.getElementById('buddyGo').classList.toggle('hidden',buddyOpen===0);
- el.classList.remove('hidden');
- typeBuddy(buddyMsg);
- clearTimeout(buddyAuto);buddyAuto=setTimeout(closeBuddy,15000);
+ o=o||{};const text=o.text||'';
+ clearInterval(buddyTyper);clearTimeout(buddyHideT);
+ el.className='buddy mood-'+(o.mood||'happy')+' tone-'+(o.tone||'info');
+ const ttl=document.getElementById('buddyTitle');ttl.textContent=o.title||'';ttl.classList.toggle('hidden',!o.title);
+ const box=document.getElementById('buddyActions');box.innerHTML='';
+ (o.actions||[]).forEach(a=>{const b=document.createElement('button');b.type='button';b.className='btn small '+(a.cls||'');b.textContent=a.label;b.onclick=()=>{closeBuddy();try{a.fn()}catch(e){console.warn(e)}};box.appendChild(b)});
+ box.classList.toggle('hidden',!(o.actions||[]).length);
+ const dur=o.duration||Math.min(14000,Math.max(6000,text.length*80+2800));
+ const bar=document.getElementById('buddyBar');bar.style.animation='none';void bar.offsetWidth;bar.style.animation='';bar.style.setProperty('--dur',dur+'ms');
+ void el.offsetWidth;el.classList.add('in');
+ typeBuddy(text);
 }
 function typeBuddy(text){
- const box=document.getElementById('buddyText');clearInterval(buddyTimer);
+ const box=document.getElementById('buddyText');clearInterval(buddyTyper);
  if(window.matchMedia&&matchMedia('(prefers-reduced-motion:reduce)').matches){box.textContent=text;return}
  const chars=Array.from(text);let i=0;box.textContent='';
- buddyTimer=setInterval(()=>{i++;box.textContent=chars.slice(0,i).join('');if(i>=chars.length)clearInterval(buddyTimer)},35);
+ buddyTyper=setInterval(()=>{i++;box.textContent=chars.slice(0,i).join('');if(i>=chars.length)clearInterval(buddyTyper)},26);
 }
 function closeBuddy(){
- clearInterval(buddyTimer);clearTimeout(buddyAuto);
- const el=document.getElementById('buddy');if(el)el.classList.add('hidden');
+ const el=document.getElementById('buddy');if(!el||el.classList.contains('hidden'))return;
+ clearInterval(buddyTyper);el.classList.remove('in');el.classList.add('out');
+ clearTimeout(buddyHideT);buddyHideT=setTimeout(()=>{el.classList.add('hidden');el.classList.remove('out')},330);
 }
-function buddyGo(){closeBuddy();showPage('exams',document.querySelectorAll('.nav button')[1])}
+
+/* ترحيب الصفحة الرئيسية */
+function showBuddy(){
+ if(!profile)return;
+ const name=firstName();
+ const done=new Set((attempts||[]).filter(a=>a.completed).map(a=>a.exam_id));
+ const open=(examCache||[]).filter(e=>!done.has(e.id)).length;
+ const h=new Date().getHours();
+ const tail=h<5?' (لسه صاحي؟ 🌙)':h<12?' صباح الفل ☀️':'';
+ const acts=[];let text,title='👋 أهلاً بيك',mood='happy';
+ if(open>0){text=`نورت يا ${name}!${tail} جاهز للامتحان النهاردة؟ عندك ${open} ${open===1?'امتحان':'امتحانات'} متاحة.`;acts.push({label:'يلا نبدأ ▶',cls:'green',fn:()=>goPage('exams')});}
+ else if(!(examCache||[]).length){text=`نورت يا ${name}!${tail} مفيش امتحانات حالياً، استغل الوقت وذاكر 📚`;}
+ else{text=`عاش يا ${name}! خلّصت كل الامتحانات المتاحة. أنا فخور بيك!`;title='🎉 شغل عالي';mood='cheer';}
+ buddySay({text,title,mood,tone:'info',actions:acts,duration:12000});
+}
+
+/* تشجيع بعد الامتحان حسب النجاح أو السقوط */
+function examBuddy(pct,examId){
+ const name=firstName(),p=Math.round(pct);
+ let o;
+ if(pct>=90)o={title:'🏆 أداء أسطوري',mood:'cheer',tone:'gold',text:`${name}، ${p}%! مستواك خطير فعلاً. كمّل كده وهتفضل في القمة.`};
+ else if(pct>=75)o={title:'🎉 مبروك النجاح',mood:'cheer',tone:'success',text:`جامد يا ${name}! جبت ${p}%. شغل محترم وتستاهل التقدير.`};
+ else if(pct>=50)o={title:'✅ نجحت',mood:'happy',tone:'success',text:`مبروك يا ${name}، نجحت بنسبة ${p}%. شوية تركيز زيادة وهتوصل لنتيجة أحسن في الجاي.`};
+ else if(pct>=30)o={title:'💪 لسه الفرصة قدامك',mood:'sad',tone:'warn',text:`النتيجة دي (${p}%) مش حكم عليك يا ${name}. راجع الأسئلة اللي غلطت فيها وهتتعوض بإذن الله.`};
+ else o={title:'🌱 ابدأ من جديد',mood:'sad',tone:'warn',text:`مفيش مشكلة يا ${name}، كل الناجحين وقعوا قبل كده. ذاكر براحة وراجع إجاباتك، وأنا معاك خطوة بخطوة.`};
+ o.actions=[];
+ if(pct>=50)o.actions.push({label:'شوف ترتيبك 🏆',cls:'gold',fn:()=>{closeExamModal();goPage('leaders')}});
+ else if(examId)o.actions.push({label:'راجع إجاباتك',fn:()=>{closeExamModal();showReviewNotice(examId)}});
+ o.duration=9500;
+ buddySay(o);
+}
+
+/* لوحة المتصدرين */
+function myRankIndex(){
+ const l=cachedLeaderboard||[];if(!l.length||!profile)return -1;
+ let i=l.findIndex(x=>(x.student_id&&x.student_id===profile.id)||(x.id&&x.id===profile.id)||(x.student_code&&x.student_code===profile.student_code));
+ if(i<0){const n=(profile.full_name||'').trim();if(n)i=l.findIndex(x=>(x.full_name||'').trim()===n);}
+ return i;
+}
+function leadersBuddy(){
+ if(!profile)return;
+ const name=firstName(),l=cachedLeaderboard||[],i=myRankIndex(),acts=[];
+ let o;
+ if(!l.length)o={title:'🏆 لوحة المتصدرين',mood:'happy',tone:'info',text:`لسه مفيش نتايج كفاية للترتيب. خلّص امتحان وكن أول اسم في اللوحة يا ${name}!`};
+ else if(i<0){o={title:'🏆 المنافسة مفتوحة',mood:'tip',tone:'info',text:`اسمك لسه مش في اللوحة يا ${name}. خلّص أول امتحان وادخل المنافسة!`};acts.push({label:'الامتحانات',fn:()=>goPage('exams')});}
+ else{
+  const rank=i+1,pct=Number(l[i].average_percentage||0);
+  if(rank===1)o={title:'👑 أنت المتصدر الأول',mood:'cheer',tone:'gold',text:`ما شاء الله يا ${name}! أنت على القمة بمتوسط ${pct.toFixed(1)}%. حافظ على مكانك.`};
+  else if(rank<=3)o={title:'🥇 على منصة التتويج',mood:'cheer',tone:'success',text:`أنت في المركز ${rank} يا ${name}! قريب جداً من القمة، خطوة كمان وتوصل.`};
+  else{
+   const gap=Math.max(0,Number(l[i-1].average_percentage||0)-pct);
+   o={title:`⭐ مركزك ${rank} من ${l.length}`,mood:'happy',tone:'info',text:gap>0?`شغل حلو يا ${name}! باقي لك ${gap.toFixed(1)}% وتتخطى اللي قدامك. كمّل!`:`شغل حلو يا ${name}! كمّل مذاكرة وهتطلع في الترتيب.`};
+  }
+ }
+ if(profile&&!(profile.avatar_url&&String(profile.avatar_url).trim())){
+  o.text+=' وضيف صورتك عشان تظهر بشكل أحلى في اللوحة 📸';
+  acts.push({label:'ضيف صورة',cls:'light',fn:chooseAvatar});
+ }
+ o.actions=acts;o.duration=8500;
+ buddySay(o);
+}
+
+/* الملف الشخصي: تذكير بالنواقص */
+function profileTasks(){
+ const nameOk=((profile&&profile.full_name)||'').trim().split(/\s+/).filter(Boolean).length>=2;
+ return [
+  {key:'photo',done:!!(profile.avatar_url&&String(profile.avatar_url).trim()),label:'صورة شخصية',hint:'تاخد علامة التوثيق ✓',btn:'إضافة صورة',fn:chooseAvatar,title:'📸 ضيف صورتك',msg:'لسه ماضفتش صورة شخصية. ضيفها عشان تاخد علامة التوثيق وتظهر بشكل محترم في لوحة المتصدرين.'},
+  {key:'name',done:nameOk,label:'الاسم الكامل',hint:'اسمين على الأقل',btn:'تعديل الاسم',fn:openProfileSettings,title:'✍️ كمّل اسمك',msg:'اكتب اسمك كامل (اسمين على الأقل) عشان يظهر صح في لوحة المتصدرين.'},
+  {key:'bio',done:!!(profile.bio&&String(profile.bio).trim()),label:'نبذة عنك',hint:'سطر واحد يكفي',btn:'كتابة نبذة',fn:openProfileSettings,title:'📝 عرّف بنفسك',msg:'لسه ماكتبتش نبذة عنك. سطر بسيط يخلي ملفك أحلى.'},
+  {key:'exam',done:myDoneCount>0,label:'أول امتحان',hint:'يدخلك الترتيب',btn:'ابدأ أول امتحان',fn:()=>goPage('exams'),title:'🚀 ابدأ رحلتك',msg:'لسه ماخلصتش أي امتحان. أول امتحان هيدخلك في ترتيب المتصدرين.'}
+ ];
+}
+function renderChecklist(){
+ if(!profile)return;
+ const box=document.getElementById('pcItems');if(!box)return;
+ const t=profileTasks(),done=t.filter(x=>x.done).length,pct=Math.round(done/t.length*100);
+ document.getElementById('pcPct').textContent=pct+'%';
+ document.getElementById('pcBar').style.width=pct+'%';
+ document.getElementById('pcSub').textContent=done===t.length?'ملفك مكتمل، ممتاز! ✨':`فاضل ${t.length-done} ${t.length-done===1?'خطوة':'خطوات'} لإكمال ملفك`;
+ box.innerHTML=t.map(x=>`<button type="button" class="pc-item ${x.done?'done':''}" ${x.done?'disabled':`onclick="profileTask('${x.key}')"`}><span class="pc-ico">${x.done?'✓':'+'}</span><span><b>${x.label}</b><small>${x.done?'تم ✓':x.hint}</small></span></button>`).join('');
+}
+function profileTask(key){const t=profileTasks().find(x=>x.key===key);if(t&&!t.done)t.fn();}
+function profileBuddy(praise){
+ if(!profile)return;
+ const name=firstName(),miss=profileTasks().filter(x=>!x.done);
+ if(!miss.length){
+  buddySay({title:'🌟 ملفك مكتمل',mood:'cheer',tone:'success',text:`${praise?praise+' ':''}ملفك كامل يا ${name}، ما شاء الله! دلوقتي ركّز في الامتحانات.`,duration:6500});
+  return;
+ }
+ const m=miss[0],more=miss.length>1?` (وفاضل ${miss.length-1} ${miss.length-1===1?'خطوة':'خطوات'} تانية)`:'';
+ buddySay({title:m.title,mood:'tip',tone:'info',text:`${praise?praise+' ':''}${m.msg}${more}`,actions:[{label:m.btn,cls:'green',fn:m.fn}],duration:9000});
+}
 
 setInterval(checkNewExams,30000);
 

@@ -968,6 +968,10 @@ th{background:var(--light-blue);color:var(--navy-dark);font-weight:700}
 .top-avatar-button{border:0;background:transparent;padding:0;display:flex;align-items:center}
 button,.btn{touch-action:manipulation}input,textarea,select{font-size:16px!important}
 
+/* Exam notifications card */
+.notif-card{display:flex;align-items:center;gap:14px;background:var(--light-blue);border:1px solid var(--border-line);border-radius:18px;padding:14px 18px;margin-bottom:16px;line-height:1.6}
+.notif-card .btn{margin-right:auto;flex-shrink:0}
+
 /* Mobile Responsive Styling */
 @media(max-width:850px){
   .library-grid { grid-template-columns: repeat(2, 1fr); gap: 14px; }
@@ -1106,6 +1110,11 @@ button,.btn{touch-action:manipulation}input,textarea,select{font-size:16px!impor
   <section class="main">
    <!-- الصفحة الرئيسية -->
    <div id="homePage">
+    <div id="notifCard" class="notif-card hidden">
+      <span style="font-size:28px">🔔</span>
+      <div><b>فعّل إشعارات الامتحانات</b><br><span class="muted">هنبلغك على المتصفح فور نزول امتحان جديد.</span></div>
+      <button class="btn small" onclick="enableNotifications()">تفعيل</button>
+    </div>
     <div class="welcome">
      <div class="welcome-text">
       <h2 id="welcomeName">أهلاً بك، <span class="gold-name">متفوق</span></h2>
@@ -1486,6 +1495,9 @@ async function openStudent(p){
  badgeRefreshHandle=setInterval(refreshStudentBadges,30000);
  await loadExams();
  await loadMyResults();
+ renderNotifCard();
+ checkNewExams();
+ subscribeExamsLive();
 }
 
 let autoCloseRoyalTimer = null;
@@ -1963,6 +1975,55 @@ async function downloadPdf(url, filename) {
 
 function esc(v){return String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
 function date(v){return v?new Date(v).toLocaleString('ar-EG'):'—'}
+/* ===== إشعارات الامتحانات الجديدة ===== */
+if('serviceWorker' in navigator)navigator.serviceWorker.register('sw.js').catch(()=>{});
+const notifIcon='data:image/svg+xml;charset=UTF-8,'+encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" width="128" height="128"><rect width="128" height="128" rx="28" fill="#0D2B56"/><text x="64" y="88" font-size="70" text-anchor="middle">🎓</text></svg>');
+let examsChannel=null,checkingExams=false;
+const knownKey=()=>'exam_known_ids_'+(profile?.student_code||'');
+function renderNotifCard(){
+ const c=document.getElementById('notifCard');if(!c)return;
+ c.classList.toggle('hidden',!('Notification' in window)||Notification.permission!=='default');
+}
+async function enableNotifications(){
+ if(!('Notification' in window)){toast('متصفحك لا يدعم الإشعارات.');return}
+ const p=await Notification.requestPermission();
+ renderNotifCard();
+ toast(p==='granted'?'تم تفعيل الإشعارات ✅':'لم يتم السماح بالإشعارات. يمكنك تفعيلها من إعدادات المتصفح.');
+}
+async function notifyNewExam(list){
+ const title=list.length===1?'امتحان جديد 📝':list.length+' امتحانات جديدة 📝';
+ const body=list.map(e=>e.title).join(' • ');
+ toast(title+' — '+body);
+ if(!('Notification' in window)||Notification.permission!=='granted')return;
+ const o={body,icon:notifIcon,badge:notifIcon,tag:'new-exam',renotify:true,dir:'rtl',lang:'ar',data:{url:location.href}};
+ try{const reg=await navigator.serviceWorker?.getRegistration();if(reg){await reg.showNotification(title,o);return}}catch(e){}
+ try{new Notification(title,o)}catch(e){}
+}
+async function checkNewExams(){
+ if(!profile||!db||checkingExams)return;
+ checkingExams=true;
+ try{
+  const {data,error}=await db.from('exams').select('id,title').eq('published',true).eq('target_year','الأولى').eq('target_department','اللغة العربية');
+  if(error||!data)return;
+  let known=null;try{known=JSON.parse(localStorage.getItem(knownKey()))}catch(e){}
+  const ids=data.map(e=>e.id);
+  const save=arr=>{try{localStorage.setItem(knownKey(),JSON.stringify(arr))}catch(e){}};
+  if(!Array.isArray(known)){save(ids);return}
+  const fresh=data.filter(e=>!known.includes(e.id));
+  if(fresh.length){
+   save([...new Set([...known,...ids])]);
+   notifyNewExam(fresh);refreshStudentBadges();loadExams();
+  }
+ }finally{checkingExams=false}
+}
+function subscribeExamsLive(){
+ try{
+  if(examsChannel)db.removeChannel(examsChannel);
+  examsChannel=db.channel('exams-live').on('postgres_changes',{event:'*',schema:'public',table:'exams'},()=>checkNewExams()).subscribe();
+ }catch(e){}
+}
+setInterval(checkNewExams,30000);
+
 restoreStudent();
 </script>
 </body>

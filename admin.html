@@ -6,30 +6,136 @@
 <title>لوحة إدارة منصة الامتحانات</title>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <style>
-:root{--green:#123d32;--green2:#1b5a49;--gold:#c9a45c;--bg:#f4f6f3;--ink:#1d2b26;--muted:#718078;--line:#e4e9e5;--white:#fff;--red:#b84444}
-*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font-family:Tahoma,Arial,sans-serif}
-button,input,select,textarea{font:inherit}button{cursor:pointer;border:0}
-.top{background:linear-gradient(120deg,var(--green),#0b2b24);color:#fff;padding:20px 5%;display:flex;justify-content:space-between;align-items:center;gap:15px;box-shadow:0 5px 20px #102e2520}
-.brand{display:flex;align-items:center;gap:12px}.brandmark{width:46px;height:46px;border-radius:15px;background:#ffffff18;border:1px solid #ffffff35;display:grid;place-items:center;color:var(--gold);font-size:24px}.brand h1{font-size:19px;margin:0 0 5px}.brand p{margin:0;color:#c7d7d0;font-size:12px}
-.wrap{max-width:1200px;margin:28px auto;padding:0 18px}.login{max-width:430px;margin:8vh auto;background:#fff;padding:30px;border-radius:22px;box-shadow:0 15px 45px #193b2b12}.login h2{margin:0 0 8px;color:var(--green)}.muted{color:var(--muted);font-size:13px;line-height:1.8}
-.field{display:flex;flex-direction:column;gap:7px;margin:15px 0}.field label{font-size:13px;font-weight:bold}.field input,.field select,.field textarea{width:100%;border:1px solid var(--line);border-radius:11px;padding:12px;background:#fff;outline:none}.field input:focus,.field select:focus,.field textarea:focus{border-color:var(--green2);box-shadow:0 0 0 3px #1b5a4912}
-.btn{padding:11px 17px;border-radius:11px;background:var(--green2);color:#fff;font-weight:bold}.btn:hover{filter:brightness(1.08)}.btn.gold{background:var(--gold);color:#1c2c25}.btn.light{background:#edf3ef;color:var(--green)}.btn.red{background:#fff0f0;color:var(--red)}.btn.small{padding:8px 11px;font-size:12px}.btn:disabled{opacity:0.6;cursor:not-allowed}
-.hidden{display:none!important}.gate{max-width:430px;margin:9vh auto;background:#fff;padding:28px;border-radius:20px;box-shadow:0 15px 45px #193b2b18}.gate h2{color:var(--green);margin-top:0}.gate input{width:100%;padding:13px;border:1px solid var(--line);border-radius:11px;margin:12px 0}
-.error{color:var(--red);font-size:13px;margin-top:10px}.success{color:#23744d;font-size:13px;margin-top:10px}
-.layout{display:grid;grid-template-columns:235px 1fr;gap:22px}.side{background:var(--green);border-radius:19px;padding:16px;height:max-content;position:sticky;top:15px}.side .nav{display:flex;flex-direction:column;gap:7px}.nav button{text-align:right;padding:13px;border-radius:10px;background:transparent;color:#d9e6df}.nav button.active,.nav button:hover{background:#ffffff19;color:#fff}.nav button span{margin-left:9px}
-.content{min-width:0}.pagehead{display:flex;justify-content:space-between;align-items:center;margin-bottom:18px;gap:10px}.pagehead h2{margin:0;color:var(--green);font-size:22px}.cards{display:grid;grid-template-columns:repeat(4,1fr);gap:13px;margin-bottom:20px}.stat{background:#fff;border:1px solid var(--line);border-radius:16px;padding:17px}.stat small{color:var(--muted)}.stat strong{display:block;font-size:25px;color:var(--green);margin-top:9px}
-.panel{background:#fff;border:1px solid var(--line);border-radius:17px;padding:20px;margin-bottom:17px}.panel h3{margin:0 0 15px;color:var(--green);font-size:17px}.grid2{display:grid;grid-template-columns:1fr 1fr;gap:13px}.tablewrap{overflow:auto}table{width:100%;border-collapse:collapse;min-width:580px}th,td{text-align:right;padding:12px;border-bottom:1px solid var(--line);font-size:13px}th{color:var(--muted);font-weight:bold;background:#f8faf8}td{vertical-align:middle}.pill{display:inline-block;padding:5px 9px;border-radius:30px;background:#eaf4ed;color:#267048;font-size:11px}.pill.off{background:#fff1e2;color:#98601e}.actions{display:flex;gap:7px;flex-wrap:wrap}.toolbar{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:13px}.toolbar input{flex:1;min-width:180px;border:1px solid var(--line);border-radius:10px;padding:10px}
-.notice{background:#fff8e9;border:1px solid #f0dfb9;color:#765b27;padding:12px 14px;border-radius:12px;font-size:12px;line-height:1.8;margin-bottom:15px}
-.qrow{border:1px solid var(--line);padding:13px;border-radius:12px;margin:10px 0}.qrow h4{margin:0 0 8px;font-size:14px}.qrow p{margin:4px 0;color:var(--muted);font-size:12px}
+:root{--green:#123d32;--green2:#1b5a49;--green3:#e8f1ec;--gold:#c9a45c;--bg:#f3f5f2;--ink:#1d2b26;--muted:#6b7a72;--line:#e2e8e4;--white:#fff;--red:#b84444;--red-bg:#fdeeee;--amber:#98601e;--amber-bg:#fff3e2;--ok:#23744d;--ok-bg:#e6f5ec;--shadow:0 2px 10px #12302811}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:"Segoe UI",Tahoma,Arial,sans-serif;line-height:1.6}
+button,input,select,textarea{font:inherit;color:inherit}button{cursor:pointer;border:0}
+h2,h3,h4{margin:0}
+.hidden{display:none!important}
+.muted{color:var(--muted);font-size:13px;line-height:1.8}
+
+/* Top bar */
+.top{background:linear-gradient(120deg,var(--green),#0b2b24);color:#fff;padding:14px 5%;display:flex;justify-content:space-between;align-items:center;gap:15px;box-shadow:0 4px 18px #102e2528;position:sticky;top:0;z-index:30}
+.brand{display:flex;align-items:center;gap:12px}
+.brandmark{width:42px;height:42px;border-radius:13px;background:#ffffff18;border:1px solid #ffffff35;display:grid;place-items:center;color:var(--gold);font-size:22px}
+.brand h1{font-size:17px;margin:0}.brand p{margin:0;color:#c7d7d0;font-size:12px}
+.menu-toggle{display:none;background:#ffffff18;color:#fff;border-radius:10px;padding:8px 12px;font-size:18px}
+.logout{background:#ffffff18;color:#fff;border-radius:10px;padding:8px 14px;font-size:13px}
+
+/* Login */
+.gate{max-width:420px;margin:10vh auto;background:#fff;padding:30px;border-radius:20px;box-shadow:0 15px 45px #193b2b18}
+.gate h2{color:var(--green);margin-bottom:6px}
+.gate input{width:100%;padding:13px;border:1px solid var(--line);border-radius:11px;margin:14px 0;outline:none}
+.gate input:focus{border-color:var(--green2);box-shadow:0 0 0 3px #1b5a4916}
+
+/* Layout */
+.wrap{max-width:1280px;margin:24px auto;padding:0 18px}
+.layout{display:grid;grid-template-columns:230px 1fr;gap:22px;align-items:start}
+.side{background:var(--green);border-radius:18px;padding:12px;position:sticky;top:84px}
+.nav{display:flex;flex-direction:column;gap:4px}
+.nav button{display:flex;align-items:center;gap:10px;text-align:right;padding:12px 13px;border-radius:10px;background:transparent;color:#d3e2da;font-size:14px;transition:.15s}
+.nav button i{font-style:normal;width:20px;text-align:center}
+.nav button:hover{background:#ffffff14;color:#fff}
+.nav button.active{background:#fff;color:var(--green);font-weight:bold}
+.nav .sep{height:1px;background:#ffffff1f;margin:8px 4px}
+.nav button.danger{color:#f3b9b9}
+.content{min-width:0}
+.pagehead{display:flex;justify-content:space-between;align-items:center;margin-bottom:18px;gap:10px;flex-wrap:wrap}
+.pagehead h2{color:var(--green);font-size:21px}
+.pagehead .sub{color:var(--muted);font-size:13px;margin-top:2px}
+
+/* Cards / panels */
+.cards{display:grid;grid-template-columns:repeat(4,1fr);gap:13px;margin-bottom:18px}
+.stat{background:#fff;border:1px solid var(--line);border-radius:16px;padding:16px;box-shadow:var(--shadow)}
+.stat small{color:var(--muted)}.stat strong{display:block;font-size:26px;color:var(--green);margin-top:6px}
+.panel{background:#fff;border:1px solid var(--line);border-radius:16px;padding:20px;margin-bottom:16px;box-shadow:var(--shadow)}
+.panel>h3,.panel-head h3{color:var(--green);font-size:16px}
+.panel>h3{margin-bottom:14px}
+.panel-head{display:flex;justify-content:space-between;align-items:center;gap:10px;margin-bottom:14px;flex-wrap:wrap}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:0 14px}
+.grid3{display:grid;grid-template-columns:repeat(3,1fr);gap:0 14px}
+
+/* Forms */
+.field{display:flex;flex-direction:column;gap:6px;margin:0 0 14px}
+.field label{font-size:13px;font-weight:bold}
+.field input,.field select,.field textarea,.toolbar input,.toolbar select{width:100%;border:1px solid var(--line);border-radius:10px;padding:10px 12px;background:#fff;outline:none;transition:.15s}
+.field input:focus,.field select:focus,.field textarea:focus,.toolbar input:focus,.toolbar select:focus{border-color:var(--green2);box-shadow:0 0 0 3px #1b5a4914}
+.field .hint{font-size:11.5px;color:var(--muted)}
+.btn{padding:10px 16px;border-radius:10px;background:var(--green2);color:#fff;font-weight:bold;font-size:14px;transition:.15s}
+.btn:hover{filter:brightness(1.1)}
+.btn.gold{background:var(--gold);color:#1c2c25}.btn.light{background:var(--green3);color:var(--green)}.btn.red{background:var(--red-bg);color:var(--red)}.btn.ghost{background:#fff;color:var(--green);border:1px solid var(--line)}
+.btn.small{padding:6px 10px;font-size:12px;border-radius:8px}
+.btn:disabled{opacity:.55;cursor:not-allowed}
+.error{color:var(--red);font-size:13px;margin:6px 0 0;min-height:18px}
+.notice{background:#fff8e9;border:1px solid #f0dfb9;color:#765b27;padding:12px 14px;border-radius:12px;font-size:12.5px;line-height:1.8;margin-bottom:15px}
+.notice.info{background:#eef6ff;border-color:#cfe2f7;color:#2b4c70}
+
+/* Tables */
+.tablewrap{overflow:auto;border:1px solid var(--line);border-radius:12px}
+table{width:100%;border-collapse:collapse;min-width:620px}
+th,td{text-align:right;padding:11px 12px;border-bottom:1px solid var(--line);font-size:13px}
+th{color:var(--muted);font-weight:bold;background:#f8faf8;white-space:nowrap}
+tbody tr:last-child td{border-bottom:0}tbody tr:hover{background:#fafcfa}
+td.empty{text-align:center;color:var(--muted);padding:28px}
+.pill{display:inline-block;padding:3px 10px;border-radius:30px;background:var(--ok-bg);color:var(--ok);font-size:11.5px;font-weight:bold}
+.pill.off{background:var(--amber-bg);color:var(--amber)}
+.pill.type{background:var(--green3);color:var(--green2)}
+.actions{display:flex;gap:6px;flex-wrap:wrap}
+.toolbar{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:13px}.toolbar input{flex:1;min-width:180px}.toolbar select{width:auto;min-width:160px}
 .book-thumb{width:45px;height:60px;object-fit:cover;border-radius:6px;border:1px solid var(--line)}
-#toast{position:fixed;bottom:18px;left:18px;background:#173d32;color:#fff;padding:12px 17px;border-radius:12px;display:none;z-index:20;max-width:90%}
-@media(max-width:850px){.layout{grid-template-columns:1fr}.side{position:static}.side .nav{display:grid;grid-template-columns:repeat(2,1fr)}.cards{grid-template-columns:repeat(2,1fr)}}
-@media(max-width:520px){.top{padding:15px}.brand h1{font-size:16px}.wrap{padding:0 12px;margin:16px auto}.panel{padding:14px}.grid2{grid-template-columns:1fr}.pagehead h2{font-size:18px}.side .nav{grid-template-columns:1fr 1fr}}
+.loading{color:var(--muted);padding:22px;text-align:center}
+
+/* Exam builder */
+.crumbs{display:flex;align-items:center;gap:8px;margin-bottom:14px;font-size:13px;color:var(--muted)}
+.crumbs a{color:var(--green2);cursor:pointer;font-weight:bold}
+.steps{display:flex;gap:8px;margin-bottom:16px;flex-wrap:wrap}
+.step{display:flex;align-items:center;gap:8px;background:#fff;border:1px solid var(--line);padding:8px 14px;border-radius:30px;font-size:13px;color:var(--muted)}
+.step b{width:22px;height:22px;border-radius:50%;background:var(--line);display:grid;place-items:center;font-size:12px;color:#fff}
+.step.on{color:var(--green);border-color:var(--green2);font-weight:bold}.step.on b{background:var(--green2)}
+.step.done b{background:var(--ok)}
+.builder-grid{display:grid;grid-template-columns:1.15fr 1fr;gap:16px;align-items:start}
+.seg{display:flex;background:var(--green3);border-radius:10px;padding:4px;gap:4px}
+.seg button{flex:1;padding:8px;border-radius:8px;background:transparent;color:var(--green);font-size:13px;font-weight:bold}
+.seg button.on{background:#fff;box-shadow:0 1px 4px #0002}
+.optrow{display:flex;align-items:center;gap:8px;margin-bottom:8px}
+.optrow input[type=text]{flex:1;border:1px solid var(--line);border-radius:10px;padding:9px 12px;outline:none}
+.optrow input[type=text]:focus{border-color:var(--green2)}
+.optrow input[type=text][readonly]{background:#f6f8f6}
+.optrow input[type=radio]{width:19px;height:19px;accent-color:var(--green2);flex:none}
+.optrow .letter{width:24px;height:24px;border-radius:50%;background:var(--green3);color:var(--green);font-size:12px;font-weight:bold;display:grid;place-items:center;flex:none}
+.optrow.correct input[type=text]{border-color:var(--ok);background:var(--ok-bg)}
+.qcard{border:1px solid var(--line);border-radius:13px;padding:13px 14px;margin-bottom:10px;background:#fff}
+.qcard.editing{border-color:var(--gold);background:#fffcf4}
+.qcard-top{display:flex;justify-content:space-between;gap:10px;align-items:flex-start}
+.qnum{background:var(--green2);color:#fff;border-radius:8px;min-width:26px;height:26px;display:grid;place-items:center;font-size:12px;font-weight:bold;flex:none}
+.qtext{flex:1;font-weight:bold;font-size:14px;white-space:pre-wrap}
+.qopts{margin:10px 0 0;padding:0;list-style:none;display:grid;gap:5px}
+.qopts li{font-size:12.5px;padding:6px 10px;border-radius:8px;background:#f7f9f7;color:#4b5a52}
+.qopts li.ok{background:var(--ok-bg);color:var(--ok);font-weight:bold}
+.qmeta{display:flex;gap:8px;align-items:center;margin-top:10px;flex-wrap:wrap}
+.summary{display:flex;gap:14px;flex-wrap:wrap;background:var(--green3);border-radius:12px;padding:12px 14px;margin-bottom:14px;font-size:13px}
+.summary div b{color:var(--green);font-size:16px;margin-right:4px}
+.warn{color:var(--amber);font-weight:bold}
+
+#toast{position:fixed;bottom:18px;left:18px;background:#173d32;color:#fff;padding:12px 17px;border-radius:12px;display:none;z-index:50;max-width:90%;box-shadow:0 8px 24px #0004;font-size:14px}
+#toast.err{background:#8e2f2f}
+
+@media(max-width:980px){.builder-grid{grid-template-columns:1fr}}
+@media(max-width:850px){
+ .layout{grid-template-columns:1fr}.menu-toggle{display:block}
+ .side{position:static;display:none}.side.open{display:block}
+ .cards{grid-template-columns:repeat(2,1fr)}.grid3{grid-template-columns:1fr}
+}
+@media(max-width:560px){.top{padding:12px 14px}.wrap{padding:0 12px;margin:14px auto}.panel{padding:14px}.grid2{grid-template-columns:1fr}.pagehead h2{font-size:18px}}
 </style>
 </head>
 <body>
 <header class="top">
   <div class="brand"><div class="brandmark">✦</div><div><h1>منصة الامتحانات الجامعية</h1><p>لوحة الإدارة والتحكم</p></div></div>
+  <div style="display:flex;gap:8px;align-items:center">
+    <button id="menuBtn" class="menu-toggle hidden" onclick="document.getElementById('side').classList.toggle('open')">☰</button>
+    <button id="logoutBtn" class="logout hidden" onclick="logoutAdmin()">تسجيل الخروج</button>
+  </div>
 </header>
 
 <section id="adminGate" class="gate">
@@ -40,132 +146,156 @@ button,input,select,textarea{font:inherit}button{cursor:pointer;border:0}
 
 <main id="adminView" class="wrap hidden">
  <div class="layout">
-  <aside class="side">
+  <aside class="side" id="side">
    <div class="nav">
-    <button class="active" data-page="overview" onclick="showPage('overview',this)"><span>▦</span>الرئيسية</button>
-    <button data-page="students" onclick="showPage('students',this)"><span>♙</span>الطلاب</button>
-    <button data-page="subjects" onclick="showPage('subjects',this)"><span>▤</span>المواد</button>
-    <button data-page="exams" onclick="showPage('exams',this)"><span>✎</span>الامتحانات</button>
-    <button data-page="results" onclick="showPage('results',this)"><span>▥</span>النتائج</button>
-    <button data-page="library" onclick="showPage('library',this)"><span>📚</span>المكتبة</button>
-    <button data-page="chat" onclick="showPage('chat',this)"><span>☏</span>المحادثة</button>
-    <button data-page="reset" onclick="showPage('reset',this)"><span>↻</span>تصفير البيانات</button>
+    <button class="active" data-page="overview" onclick="showPage('overview',this)"><i>▦</i>الرئيسية</button>
+    <button data-page="students" onclick="showPage('students',this)"><i>♙</i>الطلاب</button>
+    <button data-page="subjects" onclick="showPage('subjects',this)"><i>▤</i>المواد</button>
+    <button data-page="exams" onclick="showPage('exams',this)"><i>✎</i>الامتحانات</button>
+    <button data-page="results" onclick="showPage('results',this)"><i>▥</i>النتائج</button>
+    <button data-page="library" onclick="showPage('library',this)"><i>📚</i>المكتبة</button>
+    <button data-page="chat" onclick="showPage('chat',this)"><i>☏</i>المحادثة</button>
+    <div class="sep"></div>
+    <button class="danger" data-page="reset" onclick="showPage('reset',this)"><i>↻</i>تصفير البيانات</button>
    </div>
   </aside>
+
   <section class="content">
+   <!-- الرئيسية -->
    <div id="overviewPage">
-    <div class="pagehead"><h2>نظرة عامة</h2><button class="btn light small" onclick="refreshAll()">تحديث البيانات ↻</button></div>
+    <div class="pagehead"><div><h2>نظرة عامة</h2><div class="sub">ملخص سريع لحالة المنصة</div></div><button class="btn light small" onclick="refreshAll()">تحديث ↻</button></div>
     <div class="cards">
      <div class="stat"><small>إجمالي الطلاب</small><strong id="statStudents">—</strong></div>
      <div class="stat"><small>المواد</small><strong id="statSubjects">—</strong></div>
      <div class="stat"><small>الامتحانات المنشورة</small><strong id="statExams">—</strong></div>
      <div class="stat"><small>المحاولات المكتملة</small><strong id="statAttempts">—</strong></div>
     </div>
-    <div class="panel"><h3>آخر الامتحانات</h3><div id="recentExams" class="muted">جارٍ تحميل البيانات...</div></div>
-    <div class="notice">تنبيه: لا تعرض لوحة الإدارة كلمات مرور الطلاب. طلاب المنصة يدخلون بكود الطالب فقط، دون بريد إلكتروني أو كلمة مرور.</div>
+    <div class="panel"><div class="panel-head"><h3>آخر الامتحانات</h3><button class="btn ghost small" onclick="goExams()">كل الامتحانات</button></div><div id="recentExams" class="muted">جارٍ تحميل البيانات...</div></div>
+    <div class="notice">لا تعرض لوحة الإدارة كلمات مرور الطلاب. الطلاب يدخلون بكود الطالب فقط، دون بريد إلكتروني أو كلمة مرور.</div>
    </div>
 
+   <!-- الطلاب -->
    <div id="studentsPage" class="hidden">
-    <div class="pagehead"><h2>حسابات الطلاب</h2><button class="btn light small" onclick="loadStudents()">تحديث</button></div>
-    <div class="panel"><div class="toolbar"><input id="studentSearch" placeholder="ابحث باسم الطالب..." oninput="filterTable('studentsTable',this.value)"></div><div class="tablewrap"><table id="studentsTable"><thead><tr><th>الاسم</th><th>كود الطالب</th><th>الفرقة</th><th>القسم</th><th>تاريخ التسجيل</th><th>حذف</th></tr></thead><tbody></tbody></table></div></div>
+    <div class="pagehead"><div><h2>حسابات الطلاب</h2><div class="sub" id="studentsCount"></div></div><button class="btn light small" onclick="loadStudents()">تحديث ↻</button></div>
+    <div class="panel"><div class="toolbar"><input id="studentSearch" placeholder="ابحث بالاسم أو الكود..." oninput="filterTable('studentsTable',this.value)"></div>
+     <div class="tablewrap"><table id="studentsTable"><thead><tr><th>الاسم</th><th>كود الطالب</th><th>الفرقة</th><th>القسم</th><th>تاريخ التسجيل</th><th>حذف</th></tr></thead><tbody></tbody></table></div></div>
    </div>
 
+   <!-- المواد -->
    <div id="subjectsPage" class="hidden">
-    <div class="pagehead"><h2>إدارة المواد</h2></div>
-    <div class="panel"><h3>إضافة مادة جديدة</h3><div class="grid2"><div class="field"><label>اسم المادة</label><input id="subjectName" placeholder="مثال: علوم القرآن"></div><div class="field"><label>وصف المادة</label><input id="subjectDesc" placeholder="وصف مختصر (اختياري)"></div></div><button class="btn" onclick="addSubject()">إضافة المادة</button></div>
+    <div class="pagehead"><div><h2>إدارة المواد</h2><div class="sub">أضف المواد التي تتبعها الامتحانات</div></div></div>
+    <div class="panel"><h3>إضافة مادة جديدة</h3>
+     <div class="grid2"><div class="field"><label>اسم المادة</label><input id="subjectName" placeholder="مثال: علوم القرآن" onkeydown="if(event.key==='Enter')addSubject()"></div><div class="field"><label>وصف المادة (اختياري)</label><input id="subjectDesc" placeholder="وصف مختصر"></div></div>
+     <button class="btn" onclick="addSubject()">إضافة المادة</button></div>
     <div class="panel"><h3>المواد الموجودة</h3><div class="tablewrap"><table id="subjectsTable"><thead><tr><th>المادة</th><th>الوصف</th><th>تاريخ الإضافة</th></tr></thead><tbody></tbody></table></div></div>
    </div>
 
+   <!-- الامتحانات: القائمة -->
    <div id="examsPage" class="hidden">
-    <div class="pagehead"><h2>إدارة الامتحانات</h2></div>
-    <div class="panel">
-     <h3>إنشاء امتحان يدويًا</h3>
-     <div class="grid2">
-      <div class="field"><label>المادة</label><select id="examSubject"></select></div>
-      <div class="field"><label>اسم الامتحان</label><input id="examTitle" placeholder="مثال: امتحان علوم القرآن الأول"></div>
-      <div class="field"><label>مدة الامتحان بالدقائق</label><input id="examDuration" type="number" min="1" placeholder="مثال: 30"></div>
-      <div class="field"><label>الدرجة النهائية</label><input id="examMarks" type="number" min="1" value="100"></div>
+    <div id="examsList">
+     <div class="pagehead"><div><h2>إدارة الامتحانات</h2><div class="sub">أنشئ الامتحانات وأضف أسئلتها وانشرها للطلاب</div></div>
+      <div class="actions"><button class="btn gold" onclick="openBuilder(null)">＋ امتحان جديد</button></div></div>
+     <div class="panel">
+      <div class="toolbar"><input id="examSearch" placeholder="ابحث باسم الامتحان أو المادة..." oninput="filterTable('examsTable',this.value)">
+       <select id="examStatusFilter" onchange="filterExamStatus()"><option value="">كل الحالات</option><option value="published">منشور</option><option value="draft">مسودة</option></select></div>
+      <div class="tablewrap"><table id="examsTable"><thead><tr><th>الامتحان</th><th>المادة</th><th>الأسئلة</th><th>المدة</th><th>الحالة</th><th>الإجراءات</th></tr></thead><tbody></tbody></table></div>
      </div>
-     <div class="field"><label>وصف الامتحان</label><textarea id="examDesc" rows="2" placeholder="تعليمات أو وصف مختصر"></textarea></div>
-     <button class="btn" onclick="createExam()">إنشاء الامتحان كمسودة</button>
-     <p class="muted">بعد الإنشاء أضف الأسئلة من قسم استيراد JSON أدناه، ثم انشر الامتحان.</p>
-    </div>
-    <div class="panel">
-     <h3>إضافة سؤال يدويًا إلى امتحان</h3>
-     <div class="field"><label>اختر الامتحان</label><select id="manualExamSelect"></select></div>
-     <div class="field"><label>نص السؤال</label><textarea id="manualQuestionText" rows="2" placeholder="اكتب السؤال هنا"></textarea></div>
-     <div class="grid2">
-      <div class="field"><label>نوع السؤال</label><select id="manualQuestionType" onchange="updateManualType()"><option value="multiple_choice">اختيار من متعدد</option><option value="true_false">صح أو خطأ</option></select></div>
-      <div class="field"><label>درجة السؤال</label><input id="manualQuestionMarks" type="number" min="0.5" step="0.5" value="1"></div>
-     </div>
-     <div id="manualOptionsArea">
-      <div class="grid2">
-       <div class="field"><label>الإجابة الأولى</label><input id="manualOption0" placeholder="الاختيار الأول"></div>
-       <div class="field"><label>الإجابة الثانية</label><input id="manualOption1" placeholder="الاختيار الثاني"></div>
-       <div class="field"><label>الإجابة الثالثة</label><input id="manualOption2" placeholder="الاختيار الثالث"></div>
-       <div class="field"><label>الإجابة الرابعة</label><input id="manualOption3" placeholder="الاختيار الرابع"></div>
+     <div class="panel">
+      <div class="panel-head"><h3>استيراد امتحان بصيغة JSON</h3><button class="btn ghost small" onclick="document.getElementById('jsonBox').classList.toggle('hidden')">إظهار / إخفاء</button></div>
+      <div id="jsonBox" class="hidden">
+       <div class="notice info">الصق كود الامتحان. يجب أن يحتوي على <b dir="ltr">subject</b> و<b dir="ltr">title</b> ومصفوفة <b dir="ltr">questions</b>. يُنشأ الامتحان كمسودة لتراجعه قبل النشر.</div>
+       <div class="field"><textarea id="examJson" rows="9" dir="ltr" style="text-align:left;font-family:monospace" placeholder='{"subject":"علوم القرآن","title":"الامتحان الأول","questions":[{"question_text":"...","question_type":"multiple_choice","options":["أ","ب","ج","د"],"correct_option":1,"marks":1}]}'></textarea></div>
+       <button class="btn gold" onclick="importExamJson()">استيراد الامتحان</button>
       </div>
      </div>
-     <div class="field"><label>الإجابة الصحيحة</label><select id="manualCorrect"><option value="0">الإجابة الأولى / صح</option><option value="1">الإجابة الثانية / خطأ</option><option value="2">الإجابة الثالثة</option><option value="3">الإجابة الرابعة</option></select></div>
-     <button class="btn" onclick="addManualQuestion()">إضافة السؤال</button>
     </div>
-    <div class="panel">
-     <h3>إضافة الأسئلة بلصق JSON</h3>
-     <div class="notice">الصق كود الامتحان الذي أجهزه لك. يجب أن يحتوي على اسم المادة واسم الامتحان ومصفوفة questions. ستُضاف الأسئلة إلى امتحان جديد كمسودة، ويمكنك مراجعته ثم نشره.</div>
-     <div class="field"><label>كود الامتحان JSON</label><textarea id="examJson" rows="10" dir="ltr" style="text-align:left;font-family:monospace" placeholder='{"subject":"علوم القرآن","title":"الامتحان الأول","questions":[{"question_text":"...","question_type":"multiple_choice","options":["أ","ب","ج","د"],"correct_option":1,"marks":1}]}'></textarea></div>
-     <button class="btn gold" onclick="importExamJson()">استيراد الامتحان</button>
+
+    <!-- منشئ الامتحان -->
+    <div id="examBuilder" class="hidden">
+     <div class="crumbs"><a onclick="closeBuilder()">الامتحانات</a><span>‹</span><span id="crumbTitle">امتحان جديد</span></div>
+     <div class="steps"><div class="step on" id="step1"><b>1</b>بيانات الامتحان</div><div class="step" id="step2"><b>2</b>الأسئلة</div><div class="step" id="step3"><b>3</b>المراجعة والنشر</div></div>
+
+     <div class="panel">
+      <div class="panel-head"><h3>بيانات الامتحان</h3><span id="builderStatus"></span></div>
+      <div class="grid2">
+       <div class="field"><label>المادة *</label><select id="examSubject"></select></div>
+       <div class="field"><label>اسم الامتحان *</label><input id="examTitle" placeholder="مثال: امتحان علوم القرآن الأول"></div>
+       <div class="field"><label>مدة الامتحان بالدقائق</label><input id="examDuration" type="number" min="1" placeholder="مثال: 30"></div>
+       <div class="field"><label>الدرجة النهائية *</label><input id="examMarks" type="number" min="1" value="100"><span class="hint">يمكنك ضبطها تلقائيًا من مجموع درجات الأسئلة لاحقًا.</span></div>
+      </div>
+      <div class="field"><label>وصف / تعليمات الامتحان</label><textarea id="examDesc" rows="2" placeholder="تعليمات أو وصف مختصر (اختياري)"></textarea></div>
+      <button id="saveExamBtn" class="btn" onclick="saveExamMeta()">حفظ وإنشاء الامتحان</button>
+     </div>
+
+     <div id="questionsArea" class="hidden">
+      <div class="builder-grid">
+       <div class="panel">
+        <div class="panel-head"><h3 id="qFormTitle">إضافة سؤال</h3><button id="cancelEditBtn" class="btn ghost small hidden" onclick="resetQuestionForm()">إلغاء التعديل</button></div>
+        <div class="field"><label>نص السؤال *</label><textarea id="qText" rows="3" placeholder="اكتب السؤال هنا"></textarea></div>
+        <div class="grid2">
+         <div class="field"><label>نوع السؤال</label>
+          <div class="seg"><button id="segMC" class="on" onclick="setQType('multiple_choice')">اختيار من متعدد</button><button id="segTF" onclick="setQType('true_false')">صح / خطأ</button></div></div>
+         <div class="field"><label>درجة السؤال</label><input id="qMarks" type="number" min="0.5" step="0.5" value="1"></div>
+        </div>
+        <div class="field" style="margin-bottom:6px"><label>الإجابات <span class="muted">— حدّد الدائرة بجوار الإجابة الصحيحة</span></label></div>
+        <div id="optsBox"></div>
+        <button id="addOptBtn" class="btn ghost small" onclick="addOption()">＋ إضافة اختيار</button>
+        <div style="margin-top:16px;display:flex;gap:8px;flex-wrap:wrap">
+         <button id="saveQBtn" class="btn" onclick="saveQuestion(false)">إضافة السؤال</button>
+         <button id="saveQNextBtn" class="btn light" onclick="saveQuestion(true)">إضافة وسؤال جديد</button>
+        </div>
+       </div>
+
+       <div class="panel">
+        <div class="panel-head"><h3>أسئلة الامتحان</h3><span class="pill type" id="qCountPill">0 سؤال</span></div>
+        <div class="summary" id="qSummary"></div>
+        <div id="qList"></div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:14px;border-top:1px solid var(--line);padding-top:14px">
+         <button class="btn gold" id="publishBtn" onclick="builderTogglePublish()">نشر الامتحان</button>
+         <button class="btn ghost" onclick="closeBuilder()">حفظ والعودة للقائمة</button>
+        </div>
+       </div>
+      </div>
+     </div>
     </div>
-    <div class="panel"><h3>الامتحانات</h3><div class="tablewrap"><table id="examsTable"><thead><tr><th>الامتحان</th><th>المادة</th><th>الأسئلة</th><th>الحالة</th><th>الإجراء</th><th>حذف</th></tr></thead><tbody></tbody></table></div></div>
    </div>
 
+   <!-- النتائج -->
    <div id="resultsPage" class="hidden">
-    <div class="pagehead"><h2>نتائج الطلاب</h2><button class="btn light small" onclick="loadResults()">تحديث</button></div>
-    <div class="panel"><div class="tablewrap"><table id="resultsTable"><thead><tr><th>الطالب</th><th>الامتحان</th><th>الدرجة</th><th>النسبة</th><th>تاريخ الانتهاء</th></tr></thead><tbody></tbody></table></div></div>
+    <div class="pagehead"><div><h2>نتائج الطلاب</h2></div><button class="btn light small" onclick="loadResults()">تحديث ↻</button></div>
+    <div class="panel"><div class="toolbar"><input placeholder="ابحث باسم الطالب أو الامتحان..." oninput="filterTable('resultsTable',this.value)"></div>
+     <div class="tablewrap"><table id="resultsTable"><thead><tr><th>الطالب</th><th>الامتحان</th><th>الدرجة</th><th>النسبة</th><th>تاريخ الانتهاء</th></tr></thead><tbody></tbody></table></div></div>
    </div>
 
-   <!-- قسم المكتبة الجديد -->
+   <!-- المكتبة -->
    <div id="libraryPage" class="hidden">
-    <div class="pagehead"><h2>إدارة المكتبة الدراسية</h2><button class="btn light small" onclick="loadBooks()">تحديث</button></div>
+    <div class="pagehead"><div><h2>إدارة المكتبة الدراسية</h2></div><button class="btn light small" onclick="loadBooks()">تحديث ↻</button></div>
     <div class="panel">
      <h3>رفع كتاب جديد (PDF + غلاف)</h3>
-     <div class="field">
-      <label>اسم الكتاب / المذكرة</label>
-      <input id="bookTitle" placeholder="مثال: مذكرة النحو والصرف - الفرقة الأولى">
-     </div>
+     <div class="field"><label>اسم الكتاب / المذكرة</label><input id="bookTitle" placeholder="مثال: مذكرة النحو والصرف - الفرقة الأولى"></div>
      <div class="grid2">
-      <div class="field">
-       <label>صورة غلاف الكتاب (JPG / PNG / WEBP)</label>
-       <input id="bookCover" type="file" accept="image/jpeg,image/png,image/webp">
-      </div>
-      <div class="field">
-       <label>ملف الكتاب (PDF)</label>
-       <input id="bookPdf" type="file" accept="application/pdf">
-      </div>
+      <div class="field"><label>صورة غلاف الكتاب (JPG / PNG / WEBP)</label><input id="bookCover" type="file" accept="image/jpeg,image/png,image/webp"></div>
+      <div class="field"><label>ملف الكتاب (PDF)</label><input id="bookPdf" type="file" accept="application/pdf"></div>
      </div>
      <button id="uploadBookBtn" class="btn gold" onclick="uploadBook()">رفع الكتاب ونشره في المكتبة</button>
     </div>
-    <div class="panel">
-     <h3>الكتب الموجودة في المكتبة</h3>
-     <div class="tablewrap">
-      <table id="booksTable">
-       <thead><tr><th>الغلاف</th><th>اسم الكتاب</th><th>الملف</th><th>تاريخ الرفع</th><th>حذف</th></tr></thead>
-       <tbody></tbody>
-      </table>
-     </div>
-    </div>
+    <div class="panel"><h3>الكتب الموجودة في المكتبة</h3>
+     <div class="tablewrap"><table id="booksTable"><thead><tr><th>الغلاف</th><th>اسم الكتاب</th><th>الملف</th><th>تاريخ الرفع</th><th>حذف</th></tr></thead><tbody></tbody></table></div></div>
    </div>
 
+   <!-- المحادثة -->
+   <div id="chatPage" class="hidden">
+    <div class="pagehead"><div><h2>المحادثة العامة</h2><div class="sub">آخر 100 رسالة</div></div><button class="btn light small" onclick="loadChat()">تحديث ↻</button></div>
+    <div class="panel"><div id="chatList" class="muted">جارٍ تحميل الرسائل...</div></div>
+   </div>
+
+   <!-- التصفير -->
    <div id="resetPage" class="hidden">
-    <div class="pagehead"><h2>تصفير بيانات المنصة</h2></div>
+    <div class="pagehead"><div><h2>تصفير بيانات المنصة</h2></div></div>
     <div class="panel"><h3>حذف جميع الطلاب والدرجات والمحاولات</h3>
-     <p class="muted">سيتم حذف ملفات الطلاب وأكوادهم، وكل المحاولات والإجابات والدرجات. ستظل المواد والامتحانات والأسئلة محفوظة كما هي. حسابات تسجيل الدخول الأصلية في Supabase Auth لن تُحذف.</p>
+     <div class="notice">سيتم حذف ملفات الطلاب وأكوادهم وكل المحاولات والإجابات والدرجات. تبقى المواد والامتحانات والأسئلة كما هي. حسابات Supabase Auth الأصلية لن تُحذف. هذا الإجراء لا يمكن التراجع عنه.</div>
      <button class="btn red" onclick="resetAllStudentData()">تصفير الطلاب والدرجات بالكامل</button>
     </div>
-   </div>
-
-   <div id="chatPage" class="hidden">
-    <div class="pagehead"><h2>المحادثة العامة</h2><button class="btn light small" onclick="loadChat()">تحديث</button></div>
-    <div class="panel"><div id="chatList" class="muted">جارٍ تحميل الرسائل...</div></div>
    </div>
   </section>
  </div>
@@ -175,242 +305,432 @@ button,input,select,textarea{font:inherit}button{cursor:pointer;border:0}
 <script>
 const SUPABASE_URL = "https://bouihbsnuuxqeityyrgl.supabase.co";
 const SUPABASE_ANON_KEY = "sb_publishable_Ug3xBkJESfI973ZpOeXLFA_wjPoExD-";
+const ADMIN_PASSWORD = "Yussefreda123@#$";
 const db = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-let currentUser = null;
-let subjectsCache = [];
+const DEFAULT_YEAR='الأولى', DEFAULT_DEPT='اللغة العربية';
+const PAGES=['overview','students','subjects','exams','results','library','chat','reset'];
+let subjectsCache=[];
+let B={examId:null,exam:null,questions:[],editingId:null,qType:'multiple_choice',saving:false};
 
-function toast(msg){const el=document.getElementById('toast');el.textContent=msg;el.style.display='block';setTimeout(()=>el.style.display='none',3200)}
-function msg(el,text,kind='error'){el.className=kind;el.textContent=text}
-async function openAdminDirectly(){ /* لا تفتح اللوحة قبل إدخال كلمة المرور */ }
+/* ---------- أدوات عامة ---------- */
+function esc(v){return String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
+function date(v){return v?new Date(v).toLocaleString('ar-EG'):'—'}
+function $(id){return document.getElementById(id)}
+let toastTimer;
+function toast(m,isErr){const el=$('toast');el.textContent=m;el.className=isErr?'err':'';el.style.display='block';clearTimeout(toastTimer);toastTimer=setTimeout(()=>el.style.display='none',3400)}
+function fail(prefix,error){toast(prefix+(error?.message?': '+error.message:''),true)}
+function filterTable(id,q){q=q.toLowerCase();document.querySelectorAll('#'+id+' tbody tr').forEach(tr=>tr.style.display=tr.innerText.toLowerCase().includes(q)?'':'none')}
+function emptyRow(cols,text){return `<tr><td class="empty" colspan="${cols}">${text}</td></tr>`}
+function loadingRow(cols){return `<tr><td class="loading" colspan="${cols}">جارٍ التحميل...</td></tr>`}
+
+/* ---------- الدخول ---------- */
 function unlockAdmin(){
- const pass=document.getElementById('adminPassword').value;
- if(pass!=='Yussefreda123@#$'){document.getElementById('gateError').textContent='كلمة المرور غير صحيحة';return}
- document.getElementById('adminGate').classList.add('hidden');
- document.getElementById('adminView').classList.remove('hidden');
+ if($('adminPassword').value!==ADMIN_PASSWORD){$('gateError').textContent='كلمة المرور غير صحيحة';return}
+ try{sessionStorage.setItem('adm_ok','1')}catch(e){}
+ enterAdmin();
+}
+function enterAdmin(){
+ $('adminGate').classList.add('hidden');$('adminView').classList.remove('hidden');
+ $('logoutBtn').classList.remove('hidden');$('menuBtn').classList.remove('hidden');
  refreshAll();
 }
+function logoutAdmin(){try{sessionStorage.removeItem('adm_ok')}catch(e){}location.reload()}
+try{if(sessionStorage.getItem('adm_ok')==='1')enterAdmin()}catch(e){}
+
+/* ---------- التنقل ---------- */
 function showPage(name,btn){
- ['overview','students','subjects','exams','results','library','chat','reset'].forEach(p=>document.getElementById(p+'Page').classList.toggle('hidden',p!==name));
- document.querySelectorAll('.nav button').forEach(b=>b.classList.remove('active'));
- if(btn)btn.classList.add('active');
+ PAGES.forEach(p=>$(p+'Page').classList.toggle('hidden',p!==name));
+ document.querySelectorAll('.nav button').forEach(b=>b.classList.toggle('active',b.dataset.page===name));
+ $('side').classList.remove('open');
+ if(name==='overview')refreshAll();
  if(name==='students')loadStudents();
  if(name==='subjects')loadSubjects();
- if(name==='exams'){loadSubjects();loadExams()}
+ if(name==='exams'){closeBuilder(true);loadSubjects();loadExams()}
  if(name==='results')loadResults();
  if(name==='library')loadBooks();
  if(name==='chat')loadChat();
+ window.scrollTo({top:0,behavior:'smooth'});
 }
+function goExams(){showPage('exams')}
+
+/* ---------- الرئيسية ---------- */
 async function refreshAll(){
  const {data:stats,error:statsError}=await db.rpc('get_admin_stats');
- if(statsError){toast('تعذر تحميل الإحصائيات: '+statsError.message);return}
+ if(statsError){fail('تعذر تحميل الإحصائيات',statsError);return}
  const x=Array.isArray(stats)?stats[0]:stats;
- document.getElementById('statStudents').textContent=x?.students_count??'—';
- document.getElementById('statSubjects').textContent=x?.subjects_count??'—';
- document.getElementById('statExams').textContent=x?.published_exams_count??'—';
- document.getElementById('statAttempts').textContent=x?.completed_attempts_count??'—';
+ $('statStudents').textContent=x?.students_count??'—';
+ $('statSubjects').textContent=x?.subjects_count??'—';
+ $('statExams').textContent=x?.published_exams_count??'—';
+ $('statAttempts').textContent=x?.completed_attempts_count??'—';
  const {data,error}=await db.from('exams').select('id,title,published,created_at,subjects(name)').order('created_at',{ascending:false}).limit(6);
- document.getElementById('recentExams').innerHTML=error?esc(error.message):(data?.length?data.map(x=>`<div style="padding:10px 0;border-bottom:1px solid #e8eee9"><b>${esc(x.title)}</b> — ${esc(x.subjects?.name||'')} <span class="pill ${x.published?'':'off'}">${x.published?'منشور':'مسودة'}</span></div>`).join(''):'لا توجد امتحانات حتى الآن.');
+ $('recentExams').innerHTML=error?esc(error.message):(data?.length?data.map(e=>`<div style="padding:10px 0;border-bottom:1px solid #e8eee9;display:flex;justify-content:space-between;gap:8px;align-items:center"><span><b>${esc(e.title)}</b> <span class="muted">— ${esc(e.subjects?.name||'')}</span></span><span class="pill ${e.published?'':'off'}">${e.published?'منشور':'مسودة'}</span></div>`).join(''):'لا توجد امتحانات حتى الآن.');
 }
-async function copyCode(code){if(!code)return;try{await navigator.clipboard.writeText(code);toast('تم نسخ كود الطالب');}catch(e){const t=document.createElement('textarea');t.value=code;document.body.appendChild(t);t.select();document.execCommand('copy');t.remove();toast('تم نسخ كود الطالب');}}
+
+/* ---------- الطلاب ---------- */
+async function copyCode(code){if(!code)return;try{await navigator.clipboard.writeText(code)}catch(e){const t=document.createElement('textarea');t.value=code;document.body.appendChild(t);t.select();document.execCommand('copy');t.remove()}toast('تم نسخ كود الطالب')}
 async function loadStudents(){
+ const body=document.querySelector('#studentsTable tbody');body.innerHTML=loadingRow(6);
  const {data,error}=await db.rpc('get_admin_students');
- const body=document.querySelector('#studentsTable tbody');
- if(error){body.innerHTML=`<tr><td colspan="6">${esc(error.message)}</td></tr>`;return}
- body.innerHTML=(data||[]).map(x=>`<tr><td>${esc(x.full_name)}</td><td><b dir="ltr">${esc(x.student_code||'—')}</b> <button class="btn light small" onclick="copyCode('${esc(x.student_code||'')}')">نسخ</button></td><td>${esc(x.academic_year||'—')}</td><td>${esc(x.department||'—')}</td><td>${date(x.created_at||x.registered_at)}</td><td><button class="btn red small" onclick="deleteStudent('${x.id}')">حذف</button></td></tr>`).join('')||'<tr><td colspan="6">لا يوجد طلاب مسجلون.</td></tr>';
-}
-function filterTable(id,q){document.querySelectorAll('#'+id+' tbody tr').forEach(tr=>tr.style.display=tr.innerText.toLowerCase().includes(q.toLowerCase())?'':'none')}
-async function loadSubjects(){
- const {data,error}=await db.from('subjects').select('*').order('name');
- if(error){toast(error.message);return}
- subjectsCache=data||[];
- document.querySelector('#subjectsTable tbody').innerHTML=subjectsCache.map(s=>`<tr><td>${esc(s.name)}</td><td>${esc(s.description)}</td><td>${date(s.created_at)}</td></tr>`).join('')||'<tr><td colspan="3">لا توجد مواد.</td></tr>';
- document.getElementById('examSubject').innerHTML=subjectsCache.map(s=>`<option value="${s.id}">${esc(s.name)}</option>`).join('')||'<option value="">أضف مادة أولًا</option>';
-}
-async function addSubject(){
- const name=document.getElementById('subjectName').value.trim(),description=document.getElementById('subjectDesc').value.trim();
- if(!name){toast('اكتب اسم المادة أولًا');return}
- const {error}=await db.from('subjects').insert({name,description});
- if(error){toast('تعذر إضافة المادة: '+error.message);return}
- document.getElementById('subjectName').value='';document.getElementById('subjectDesc').value='';
- toast('تمت إضافة المادة');await loadSubjects();await refreshAll();
-}
-async function createExam(){
- const subject_id=document.getElementById('examSubject').value,title=document.getElementById('examTitle').value.trim();
- if(!subject_id||!title){toast('اختر المادة واكتب اسم الامتحان');return}
- const payload={subject_id,title,description:document.getElementById('examDesc').value.trim(),duration_minutes:Number(document.getElementById('examDuration').value)||null,total_marks:Number(document.getElementById('examMarks').value)||100,published:false,target_year:'الأولى',target_department:'اللغة العربية'};
- const {error}=await db.from('exams').insert(payload);
- if(error){toast('تعذر إنشاء الامتحان: '+error.message);return}
- toast('تم إنشاء الامتحان كمسودة');document.getElementById('examTitle').value='';document.getElementById('examDesc').value='';
- await loadExams();await refreshAll();
-}
-async function importExamJson(){
- let obj;try{obj=JSON.parse(document.getElementById('examJson').value)}catch(e){toast('صيغة JSON غير صحيحة');return}
- if(!obj.subject||!obj.title||!Array.isArray(obj.questions)||!obj.questions.length){toast('تأكد من وجود subject وtitle وquestions');return}
- let subject=subjectsCache.find(s=>s.name===obj.subject);
- if(!subject){
-  const {data,error}=await db.from('subjects').insert({name:obj.subject}).select().single();
-  if(error){toast('تعذر إنشاء المادة: '+error.message);return}subject=data;
- }
- const {data:exam,error:examErr}=await db.from('exams').insert({subject_id:subject.id,title:obj.title,description:obj.description||'',duration_minutes:obj.duration_minutes||null,total_marks:obj.total_marks||100,published:false,target_year:'الأولى',target_department:'اللغة العربية'}).select().single();
- if(examErr){toast('تعذر إنشاء الامتحان: '+examErr.message);return}
- const rows=obj.questions.map((q,i)=>({exam_id:exam.id,question_text:q.question_text||q.question,question_type:q.question_type||'multiple_choice',options:q.options||['صح','خطأ'],correct_option:Number(q.correct_option),marks:Number(q.marks)||1,question_order:i+1}));
- const {error:qErr}=await db.from('exam_questions').insert(rows);
- if(qErr){await db.from('exams').delete().eq('id',exam.id);toast('خطأ في الأسئلة وتم إلغاء المسودة: '+qErr.message);return}
- document.getElementById('examJson').value='';toast('تم استيراد الامتحان كمسودة. راجعه ثم انشره.');await loadSubjects();await loadExams();await refreshAll();
-}
-async function loadExams(){
- const {data,error}=await db.from('exams').select('id,title,published,created_at,subjects(name),exam_questions(id)').order('created_at',{ascending:false});
- const manualSelect=document.getElementById('manualExamSelect');
- if(manualSelect) manualSelect.innerHTML=(data||[]).map(e=>`<option value="${e.id}">${esc(e.title)} — ${esc(e.subjects?.name||'')}</option>`).join('')||'<option value="">لا توجد امتحانات</option>';
- const body=document.querySelector('#examsTable tbody');
- if(error){body.innerHTML=`<tr><td colspan="6">${esc(error.message)}</td></tr>`;return}
- body.innerHTML=(data||[]).map(e=>`<tr><td>${esc(e.title)}</td><td>${esc(e.subjects?.name||'')}</td><td>${e.exam_questions?.length||0}</td><td><span class="pill ${e.published?'':'off'}">${e.published?'منشور':'مسودة'}</span></td><td><div class="actions"><button class="btn small ${e.published?'red':'gold'}" onclick="togglePublish('${e.id}',${!e.published})">${e.published?'إخفاء':'نشر'}</button></div></td><td><button class="btn red small" onclick="deleteExam('${e.id}')">حذف</button></td></tr>`).join('')||'<tr><td colspan="6">لا توجد امتحانات.</td></tr>';
-}
-function updateManualType(){
- const isTF=document.getElementById('manualQuestionType').value==='true_false';
- document.getElementById('manualOptionsArea').classList.toggle('hidden',isTF);
- document.getElementById('manualCorrect').innerHTML=isTF
-  ? '<option value="0">صح</option><option value="1">خطأ</option>'
-  : '<option value="0">الإجابة الأولى</option><option value="1">الإجابة الثانية</option><option value="2">الإجابة الثالثة</option><option value="3">الإجابة الرابعة</option>';
-}
-async function addManualQuestion(){
- const exam_id=document.getElementById('manualExamSelect').value;
- const question_text=document.getElementById('manualQuestionText').value.trim();
- const question_type=document.getElementById('manualQuestionType').value;
- const marks=Number(document.getElementById('manualQuestionMarks').value)||1;
- let options, correct_option=Number(document.getElementById('manualCorrect').value);
- if(!exam_id||!question_text){toast('اختر الامتحان واكتب السؤال');return}
- if(question_type==='true_false'){options=['صح','خطأ'];}
- else {
-  options=[0,1,2,3].map(i=>document.getElementById('manualOption'+i).value.trim());
-  if(options.some(x=>!x)){toast('اكتب الاختيارات الأربعة');return}
- }
- const {count,error:countError}=await db.from('exam_questions').select('id',{count:'exact',head:true}).eq('exam_id',exam_id);
- if(countError){toast(countError.message);return}
- const {error}=await db.from('exam_questions').insert({exam_id,question_text,question_type,options,correct_option,marks,question_order:(count||0)+1});
- if(error){toast('تعذر إضافة السؤال: '+error.message);return}
- document.getElementById('manualQuestionText').value='';
- [0,1,2,3].forEach(i=>{const el=document.getElementById('manualOption'+i);if(el)el.value=''});
- toast('تمت إضافة السؤال');await loadExams();
-}
-async function togglePublish(id,value){
- const {error}=await db.from('exams').update({published:value}).eq('id',id);
- if(error){toast('تعذر تحديث حالة الامتحان: '+error.message);return}
- toast(value?'تم نشر الامتحان':'تم إخفاء الامتحان');await loadExams();await refreshAll();
+ if(error){body.innerHTML=emptyRow(6,esc(error.message));return}
+ $('studentsCount').textContent=(data?.length||0)+' طالب';
+ body.innerHTML=(data||[]).map(x=>`<tr><td>${esc(x.full_name)}</td><td><b dir="ltr">${esc(x.student_code||'—')}</b> <button class="btn light small" onclick="copyCode('${esc(x.student_code||'')}')">نسخ</button></td><td>${esc(x.academic_year||'—')}</td><td>${esc(x.department||'—')}</td><td>${date(x.created_at||x.registered_at)}</td><td><button class="btn red small" onclick="deleteStudent('${esc(x.id)}')">حذف</button></td></tr>`).join('')||emptyRow(6,'لا يوجد طلاب مسجلون.');
 }
 async function deleteStudent(id){
  if(!confirm('تأكيد حذف الطالب وكل محاولاته وإجاباته ونتائجه؟'))return;
  const {data,error}=await db.rpc('delete_admin_student',{p_student_id:id});
- if(error){toast('تعذر حذف الطالب: '+error.message);return}
- if(data!==true){toast('الطالب غير موجود أو لم يتم الحذف');return}
+ if(error){fail('تعذر حذف الطالب',error);return}
+ if(data!==true){toast('الطالب غير موجود أو لم يتم الحذف',true);return}
  toast('تم حذف الطالب وبياناته');await loadStudents();await refreshAll();
+}
+
+/* ---------- المواد ---------- */
+async function loadSubjects(){
+ const {data,error}=await db.from('subjects').select('*').order('name');
+ if(error){fail('تعذر تحميل المواد',error);return}
+ subjectsCache=data||[];
+ document.querySelector('#subjectsTable tbody').innerHTML=subjectsCache.map(s=>`<tr><td><b>${esc(s.name)}</b></td><td>${esc(s.description||'—')}</td><td>${date(s.created_at)}</td></tr>`).join('')||emptyRow(3,'لا توجد مواد.');
+ const cur=$('examSubject').value;
+ $('examSubject').innerHTML=subjectsCache.map(s=>`<option value="${esc(s.id)}">${esc(s.name)}</option>`).join('')||'<option value="">أضف مادة أولًا</option>';
+ if(cur)$('examSubject').value=cur;
+}
+async function addSubject(){
+ const name=$('subjectName').value.trim(),description=$('subjectDesc').value.trim();
+ if(!name){toast('اكتب اسم المادة أولًا',true);return}
+ if(subjectsCache.some(s=>s.name===name)){toast('هذه المادة موجودة بالفعل',true);return}
+ const {error}=await db.from('subjects').insert({name,description});
+ if(error){fail('تعذر إضافة المادة',error);return}
+ $('subjectName').value='';$('subjectDesc').value='';
+ toast('تمت إضافة المادة');await loadSubjects();await refreshAll();
+}
+
+/* ---------- قائمة الامتحانات ---------- */
+async function loadExams(){
+ const body=document.querySelector('#examsTable tbody');body.innerHTML=loadingRow(6);
+ const {data,error}=await db.from('exams').select('id,title,published,created_at,duration_minutes,total_marks,subjects(name),exam_questions(id)').order('created_at',{ascending:false});
+ if(error){body.innerHTML=emptyRow(6,esc(error.message));return}
+ body.innerHTML=(data||[]).map(e=>{
+  const n=e.exam_questions?.length||0;
+  return `<tr data-status="${e.published?'published':'draft'}"><td><b>${esc(e.title)}</b><div class="muted" style="font-size:11px">${date(e.created_at)}</div></td><td>${esc(e.subjects?.name||'')}</td><td>${n}</td><td>${e.duration_minutes?e.duration_minutes+' د':'—'}</td><td><span class="pill ${e.published?'':'off'}">${e.published?'منشور':'مسودة'}</span></td><td><div class="actions"><button class="btn light small" onclick="openBuilder('${esc(e.id)}')">✎ الأسئلة والتعديل</button><button class="btn small ${e.published?'ghost':'gold'}" onclick="togglePublish('${esc(e.id)}',${!e.published},${n})">${e.published?'إخفاء':'نشر'}</button><button class="btn red small" onclick="deleteExam('${esc(e.id)}')">حذف</button></div></td></tr>`;
+ }).join('')||emptyRow(6,'لا توجد امتحانات. اضغط «امتحان جديد» للبدء.');
+ filterExamStatus();
+}
+function filterExamStatus(){
+ const s=$('examStatusFilter').value;
+ document.querySelectorAll('#examsTable tbody tr[data-status]').forEach(tr=>{tr.style.display=(!s||tr.dataset.status===s)?'':'none'});
+}
+async function togglePublish(id,value,count){
+ if(value&&count===0){toast('أضف سؤالًا واحدًا على الأقل قبل النشر',true);return}
+ const {error}=await db.from('exams').update({published:value}).eq('id',id);
+ if(error){fail('تعذر تحديث حالة الامتحان',error);return}
+ toast(value?'تم نشر الامتحان':'تم إخفاء الامتحان');await loadExams();await refreshAll();
 }
 async function deleteExam(id){
  if(!confirm('تأكيد حذف الامتحان نهائيًا مع الأسئلة والإجابات والمحاولات والنتائج؟'))return;
  const {data,error}=await db.rpc('delete_admin_exam',{p_exam_id:id});
- if(error){toast('تعذر حذف الامتحان: '+error.message);return}
- if(data!==true){toast('الامتحان غير موجود أو لم يتم الحذف');return}
+ if(error){fail('تعذر حذف الامتحان',error);return}
+ if(data!==true){toast('الامتحان غير موجود أو لم يتم الحذف',true);return}
  toast('تم حذف الامتحان وكل بياناته');await loadExams();await refreshAll();
 }
+
+/* ---------- منشئ الامتحان ---------- */
+async function openBuilder(id){
+ await loadSubjects();
+ if(!subjectsCache.length){toast('أضف مادة أولًا من قسم المواد',true);return}
+ $('examsList').classList.add('hidden');$('examBuilder').classList.remove('hidden');
+ B={examId:null,exam:null,questions:[],editingId:null,qType:'multiple_choice',saving:false};
+ resetQuestionForm();
+ if(!id){
+  $('crumbTitle').textContent='امتحان جديد';
+  $('examTitle').value='';$('examDesc').value='';$('examDuration').value='';$('examMarks').value=100;
+  $('saveExamBtn').textContent='حفظ وإنشاء الامتحان';
+  $('builderStatus').innerHTML='';
+  $('questionsArea').classList.add('hidden');
+  setSteps(1);window.scrollTo({top:0});
+  return;
+ }
+ const {data,error}=await db.from('exams').select('*').eq('id',id).single();
+ if(error){fail('تعذر تحميل الامتحان',error);closeBuilder();return}
+ applyExam(data);
+ await loadBuilderQuestions();
+ window.scrollTo({top:0});
+}
+function applyExam(e){
+ B.examId=e.id;B.exam=e;
+ $('crumbTitle').textContent=e.title;
+ $('examSubject').value=e.subject_id;$('examTitle').value=e.title||'';$('examDesc').value=e.description||'';
+ $('examDuration').value=e.duration_minutes||'';$('examMarks').value=e.total_marks||100;
+ $('saveExamBtn').textContent='حفظ تعديلات البيانات';
+ $('builderStatus').innerHTML=`<span class="pill ${e.published?'':'off'}">${e.published?'منشور':'مسودة'}</span>`;
+ $('questionsArea').classList.remove('hidden');
+ $('publishBtn').textContent=e.published?'إخفاء الامتحان (تحويل لمسودة)':'نشر الامتحان';
+ $('publishBtn').className='btn '+(e.published?'ghost':'gold');
+}
+function closeBuilder(silent){
+ $('examBuilder').classList.add('hidden');$('examsList').classList.remove('hidden');
+ if(!silent){loadExams();refreshAll()}
+}
+function setSteps(n){
+ [1,2,3].forEach(i=>{const s=$('step'+i);s.classList.toggle('on',i===n);s.classList.toggle('done',i<n)});
+}
+async function saveExamMeta(){
+ const subject_id=$('examSubject').value,title=$('examTitle').value.trim();
+ const total=Number($('examMarks').value),dur=Number($('examDuration').value)||null;
+ if(!subject_id){toast('اختر المادة',true);return}
+ if(!title){toast('اكتب اسم الامتحان',true);return}
+ if(!(total>0)){toast('الدرجة النهائية يجب أن تكون أكبر من صفر',true);return}
+ const fields={subject_id,title,description:$('examDesc').value.trim(),duration_minutes:dur,total_marks:total};
+ const btn=$('saveExamBtn');btn.disabled=true;
+ try{
+  if(!B.examId){
+   const {data,error}=await db.from('exams').insert({...fields,published:false,target_year:DEFAULT_YEAR,target_department:DEFAULT_DEPT}).select().single();
+   if(error){fail('تعذر إنشاء الامتحان',error);return}
+   toast('تم إنشاء الامتحان كمسودة. أضف أسئلته الآن.');
+   applyExam(data);await loadBuilderQuestions();
+   $('questionsArea').scrollIntoView({behavior:'smooth'});
+  }else{
+   const {data,error}=await db.from('exams').update(fields).eq('id',B.examId).select().single();
+   if(error){fail('تعذر حفظ التعديلات',error);return}
+   toast('تم حفظ بيانات الامتحان');applyExam(data);renderQuestions();
+  }
+ }finally{btn.disabled=false}
+}
+
+/* أسئلة الامتحان */
+async function loadBuilderQuestions(){
+ const {data,error}=await db.from('exam_questions').select('*').eq('exam_id',B.examId).order('question_order');
+ if(error){fail('تعذر تحميل الأسئلة',error);return}
+ B.questions=data||[];renderQuestions();
+}
+const LETTERS=['أ','ب','ج','د','هـ','و'];
+function renderQuestions(){
+ const qs=B.questions;
+ const sum=qs.reduce((a,q)=>a+Number(q.marks||0),0);
+ const total=Number(B.exam?.total_marks||0);
+ $('qCountPill').textContent=qs.length+' سؤال';
+ const mismatch=qs.length&&Math.abs(sum-total)>0.001;
+ $('qSummary').innerHTML=`<div>عدد الأسئلة<b>${qs.length}</b></div><div>مجموع درجات الأسئلة<b>${sum}</b></div><div>الدرجة النهائية<b>${total}</b></div>`+(mismatch?`<div class="warn" style="flex-basis:100%">⚠ مجموع الأسئلة لا يساوي الدرجة النهائية. <button class="btn small light" onclick="syncTotalMarks(${sum})">اعتماد ${sum} كدرجة نهائية</button></div>`:'');
+ $('qList').innerHTML=qs.map((q,i)=>{
+  const opts=Array.isArray(q.options)?q.options:[];
+  return `<div class="qcard ${B.editingId===q.id?'editing':''}">
+   <div class="qcard-top"><span class="qnum">${i+1}</span><div class="qtext">${esc(q.question_text)}</div></div>
+   <ul class="qopts">${opts.map((o,k)=>`<li class="${k===Number(q.correct_option)?'ok':''}">${k===Number(q.correct_option)?'✔ ':''}${esc(o)}</li>`).join('')}</ul>
+   <div class="qmeta"><span class="pill type">${q.question_type==='true_false'?'صح / خطأ':'اختيار من متعدد'}</span><span class="muted">${Number(q.marks)} درجة</span>
+    <span style="flex:1"></span>
+    <button class="btn ghost small" ${i===0?'disabled':''} onclick="moveQuestion(${i},-1)" title="أعلى">▲</button>
+    <button class="btn ghost small" ${i===qs.length-1?'disabled':''} onclick="moveQuestion(${i},1)" title="أسفل">▼</button>
+    <button class="btn light small" onclick="editQuestion('${esc(q.id)}')">تعديل</button>
+    <button class="btn red small" onclick="deleteQuestion('${esc(q.id)}')">حذف</button></div>
+  </div>`}).join('')||'<div class="muted" style="text-align:center;padding:26px">لم تُضف أسئلة بعد. استخدم النموذج لإضافة أول سؤال.</div>';
+ setSteps(qs.length?3:2);
+}
+async function syncTotalMarks(sum){
+ const {data,error}=await db.from('exams').update({total_marks:sum}).eq('id',B.examId).select().single();
+ if(error){fail('تعذر التحديث',error);return}
+ applyExam(data);renderQuestions();toast('تم تحديث الدرجة النهائية');
+}
+
+/* نموذج السؤال */
+function setQType(t,keep){
+ B.qType=t;
+ $('segMC').classList.toggle('on',t==='multiple_choice');$('segTF').classList.toggle('on',t==='true_false');
+ if(!keep){
+  if(t==='true_false')renderOptions(['صح','خطأ'],0);
+  else renderOptions(['','','',''],0);
+ }
+ $('addOptBtn').classList.toggle('hidden',t==='true_false');
+}
+function renderOptions(opts,correct){
+ const tf=B.qType==='true_false';
+ $('optsBox').innerHTML=opts.map((o,i)=>`<div class="optrow ${i===correct?'correct':''}">
+  <input type="radio" name="qCorrect" value="${i}" ${i===correct?'checked':''} onchange="markCorrect()">
+  <span class="letter">${LETTERS[i]||i+1}</span>
+  <input type="text" value="${esc(o)}" placeholder="الإجابة ${LETTERS[i]||i+1}" ${tf?'readonly':''}>
+  ${(!tf&&opts.length>2)?`<button class="btn red small" onclick="removeOption(${i})" title="حذف">✕</button>`:''}</div>`).join('');
+}
+function readOptions(){
+ const rows=[...document.querySelectorAll('#optsBox .optrow')];
+ const opts=rows.map(r=>r.querySelector('input[type=text]').value);
+ const c=document.querySelector('#optsBox input[type=radio]:checked');
+ return {opts,correct:c?Number(c.value):0};
+}
+function markCorrect(){document.querySelectorAll('#optsBox .optrow').forEach(r=>r.classList.toggle('correct',r.querySelector('input[type=radio]').checked))}
+function addOption(){
+ const {opts,correct}=readOptions();
+ if(opts.length>=6){toast('الحد الأقصى 6 اختيارات',true);return}
+ opts.push('');renderOptions(opts,correct);
+ const inputs=document.querySelectorAll('#optsBox input[type=text]');inputs[inputs.length-1].focus();
+}
+function removeOption(i){
+ const {opts,correct}=readOptions();
+ if(opts.length<=2)return;
+ opts.splice(i,1);
+ renderOptions(opts,correct===i?0:(correct>i?correct-1:correct));
+}
+function resetQuestionForm(){
+ B.editingId=null;$('qText').value='';$('qMarks').value=1;
+ $('qFormTitle').textContent='إضافة سؤال';$('saveQBtn').textContent='إضافة السؤال';
+ $('saveQNextBtn').classList.remove('hidden');$('cancelEditBtn').classList.add('hidden');
+ setQType('multiple_choice');
+ if(B.questions&&B.questions.length)renderQuestions();
+}
+function editQuestion(id){
+ const q=B.questions.find(x=>x.id===id);if(!q)return;
+ B.editingId=id;
+ $('qText').value=q.question_text;$('qMarks').value=q.marks;
+ setQType(q.question_type==='true_false'?'true_false':'multiple_choice',true);
+ renderOptions(Array.isArray(q.options)?q.options:['',''],Number(q.correct_option)||0);
+ $('qFormTitle').textContent='تعديل السؤال';$('saveQBtn').textContent='حفظ التعديل';
+ $('saveQNextBtn').classList.add('hidden');$('cancelEditBtn').classList.remove('hidden');
+ renderQuestions();$('qText').scrollIntoView({behavior:'smooth',block:'center'});$('qText').focus();
+}
+async function saveQuestion(next){
+ if(B.saving)return;
+ const text=$('qText').value.trim(),marks=Number($('qMarks').value);
+ if(!text){toast('اكتب نص السؤال',true);return}
+ if(!(marks>0)){toast('درجة السؤال يجب أن تكون أكبر من صفر',true);return}
+ let {opts,correct}=readOptions();
+ opts=opts.map(o=>o.trim());
+ if(opts.some(o=>!o)){toast('املأ كل الاختيارات أو احذف الفارغ منها',true);return}
+ if(new Set(opts).size!==opts.length){toast('يوجد اختيارات مكررة',true);return}
+ const row={question_text:text,question_type:B.qType,options:opts,correct_option:correct,marks};
+ B.saving=true;$('saveQBtn').disabled=$('saveQNextBtn').disabled=true;
+ try{
+  let error;
+  if(B.editingId){({error}=await db.from('exam_questions').update(row).eq('id',B.editingId))}
+  else{
+   const order=B.questions.length?Math.max(...B.questions.map(q=>q.question_order||0))+1:1;
+   ({error}=await db.from('exam_questions').insert({...row,exam_id:B.examId,question_order:order}));
+  }
+  if(error){fail('تعذر حفظ السؤال',error);return}
+  toast(B.editingId?'تم حفظ التعديل':'تمت إضافة السؤال');
+  const wasType=B.qType;
+  B.editingId=null;await loadBuilderQuestions();resetQuestionForm();
+  if(next&&wasType==='true_false')setQType('true_false');
+  $('qText').focus();
+ }finally{B.saving=false;$('saveQBtn').disabled=$('saveQNextBtn').disabled=false}
+}
+async function deleteQuestion(id){
+ if(!confirm('حذف هذا السؤال؟'))return;
+ const {error}=await db.from('exam_questions').delete().eq('id',id);
+ if(error){fail('تعذر حذف السؤال',error);return}
+ if(B.editingId===id)resetQuestionForm();
+ toast('تم حذف السؤال');await loadBuilderQuestions();
+ // إعادة ترقيم الأسئلة بعد الحذف
+ for(let i=0;i<B.questions.length;i++){if(B.questions[i].question_order!==i+1)await db.from('exam_questions').update({question_order:i+1}).eq('id',B.questions[i].id)}
+}
+async function moveQuestion(i,dir){
+ const a=B.questions[i],b=B.questions[i+dir];if(!a||!b)return;
+ const [r1,r2]=await Promise.all([
+  db.from('exam_questions').update({question_order:i+dir+1}).eq('id',a.id),
+  db.from('exam_questions').update({question_order:i+1}).eq('id',b.id)]);
+ if(r1.error||r2.error){fail('تعذر تغيير الترتيب',r1.error||r2.error);return}
+ await loadBuilderQuestions();
+}
+async function builderTogglePublish(){
+ if(!B.exam)return;
+ const val=!B.exam.published;
+ if(val&&!B.questions.length){toast('أضف سؤالًا واحدًا على الأقل قبل النشر',true);return}
+ if(val){
+  const sum=B.questions.reduce((a,q)=>a+Number(q.marks||0),0);
+  if(Math.abs(sum-Number(B.exam.total_marks))>0.001&&!confirm(`مجموع درجات الأسئلة (${sum}) لا يساوي الدرجة النهائية (${B.exam.total_marks}). هل تريد النشر رغم ذلك؟`))return;
+ }
+ const {data,error}=await db.from('exams').update({published:val}).eq('id',B.examId).select().single();
+ if(error){fail('تعذر تحديث الحالة',error);return}
+ applyExam(data);renderQuestions();toast(val?'تم نشر الامتحان للطلاب':'تم تحويل الامتحان إلى مسودة');
+}
+
+/* ---------- استيراد JSON ---------- */
+async function importExamJson(){
+ let obj;try{obj=JSON.parse($('examJson').value)}catch(e){toast('صيغة JSON غير صحيحة',true);return}
+ if(!obj.subject||!obj.title||!Array.isArray(obj.questions)||!obj.questions.length){toast('تأكد من وجود subject وtitle وquestions',true);return}
+ for(const [i,q] of obj.questions.entries()){
+  const opts=q.options||['صح','خطأ'],c=Number(q.correct_option);
+  if(!(q.question_text||q.question)||!Array.isArray(opts)||opts.length<2||!Number.isInteger(c)||c<0||c>=opts.length){toast(`السؤال رقم ${i+1} غير صالح (تحقق من النص والخيارات وcorrect_option)`,true);return}
+ }
+ await loadSubjects();
+ let subject=subjectsCache.find(s=>s.name===obj.subject);
+ if(!subject){
+  const {data,error}=await db.from('subjects').insert({name:obj.subject}).select().single();
+  if(error){fail('تعذر إنشاء المادة',error);return}subject=data;
+ }
+ const {data:exam,error:examErr}=await db.from('exams').insert({subject_id:subject.id,title:obj.title,description:obj.description||'',duration_minutes:obj.duration_minutes||null,total_marks:obj.total_marks||100,published:false,target_year:DEFAULT_YEAR,target_department:DEFAULT_DEPT}).select().single();
+ if(examErr){fail('تعذر إنشاء الامتحان',examErr);return}
+ const rows=obj.questions.map((q,i)=>({exam_id:exam.id,question_text:q.question_text||q.question,question_type:q.question_type||'multiple_choice',options:q.options||['صح','خطأ'],correct_option:Number(q.correct_option),marks:Number(q.marks)||1,question_order:i+1}));
+ const {error:qErr}=await db.from('exam_questions').insert(rows);
+ if(qErr){await db.from('exams').delete().eq('id',exam.id);fail('خطأ في الأسئلة وتم إلغاء المسودة',qErr);return}
+ $('examJson').value='';toast('تم استيراد الامتحان كمسودة. راجعه ثم انشره.');
+ await loadSubjects();await loadExams();await refreshAll();
+}
+
+/* ---------- النتائج ---------- */
+async function loadResults(){
+ const body=document.querySelector('#resultsTable tbody');body.innerHTML=loadingRow(5);
+ const {data,error}=await db.rpc('get_admin_results');
+ if(error){body.innerHTML=emptyRow(5,esc(error.message));return}
+ body.innerHTML=(data||[]).map(x=>`<tr><td>${esc(x.full_name||'')}</td><td>${esc(x.exam_title||'')}</td><td>${Number(x.score||0)} / ${Number(x.total_marks||0)}</td><td>${Number(x.percentage||0).toFixed(1)}%</td><td>${date(x.finished_at)}</td></tr>`).join('')||emptyRow(5,'لا توجد نتائج حتى الآن.');
+}
+
+/* ---------- المكتبة ---------- */
+async function uploadBook(){
+ const title=$('bookTitle').value.trim(),coverFile=$('bookCover').files[0],pdfFile=$('bookPdf').files[0],btn=$('uploadBookBtn');
+ if(!title){toast('اكتب اسم الكتاب أولًا',true);return}
+ if(!coverFile){toast('اختر صورة غلاف الكتاب',true);return}
+ if(!pdfFile){toast('اختر ملف الكتاب بصيغة PDF',true);return}
+ if(pdfFile.type!=='application/pdf'){toast('يجب أن يكون الملف بصيغة PDF',true);return}
+ btn.disabled=true;btn.textContent='جاري رفع الغلاف والملف...';
+ try{
+  const uid=crypto.randomUUID();
+  const coverExt=(coverFile.name.split('.').pop()||'jpg').toLowerCase();
+  const coverPath=`covers/${uid}.${coverExt}`,pdfPath=`pdfs/${uid}.pdf`;
+  const {error:coverErr}=await db.storage.from('library').upload(coverPath,coverFile,{contentType:coverFile.type});
+  if(coverErr)throw coverErr;
+  const {data:cu}=db.storage.from('library').getPublicUrl(coverPath);
+  const {error:pdfErr}=await db.storage.from('library').upload(pdfPath,pdfFile,{contentType:'application/pdf'});
+  if(pdfErr)throw pdfErr;
+  const {data:pu}=db.storage.from('library').getPublicUrl(pdfPath);
+  const {error:dbErr}=await db.from('library_books').insert({title,cover_url:cu.publicUrl,pdf_url:pu.publicUrl});
+  if(dbErr)throw dbErr;
+  toast('تم رفع الكتاب ونشره بنجاح');
+  $('bookTitle').value='';$('bookCover').value='';$('bookPdf').value='';
+  await loadBooks();
+ }catch(e){toast('خطأ أثناء الرفع: '+(e.message||'خطأ غير معروف'),true)}
+ finally{btn.disabled=false;btn.textContent='رفع الكتاب ونشره في المكتبة'}
+}
+async function loadBooks(){
+ const body=document.querySelector('#booksTable tbody');body.innerHTML=loadingRow(5);
+ const {data,error}=await db.from('library_books').select('*').order('created_at',{ascending:false});
+ if(error){body.innerHTML=emptyRow(5,esc(error.message));return}
+ body.innerHTML=(data||[]).map(b=>`<tr><td><img src="${esc(b.cover_url)}" class="book-thumb" alt="غلاف"></td><td><b>${esc(b.title)}</b></td><td><a href="${esc(b.pdf_url)}" target="_blank" rel="noopener" class="btn light small" style="text-decoration:none;display:inline-block">فتح PDF</a></td><td>${date(b.created_at)}</td><td><button class="btn red small" onclick="deleteBook('${esc(b.id)}')">حذف</button></td></tr>`).join('')||emptyRow(5,'لا توجد كتب مضافة في المكتبة بعد.');
+}
+async function deleteBook(id){
+ if(!confirm('هل أنت متأكد من حذف هذا الكتاب من المكتبة؟'))return;
+ const {error}=await db.from('library_books').delete().eq('id',id);
+ if(error){fail('تعذر الحذف',error);return}
+ toast('تم حذف الكتاب من المكتبة');await loadBooks();
+}
+
+/* ---------- المحادثة ---------- */
+async function loadChat(){
+ const box=$('chatList');
+ const {data,error}=await db.from('chat_messages').select('id,message,created_at,profiles(full_name)').order('created_at',{ascending:false}).limit(100);
+ if(error){box.textContent=error.message;return}
+ box.innerHTML=(data||[]).map(m=>`<div style="display:flex;justify-content:space-between;gap:12px;align-items:center;border-bottom:1px solid #e8eee9;padding:12px 0"><div><b>${esc(m.profiles?.full_name||'طالب')}</b><div style="margin-top:4px">${esc(m.message)}</div><small class="muted">${date(m.created_at)}</small></div><button class="btn red small" onclick="deleteMessage('${esc(m.id)}')">حذف</button></div>`).join('')||'لا توجد رسائل.';
+}
+async function deleteMessage(id){
+ if(!confirm('هل تريد حذف هذه الرسالة؟'))return;
+ const {error}=await db.from('chat_messages').delete().eq('id',id);
+ if(error){fail('تعذر الحذف',error);return}
+ toast('تم حذف الرسالة');loadChat();
+}
+
+/* ---------- التصفير ---------- */
 async function resetAllStudentData(){
  const phrase=prompt('هذا الإجراء سيحذف جميع الطلاب والأكواد والدرجات والمحاولات، مع الاحتفاظ بالامتحانات والأسئلة. اكتب: تصفير الكل');
  if(phrase!=='تصفير الكل')return;
- const {data,error}=await db.rpc('admin_reset_student_data');
- if(error){toast('تعذر التصفير: '+error.message);return}
- toast('تم تصفير بيانات الطلاب والدرجات');await refreshAll();await loadStudents();await loadResults();
+ const {error}=await db.rpc('admin_reset_student_data');
+ if(error){fail('تعذر التصفير',error);return}
+ toast('تم تصفير بيانات الطلاب والدرجات');await refreshAll();
 }
-async function loadResults(){
- const {data,error}=await db.rpc('get_admin_results');
- const body=document.querySelector('#resultsTable tbody');
- if(error){body.innerHTML=`<tr><td colspan="5">${esc(error.message)}</td></tr>`;return}
- body.innerHTML=(data||[]).map(x=>`<tr><td>${esc(x.full_name||'')}</td><td>${esc(x.exam_title||'')}</td><td>${Number(x.score||0)} / ${Number(x.total_marks||0)}</td><td>${Number(x.percentage||0).toFixed(1)}%</td><td>${date(x.finished_at)}</td></tr>`).join('')||'<tr><td colspan="5">لا توجد نتائج حتى الآن.</td></tr>';
-}
-
-/* دوال المكتبة (رفع وعرض وحذف الكتب) */
-async function uploadBook(){
- const title = document.getElementById('bookTitle').value.trim();
- const coverFile = document.getElementById('bookCover').files[0];
- const pdfFile = document.getElementById('bookPdf').files[0];
- const btn = document.getElementById('uploadBookBtn');
-
- if(!title){toast('اكتب اسم الكتاب أولاً');return;}
- if(!coverFile){toast('اختر صورة غلاف الكتاب');return;}
- if(!pdfFile){toast('اختر ملف الكتاب بصيغة PDF');return;}
- if(pdfFile.type !== 'application/pdf'){toast('يجب أن يكون الملف بصيغة PDF');return;}
-
- btn.disabled = true;
- btn.textContent = 'جاري رفع الغلاف والملف...';
-
- try{
-  const uid = crypto.randomUUID();
-  const coverExt = coverFile.name.split('.').pop() || 'jpg';
-  const coverPath = `covers/${uid}.${coverExt}`;
-  const pdfPath = `pdfs/${uid}.pdf`;
-
-  // رفع الغلاف
-  const {error: coverErr} = await db.storage.from('library').upload(coverPath, coverFile, {contentType: coverFile.type});
-  if(coverErr) throw coverErr;
-  const {data: coverUrlData} = db.storage.from('library').getPublicUrl(coverPath);
-
-  // رفع ملف الـ PDF
-  const {error: pdfErr} = await db.storage.from('library').upload(pdfPath, pdfFile, {contentType: 'application/pdf'});
-  if(pdfErr) throw pdfErr;
-  const {data: pdfUrlData} = db.storage.from('library').getPublicUrl(pdfPath);
-
-  // حفظ البيانات في الجدول
-  const {error: dbErr} = await db.from('library_books').insert({
-   title: title,
-   cover_url: coverUrlData.publicUrl,
-   pdf_url: pdfUrlData.publicUrl
-  });
-  if(dbErr) throw dbErr;
-
-  toast('تم رفع الكتاب ونشره بنجاح!');
-  document.getElementById('bookTitle').value = '';
-  document.getElementById('bookCover').value = '';
-  document.getElementById('bookPdf').value = '';
-  await loadBooks();
- }catch(e){
-  toast('خطأ أثناء الرفع: ' + (e.message || 'خطأ غير معروف'));
- }finally{
-  btn.disabled = false;
-  btn.textContent = 'رفع الكتاب ونشره في المكتبة';
- }
-}
-
-async function loadBooks(){
- const {data,error} = await db.from('library_books').select('*').order('created_at',{ascending:false});
- const body = document.querySelector('#booksTable tbody');
- if(error){body.innerHTML=`<tr><td colspan="5">${esc(error.message)}</td></tr>`;return;}
- body.innerHTML = (data||[]).map(b=>`
-  <tr>
-   <td><img src="${esc(b.cover_url)}" class="book-thumb" alt="غلاف"></td>
-   <td><b>${esc(b.title)}</b></td>
-   <td><a href="${esc(b.pdf_url)}" target="_blank" class="btn light small" style="text-decoration:none;display:inline-block;">فتح PDF</a></td>
-   <td>${date(b.created_at)}</td>
-   <td><button class="btn red small" onclick="deleteBook('${b.id}')">حذف</button></td>
-  </tr>
- `).join('') || '<tr><td colspan="5">لا توجد كتب مضافة في المكتبة بعد.</td></tr>';
-}
-
-async function deleteBook(id){
- if(!confirm('هل أنت متأكد من حذف هذا الكتاب من المكتبة؟')) return;
- const {error} = await db.from('library_books').delete().eq('id', id);
- if(error){toast('تعذر الحذف: ' + error.message);return;}
- toast('تم حذف الكتاب من المكتبة');
- await loadBooks();
-}
-
-async function loadChat(){
- const {data,error}=await db.from('chat_messages').select('id,message,created_at,profiles(full_name)').order('created_at',{ascending:false}).limit(100);
- const box=document.getElementById('chatList');
- if(error){box.textContent=error.message;return}
- box.innerHTML=(data||[]).map(m=>`<div style="display:flex;justify-content:space-between;gap:12px;align-items:center;border-bottom:1px solid #e8eee9;padding:12px 0"><div><b>${esc(m.profiles?.full_name||'طالب')}</b><div style="margin-top:5px">${esc(m.message)}</div><small class="muted">${date(m.created_at)}</small></div><button class="btn red small" onclick="deleteMessage('${m.id}')">حذف</button></div>`).join('')||'لا توجد رسائل.';
-}
-async function deleteMessage(id){if(!confirm('هل تريد حذف هذه الرسالة؟'))return;const {error}=await db.from('chat_messages').delete().eq('id',id);if(error){toast(error.message);return}toast('تم حذف الرسالة');loadChat()}
-function esc(v){return String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
-function date(v){return v?new Date(v).toLocaleString('ar-EG'):'—'}
-openAdminDirectly();
 </script>
 </body>
 </html>

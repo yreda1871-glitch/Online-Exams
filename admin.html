@@ -275,18 +275,23 @@ table{min-width:640px}th,td{padding:13px 14px;font-size:13px}th{background:#f2f7
     <div id="examsList">
      <div class="pagehead"><div><h2>إدارة الامتحانات</h2><div class="sub">امتحانات <span class="yearbadge" id="examYearBadge"></span> فقط — أنشئ وأضف أسئلة وانشر</div></div>
       <div class="actions"><button class="btn gold" onclick="openBuilder(null)">＋ امتحان جديد</button></div></div>
+     <div class="panel" id="examJsonImportPanel" style="border:2px solid #c9a45c;background:linear-gradient(135deg,#fffdf7,#fff)">
+      <div class="panel-head"><div><h3 style="font-size:18px">📥 إضافة امتحان بصيغة JSON</h3><div class="muted">ارفع ملف JSON من هاتفك أو الصق الكود مباشرة</div></div><span class="pill">استيراد سريع</span></div>
+      <div class="notice info">ملف الامتحان يجب أن يحتوي على <b dir="ltr">title</b> ومصفوفة <b dir="ltr">questions</b>. سيتم حفظه كمسودة أولًا، وبعد المراجعة يمكنك نشره للطلاب. هذا القسم خاص بالامتحانات وليس دروس الشرح.</div>
+      <div class="actions" style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:14px">
+       <input id="examJsonFile" type="file" accept=".json,application/json" style="display:none" onchange="loadExamJsonFile(this)">
+       <button type="button" class="btn gold" onclick="document.getElementById('examJsonFile').click()">📂 اختيار ملف JSON من الهاتف</button>
+       <button type="button" class="btn ghost" onclick="document.getElementById('jsonBox').classList.toggle('hidden')">لصق كود JSON يدويًا</button>
+      </div>
+      <div id="jsonBox" class="hidden">
+       <div class="field"><label>كود الامتحان JSON</label><textarea id="examJson" rows="9" dir="ltr" style="text-align:left;font-family:monospace" placeholder='{"title":"الامتحان الأول","questions":[{"question_text":"...","question_type":"multiple_choice","options":["أ","ب","ج","د"],"correct_option":1,"marks":1}]}'></textarea></div>
+       <button class="btn gold" onclick="importExamJson()">استيراد الامتحان الآن</button>
+      </div>
+     </div>
      <div class="panel">
       <div class="toolbar"><input id="examSearch" placeholder="ابحث باسم الامتحان..." oninput="filterTable('examsTable',this.value)">
        <select id="examStatusFilter" onchange="filterExamStatus()"><option value="">كل الحالات</option><option value="published">منشور</option><option value="draft">مسودة</option></select></div>
       <div class="tablewrap"><table id="examsTable"><thead><tr><th>اسم الامتحان</th><th>الأسئلة</th><th>المدة</th><th>الحالة</th><th>الإجراءات</th></tr></thead><tbody></tbody></table></div>
-     </div>
-     <div class="panel">
-      <div class="panel-head"><h3>إضافة امتحان من ملف JSON</h3><button class="btn ghost small" onclick="document.getElementById('jsonBox').classList.toggle('hidden')">إخفاء / إظهار</button></div>
-      <div id="jsonBox">
-       <div class="notice info">الصق كود الامتحان. يجب أن يحتوي على <b dir="ltr">title</b> ومصفوفة <b dir="ltr">questions</b>. يُنشأ الامتحان كمسودة لتراجعه قبل النشر.</div>
-       <div class="field"><textarea id="examJson" rows="9" dir="ltr" style="text-align:left;font-family:monospace" placeholder='{"title":"الامتحان الأول","questions":[{"question_text":"...","question_type":"multiple_choice","options":["أ","ب","ج","د"],"correct_option":1,"marks":1}]}'></textarea></div>
-       <button class="btn gold" onclick="importExamJson()">استيراد الامتحان</button>
-      </div>
      </div>
     </div>
 
@@ -370,16 +375,18 @@ table{min-width:640px}th,td{padding:13px 14px;font-size:13px}th{background:#f2f7
     <div class="panel">
      <div class="panel-head"><h3 id="lessonEditorHeading">إضافة درس جديد / استيراد JSON</h3><button class="btn ghost small" onclick="teachingNewLesson()">درس جديد</button></div>
      <div class="grid2">
+      <div class="field"><label>نوع الدرس</label><select id="teachingType" onchange="teachingToggleType()"><option value="interactive">درس تفاعلي (JSON)</option><option value="video">درس فيديو</option></select></div>
       <div class="field"><label>عنوان الدرس</label><input id="teachingTitle" placeholder="مثال: علامات الإعراب الأصلية"></div>
       <div class="field"><label>الفرقة المستهدفة</label><select id="teachingYear"><option>الأولى</option><option>الثانية</option><option>الثالثة</option><option>الرابعة</option></select></div>
      </div>
+     <div id="teachingVideoFields" class="field hidden"><label>رابط فيديو مباشر (MP4 أو WebM)</label><input id="teachingVideoUrl" type="url" dir="ltr" placeholder="https://example.com/lesson.mp4"><span class="hint">ضع رابط ملف فيديو مباشر قابل للتشغيل، وليس رابط مشاركة NotebookLM أو YouTube.</span></div>
      <div class="field"><label>وصف مختصر</label><input id="teachingDescription" placeholder="نبذة بسيطة عن الدرس"></div>
      <div class="grid2">
       <div class="field"><label>الأفاتار</label><select id="teachingAvatar"><option value="teacher_1">المعلم الأول</option><option value="teacher_2">المعلم الثاني</option><option value="teacher_3">المعلم الثالث</option></select></div>
       <div class="field"><label>حالة النشر</label><select id="teachingPublished"><option value="false">مسودة — غير منشور</option><option value="true">منشور للطلاب</option></select></div>
      </div>
-     <div class="field"><label>محتوى الدرس بصيغة JSON</label><textarea id="teachingJson" rows="15" dir="ltr" style="text-align:left;font-family:monospace;white-space:pre" placeholder='{"title":"عنوان الدرس","target_year":"الأولى","sections":[{"section_order":1,"title":"الجزء الأول","explanation":"شرح مبسط","question":"سؤال","options":["أ","ب","ج","د"],"correct_index":0,"feedback":"التفسير"}],"final_questions":[]}'></textarea><span class="hint">كل سؤال يحتاج أربعة اختيارات، و correct_index يبدأ من 0 إلى 3. يمكن إضافة simple_explanation للشرح المبسط، و narration للنص الصوتي، و image_url للصورة، و image_alt لوصفها. ويمكن وضع رابط صورة المدرس في خانة الأفاتار بدل teacher_1.</span></div>
-     <div style="display:flex;gap:8px;flex-wrap:wrap"><button class="btn gold" onclick="teachingSaveLesson(this)">حفظ الدرس</button><button class="btn light" onclick="teachingPreview()">معاينة JSON</button><button class="btn ghost" onclick="teachingLoadSample()">إدراج قالب جاهز</button></div>
+     <div class="field" id="teachingJsonField"><label>محتوى الدرس بصيغة JSON</label><textarea id="teachingJson" rows="15" dir="ltr" style="text-align:left;font-family:monospace;white-space:pre" placeholder='{"title":"عنوان الدرس","target_year":"الأولى","sections":[{"section_order":1,"title":"الجزء الأول","explanation":"شرح مبسط","question":"سؤال","options":["أ","ب","ج","د"],"correct_index":0,"feedback":"التفسير"}],"final_questions":[]}'></textarea><span class="hint">كل سؤال يحتاج أربعة اختيارات، و correct_index يبدأ من 0 إلى 3. يمكن إضافة simple_explanation للشرح المبسط، و narration للنص الصوتي، و image_url للصورة، و image_alt لوصفها. ويمكن وضع رابط صورة المدرس في خانة الأفاتار بدل teacher_1.</span></div>
+     <div style="display:flex;gap:8px;flex-wrap:wrap"><button class="btn gold" onclick="teachingSaveLesson(this)">حفظ الدرس</button><button id="teachingPreviewBtn" class="btn light" onclick="teachingPreview()">معاينة JSON</button><button id="teachingSampleBtn" class="btn ghost" onclick="teachingLoadSample()">إدراج قالب جاهز</button></div>
      <p id="teachingEditorError" class="error"></p><div id="teachingPreviewBox" class="hidden" style="margin-top:14px"></div>
     </div>
     <div class="panel"><div class="panel-head"><h3>الدروس الموجودة</h3><span class="muted" id="teachingCount"></span></div><div class="tablewrap"><table id="teachingTable"><thead><tr><th>اسم الدرس</th><th>الفرقة</th><th>الأجزاء</th><th>الاختبار النهائي</th><th>الحالة</th><th>الإجراءات</th></tr></thead><tbody><tr><td class="empty" colspan="6">اضغط تحديث لتحميل الدروس</td></tr></tbody></table></div></div>
@@ -766,6 +773,25 @@ async function builderTogglePublish(){
  applyExam(data);renderQuestions();toast(val?'تم نشر الامتحان للطلاب':'تم تحويل الامتحان إلى مسودة');
 }
 
+/* ---------- تحميل ملف امتحان JSON من الهاتف ---------- */
+function loadExamJsonFile(input){
+ const file=input && input.files && input.files[0];
+ if(!file)return;
+ if(!/\.json$/i.test(file.name) && file.type!=='application/json'){
+  toast('اختر ملفًا بامتداد JSON',true);input.value='';return;
+ }
+ const reader=new FileReader();
+ reader.onload=()=>{
+  $('examJson').value=String(reader.result||'');
+  $('jsonBox').classList.remove('hidden');
+  toast('تم تحميل الملف. جارٍ التحقق والاستيراد...');
+  importExamJson();
+  input.value='';
+ };
+ reader.onerror=()=>{toast('تعذر قراءة الملف، حاول مرة أخرى',true);input.value='';};
+ reader.readAsText(file,'UTF-8');
+}
+
 /* ---------- استيراد JSON ---------- */
 async function importExamJson(){
  let obj;try{obj=JSON.parse($('examJson').value)}catch(e){toast('صيغة JSON غير صحيحة',true);return}
@@ -831,24 +857,42 @@ async function deleteBook(id){
  toast('تم حذف الكتاب من المكتبة');await loadBooks();
 }
 
-/* ---------- الشرح التفاعلي ---------- */
+/* ---------- الشرح التفاعلي والفيديو ---------- */
 let teachingLessonsCache=[];
+function teachingToggleType(){
+ const video=$('teachingType')?.value==='video';
+ $('teachingVideoFields')?.classList.toggle('hidden',!video);
+ $('teachingJsonField')?.classList.toggle('hidden',video);
+ const preview=$('teachingPreviewBtn');if(preview)preview.classList.toggle('hidden',video);
+ const sample=$('teachingSampleBtn');if(sample)sample.classList.toggle('hidden',video);
+}
 function teachingNewLesson(){
- $('teachingTitle').value='';$('teachingYear').value=year||'الأولى';$('teachingDescription').value='';$('teachingAvatar').value='teacher_1';$('teachingPublished').value='false';$('teachingJson').value='';$('teachingEditorError').textContent='';$('teachingPreviewBox').classList.add('hidden');$('lessonEditorHeading').textContent='إضافة درس جديد / استيراد JSON';$('teachingJson').dataset.lessonId='';
+ $('teachingTitle').value='';$('teachingYear').value=year||'الأولى';$('teachingDescription').value='';$('teachingAvatar').value='teacher_1';$('teachingPublished').value='false';$('teachingJson').value='';$('teachingVideoUrl').value='';$('teachingType').value='interactive';$('teachingEditorError').textContent='';$('teachingPreviewBox').classList.add('hidden');$('lessonEditorHeading').textContent='إضافة درس جديد';$('teachingJson').dataset.lessonId='';teachingToggleType();
 }
 function teachingSample(){return {title:'عنوان الدرس',description:'شرح مبسط للدرس',target_year:'الأولى',avatar:'teacher_1',published:false,sections:[{section_order:1,title:'الجزء الأول',explanation:'اكتب هنا الشرح الكامل.',simple_explanation:'اكتب شرحًا مبسطًا جدًا باللهجة العربية السهلة، كأن المدرس يشرح لطالب لأول مرة.',narration:'النص الذي سيقرؤه صوت المدرس، جمل قصيرة وواضحة.',image_url:'https://example.com/lesson-image.jpg',image_alt:'وصف الصورة',question:'ما الإجابة الصحيحة؟',options:['الإجابة الأولى','الإجابة الثانية','الإجابة الثالثة','الإجابة الرابعة'],correct_index:0,feedback:'هذا هو التفسير المبسط للإجابة الصحيحة.'}],final_questions:[{question_order:1,question:'سؤال المراجعة النهائي؟',options:['اختيار أ','اختيار ب','اختيار ج','اختيار د'],correct_index:0,feedback:'تفسير الإجابة.'}]};}
 function teachingLoadSample(){const x=teachingSample();$('teachingTitle').value=x.title;$('teachingYear').value=x.target_year;$('teachingDescription').value=x.description;$('teachingJson').value=JSON.stringify({sections:x.sections,final_questions:x.final_questions},null,2);}
-function teachingReadJson(){let data;try{data=JSON.parse($('teachingJson').value)}catch(e){throw new Error('صيغة JSON غير صحيحة: '+e.message)}
+function teachingReadJson(){
+ const type=$('teachingType').value;
+ const title=$('teachingTitle').value.trim();
+ if(!title)throw new Error('اكتب عنوان الدرس');
+ const base={id:$('teachingJson').dataset.lessonId||undefined,title,description:$('teachingDescription').value.trim(),target_year:$('teachingYear').value,avatar:$('teachingAvatar').value,published:$('teachingPublished').value==='true',lesson_type:type};
+ if(type==='video'){
+  const video_url=$('teachingVideoUrl').value.trim();
+  if(!video_url)throw new Error('أضف رابط الفيديو المباشر');
+  if(!/^https?:\/\//i.test(video_url))throw new Error('رابط الفيديو يجب أن يبدأ بـ https:// أو http://');
+  return {...base,video_url,video_path:null,sections:[],final_questions:[]};
+ }
+ let data;try{data=JSON.parse($('teachingJson').value)}catch(e){throw new Error('صيغة JSON غير صحيحة: '+e.message)}
  if(!data||typeof data!=='object'||Array.isArray(data))throw new Error('يجب أن يكون محتوى JSON كائنًا');
- const title=$('teachingTitle').value.trim()||data.title||'';const target_year=$('teachingYear').value;const sections=data.sections;
- if(!title)throw new Error('اكتب عنوان الدرس');if(!Array.isArray(sections)||!sections.length)throw new Error('أضف جزءًا واحدًا على الأقل داخل sections');
+ const sections=data.sections;
+ if(!Array.isArray(sections)||!sections.length)throw new Error('أضف جزءًا واحدًا على الأقل داخل sections');
  [...sections,...(data.final_questions||[])].forEach((q,i)=>{if(!Array.isArray(q.options)||q.options.length!==4)throw new Error('السؤال رقم '+(i+1)+' يجب أن يحتوي على أربعة اختيارات');if(!Number.isInteger(Number(q.correct_index))||Number(q.correct_index)<0||Number(q.correct_index)>3)throw new Error('حدد الإجابة الصحيحة للسؤال رقم '+(i+1));});
- return {id:$('teachingJson').dataset.lessonId||undefined,title,description:$('teachingDescription').value.trim()||data.description||'',target_year,avatar:$('teachingAvatar').value,published:$('teachingPublished').value==='true',sections:sections.map((q,i)=>({...q,section_order:Number(q.section_order)||i+1,options:q.options,correct_index:Number(q.correct_index)})),final_questions:(data.final_questions||[]).map((q,i)=>({...q,question_order:Number(q.question_order)||i+1,options:q.options,correct_index:Number(q.correct_index)}))};
+ return {...base,video_url:null,video_path:null,sections:sections.map((q,i)=>({...q,section_order:Number(q.section_order)||i+1,options:q.options,correct_index:Number(q.correct_index)})),final_questions:(data.final_questions||[]).map((q,i)=>({...q,question_order:Number(q.question_order)||i+1,options:q.options,correct_index:Number(q.correct_index)}))};
 }
 function teachingPreview(){try{const d=teachingReadJson();$('teachingPreviewBox').innerHTML='<h4 style="margin-bottom:8px">'+esc(d.title)+'</h4><p class="muted">'+esc(d.description)+'</p><p>عدد أجزاء الشرح: <b>'+d.sections.length+'</b> — أسئلة الاختبار النهائي: <b>'+d.final_questions.length+'</b></p>'+d.sections.map((q,i)=>'<div style="padding:10px;border:1px solid var(--line);border-radius:10px;margin:8px 0"><b>الجزء '+(i+1)+': '+esc(q.title||'')+'</b><p>'+esc(q.explanation||'')+'</p><small>'+esc(q.question||'')+'</small></div>').join('');$('teachingPreviewBox').classList.remove('hidden');$('teachingEditorError').textContent=''}catch(e){$('teachingEditorError').textContent=e.message}}
-async function teachingSaveLesson(btn){try{const lesson=teachingReadJson();if(btn)btn.disabled=true;const {data,error}=await db.rpc('teaching_admin_save',{p_admin_password:ADMIN_PASSWORD,p_lesson:lesson});if(error)throw error;toast('تم حفظ الدرس بنجاح');teachingNewLesson();await loadTeachingLessons();}catch(e){$('teachingEditorError').textContent=e.message||'تعذر حفظ الدرس';}finally{if(btn)btn.disabled=false}}
-async function loadTeachingLessons(){const body=$('teachingTable')?.querySelector('tbody');if(!body)return;body.innerHTML=loadingRow(6);try{const {data,error}=await db.rpc('teaching_admin_list',{p_admin_password:ADMIN_PASSWORD});if(error)throw error;teachingLessonsCache=Array.isArray(data)?data:(data?.lessons||[]);$('teachingCount').textContent=teachingLessonsCache.length+' درس';body.innerHTML=teachingLessonsCache.length?teachingLessonsCache.map(l=>`<tr><td><b>${esc(l.title)}</b><div class="muted">${esc(l.description||'')}</div></td><td>${esc(l.target_year||'—')}</td><td>${Number(l.sections_count??l.section_count??0)}</td><td>${Number(l.final_questions_count??l.final_count??0)}</td><td><span class="pill ${l.published?'':'off'}">${l.published?'منشور':'مسودة'}</span></td><td><button class="btn light small" onclick="teachingEditLesson('${esc(l.id)}')">تعديل</button> <button class="btn red small" onclick="teachingDeleteLesson('${esc(l.id)}')">حذف</button></td></tr>`).join(''):emptyRow(6,'لا توجد دروس حتى الآن');}catch(e){body.innerHTML=emptyRow(6,'تعذر تحميل الدروس: '+esc(e.message));}}
-async function teachingEditLesson(id){try{const {data,error}=await db.rpc('teaching_admin_get',{p_admin_password:ADMIN_PASSWORD,p_lesson_id:id});if(error)throw error;const d=data?.lesson||data;if(!d)throw new Error('لم يتم العثور على بيانات الدرس');$('teachingTitle').value=d.title||'';$('teachingYear').value=d.target_year||'الأولى';$('teachingDescription').value=d.description||'';$('teachingAvatar').value=d.avatar||'teacher_1';$('teachingPublished').value=String(!!d.published);$('teachingJson').value=JSON.stringify({sections:d.sections||[],final_questions:d.final_questions||[]},null,2);$('teachingJson').dataset.lessonId=id;$('lessonEditorHeading').textContent='تعديل الدرس: '+(d.title||'');$('teachingEditorError').textContent='';$('teachingPreviewBox').classList.add('hidden');window.scrollTo({top:0,behavior:'smooth'});}catch(e){fail('تعذر فتح الدرس للتعديل',e)}}
+async function teachingSaveLesson(btn){try{const lesson=teachingReadJson();if(btn)btn.disabled=true;const {data,error}=await db.rpc('teaching_admin_save',{p_admin_password:ADMIN_PASSWORD,p_lesson:lesson});if(error)throw error;if(data?.success===false)throw new Error(data.message||'تعذر حفظ الدرس');toast('تم حفظ الدرس بنجاح');teachingNewLesson();await loadTeachingLessons();}catch(e){$('teachingEditorError').textContent=e.message||'تعذر حفظ الدرس';}finally{if(btn)btn.disabled=false}}
+async function loadTeachingLessons(){const body=$('teachingTable')?.querySelector('tbody');if(!body)return;body.innerHTML=loadingRow(6);try{const {data,error}=await db.rpc('teaching_admin_list',{p_admin_password:ADMIN_PASSWORD});if(error)throw error;teachingLessonsCache=Array.isArray(data)?data:(data?.lessons||[]);$('teachingCount').textContent=teachingLessonsCache.length+' درس';body.innerHTML=teachingLessonsCache.length?teachingLessonsCache.map(l=>`<tr><td><b>${esc(l.title)}</b><div class="muted">${esc(l.description||'')}</div><small>${l.lesson_type==='video'?'🎬 درس فيديو':'🎓 درس تفاعلي'}</small></td><td>${esc(l.target_year||'—')}</td><td>${l.lesson_type==='video'?'—':Number(l.sections_count??l.section_count??0)}</td><td>${l.lesson_type==='video'?'—':Number(l.final_questions_count??l.final_count??0)}</td><td><span class="pill ${l.published?'':'off'}">${l.published?'منشور':'مسودة'}</span></td><td><button class="btn light small" onclick="teachingEditLesson('${esc(l.id)}')">تعديل</button> <button class="btn red small" onclick="teachingDeleteLesson('${esc(l.id)}')">حذف</button></td></tr>`).join(''):emptyRow(6,'لا توجد دروس حتى الآن');}catch(e){body.innerHTML=emptyRow(6,'تعذر تحميل الدروس: '+esc(e.message));}}
+async function teachingEditLesson(id){try{const {data,error}=await db.rpc('teaching_admin_get',{p_admin_password:ADMIN_PASSWORD,p_lesson_id:id});if(error)throw error;const d=data?.lesson||data;if(!d)throw new Error('لم يتم العثور على بيانات الدرس');$('teachingTitle').value=d.title||'';$('teachingYear').value=d.target_year||'الأولى';$('teachingDescription').value=d.description||'';$('teachingAvatar').value=d.avatar||'teacher_1';$('teachingPublished').value=String(!!d.published);$('teachingType').value=d.lesson_type||'interactive';$('teachingVideoUrl').value=d.video_url||'';$('teachingJson').value=JSON.stringify({sections:d.sections||[],final_questions:d.final_questions||[]},null,2);$('teachingJson').dataset.lessonId=id;$('lessonEditorHeading').textContent='تعديل الدرس: '+(d.title||'');$('teachingEditorError').textContent='';$('teachingPreviewBox').classList.add('hidden');teachingToggleType();window.scrollTo({top:0,behavior:'smooth'});}catch(e){fail('تعذر فتح الدرس للتعديل',e)}}
 async function teachingDeleteLesson(id){if(!confirm('هل تريد حذف هذا الدرس نهائيًا؟'))return;try{const {error}=await db.rpc('teaching_admin_delete',{p_admin_password:ADMIN_PASSWORD,p_lesson_id:id});if(error)throw error;toast('تم حذف الدرس');loadTeachingLessons()}catch(e){fail('تعذر حذف الدرس',e)}}
 
 /* ---------- المحادثة ---------- */

@@ -159,6 +159,14 @@ body{background:radial-gradient(ellipse at 8% 0%,#e5f2ec 0,transparent 34%),var(
 .nav button i{font-size:17px}.nav button:hover{background:#ffffff14;transform:translateX(-2px)}
 .nav button.active{background:linear-gradient(100deg,#e9fff3,#fff);color:#07513d;box-shadow:0 5px 14px #001d1425;font-weight:800}
 .nav button.danger{margin-top:3px;color:#ffcaca}.nav .sep{background:#ffffff25;margin:10px 5px}
+.grade-nav-title{color:#d6eee3;font-size:12px;font-weight:800;padding:7px 12px 3px}
+.side-year-choices{display:grid;gap:6px}
+.side-year-choices button{display:flex;align-items:center;justify-content:space-between;gap:8px;width:100%;padding:11px 12px;border-radius:12px;background:#ffffff0d;color:#d5e8df;border:1px solid #ffffff16;text-align:right;font-size:13px}
+.side-year-choices button:hover{background:#ffffff1b}
+.side-year-choices button.on{background:linear-gradient(100deg,#e9fff3,#fff);color:#07513d;font-weight:850;box-shadow:0 4px 12px #001d1425}
+.side-year-choices button .lock{font-size:11px;opacity:.9}
+.side-year-choices button .available{font-size:10px;color:#a8dfc1}
+@media(max-width:850px){.side-year-choices{grid-template-columns:repeat(3,minmax(0,1fr))}.grade-nav-title{grid-column:1/-1}.side-year-choices button{justify-content:center;padding:10px 6px;font-size:12px}}
 .content{min-width:0}.yearbar{border:1px solid #e0ebe5;border-radius:17px;padding:12px 16px;box-shadow:var(--shadow);background:#fff;gap:14px}
 .yearbar>span{font-size:14px;font-weight:800}.yearbar .seg{background:#eff5f1;border:1px solid #e6eee9;padding:4px;border-radius:12px}
 .yearbar .seg button{padding:9px 13px;border-radius:9px;font-size:13px;transition:.2s}.yearbar .seg button.on{background:#07513f;color:#fff;box-shadow:0 4px 10px #07513f30}
@@ -217,6 +225,9 @@ table{min-width:640px}th,td{padding:13px 14px;font-size:13px}th{background:#f2f7
  <div class="layout">
   <aside class="side" id="side">
    <div class="nav">
+    <div class="grade-nav-title">🎓 الفرق الدراسية</div>
+    <div id="sideYearChoices" class="side-year-choices"></div>
+    <div class="sep"></div>
     <button class="active" data-page="overview" onclick="showPage('overview',this)"><i>▦</i>الرئيسية</button>
     <button data-page="students" onclick="showPage('students',this)"><i>♙</i>الطلاب</button>
     <button data-page="exams" onclick="showPage('exams',this)"><i>✎</i>الامتحانات</button>
@@ -229,7 +240,7 @@ table{min-width:640px}th,td{padding:13px 14px;font-size:13px}th{background:#f2f7
   </aside>
 
   <section class="content">
-   <div class="yearbar"><span>🎓 الفرقة الدراسية:</span><div class="seg" id="yearSeg"></div></div>
+   <div class="yearbar" id="yearbar" style="display:none"><span>🎓 الفرقة الدراسية:</span><div class="seg" id="yearSeg"></div></div>
    <!-- الرئيسية -->
    <div id="overviewPage">
     <div class="pagehead"><div><h2>نظرة عامة</h2><div class="sub">ملخص سريع لحالة المنصة</div></div><button class="btn light small" onclick="refreshAll()">تحديث ↻</button></div>
@@ -369,15 +380,37 @@ const ADMIN_PASSWORD = "Yussefreda123@#$";
 const db = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 const DEFAULT_YEAR='الأولى', DEFAULT_DEPT='اللغة العربية';
 const PAGES=['overview','students','exams','results','library','chat','reset'];
-const YEARS=['الأولى','الثانية','الثالثة','الرابعة'];
-let year='الأولى';try{const y=sessionStorage.getItem('adm_year');if(YEARS.includes(y))year=y}catch(e){}
+const YEARS=['الأولى','الثانية','الثالثة'];
+const FIRST_YEAR_PASSWORD='2006';
+let year='الثانية';
+try{
+ const saved=sessionStorage.getItem('adm_year');
+ const firstUnlocked=sessionStorage.getItem('first_year_unlocked')==='1';
+ if(YEARS.includes(saved) && (saved!=='الأولى'||firstUnlocked)) year=saved;
+}catch(e){}
 const yr=v=>String(v||'الأولى').trim();
-function renderYearBar(){$('yearSeg').innerHTML=YEARS.map(y=>`<button class="${y===year?'on':''}" onclick="setYear('${y}')">الفرقة ${y}</button>`).join('')}
+function renderYearBar(){
+ const host=$('sideYearChoices');
+ if(host)host.innerHTML=YEARS.map(y=>`<button type="button" class="${y===year?'on':''}" onclick="selectYear('${y}')"><span>الفرقة ${y}</span>${y==='الأولى'?'<span class="lock">🔒 محمية</span>':'<span class="available">متاحة</span>'}</button>`).join('');
+ if($('yearSeg'))$('yearSeg').innerHTML='';
+}
+function selectYear(y){
+ if(!YEARS.includes(y))return;
+ if(y==='الأولى' && sessionStorage.getItem('first_year_unlocked')!=='1'){
+  const entered=prompt('الفرقة الأولى محمية. أدخل كلمة المرور للمتابعة:');
+  if(entered===null)return;
+  if(entered!==FIRST_YEAR_PASSWORD){toast('كلمة المرور غير صحيحة',true);return}
+  try{sessionStorage.setItem('first_year_unlocked','1')}catch(e){}
+ }
+ setYear(y);
+}
 function setYear(y){
- year=y;try{sessionStorage.setItem('adm_year',y)}catch(e){}
+ if(!YEARS.includes(y))return;
+ year=y;
+ try{sessionStorage.setItem('adm_year',y)}catch(e){}
  renderYearBar();
  const cur=PAGES.find(p=>!$(p+'Page').classList.contains('hidden'))||'overview';
- showPage(cur);toast('تم التبديل إلى الفرقة '+y);
+ showPage(cur);toast('تم فتح لوحة تحكم الفرقة '+y);
 }
 async function yearResults(){
  const [{data:ex},{data:rs,error}]=await Promise.all([db.from('exams').select('title,target_year'),db.rpc('get_admin_results')]);
@@ -415,7 +448,7 @@ function logoutAdmin(){try{sessionStorage.removeItem('adm_ok')}catch(e){}locatio
 /* ---------- التنقل ---------- */
 function showPage(name,btn){
  PAGES.forEach(p=>$(p+'Page').classList.toggle('hidden',p!==name));
- document.querySelectorAll('.nav button').forEach(b=>b.classList.toggle('active',b.dataset.page===name));
+ document.querySelectorAll('.nav button[data-page]').forEach(b=>b.classList.toggle('active',b.dataset.page===name));
  $('side').classList.remove('open');
  if(name==='overview')refreshAll();
  if(name==='students')loadStudents();

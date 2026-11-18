@@ -450,11 +450,11 @@ async function refreshAll(){
  try{
   const [st,sb,ex]=await Promise.all([
    db.rpc('get_admin_students'),
-   db.from('subjects').select('id',{count:'exact',head:true}),
+   db.from('subjects').select('id,hidden_years'),
    db.from('exams').select('id,title,published,created_at,subjects(name)').eq('target_year',year).order('created_at',{ascending:false})]);
-  if(st.error)throw st.error;if(ex.error)throw ex.error;
+  if(st.error)throw st.error;if(sb.error)throw sb.error;if(ex.error)throw ex.error;
   $('statStudents').textContent=(st.data||[]).filter(x=>yr(x.academic_year)===year).length;
-  $('statSubjects').textContent=sb.count??'—';
+  $('statSubjects').textContent=(sb.data||[]).filter(s=>!Array.isArray(s.hidden_years)||!s.hidden_years.includes(year)).length;
   const exams=ex.data||[];
   $('statExams').textContent=exams.filter(e=>e.published).length;
   $('recentExams').innerHTML=exams.length?exams.slice(0,6).map(e=>`<div style="padding:10px 0;border-bottom:1px solid #e8eee9;display:flex;justify-content:space-between;gap:8px;align-items:center"><span><b>${esc(e.title)}</b> <span class="muted">— ${esc(e.subjects?.name||'')}</span></span><span class="pill ${e.published?'':'off'}">${e.published?'منشور':'مسودة'}</span></div>`).join(''):'لا توجد امتحانات للفرقة '+year+' حتى الآن.';

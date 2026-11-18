@@ -2151,7 +2151,7 @@ async function loadTeachingLessons(){
   if(!teachingLessonsCache.length){box.innerHTML='<div class="lesson-empty">📘 لا توجد دروس منشورة لفرقتك حاليًا. ارجع لاحقًا للاطلاع على الدروس الجديدة.</div>';return;}
   box.innerHTML=teachingLessonsCache.map((l,i)=>{
    const pct=lessonProgressPercent(l),done=!!l.completed;
-   return `<article class="lesson-card" onclick="openTeachingLesson(${i})"><div class="lesson-video-cover"><span class="lesson-play">▶</span><span class="lesson-video-label">▶ شرح تفاعلي · ${Number(l.total_sections||l.sections_count||0)} أجزاء</span></div><div class="lesson-card-content"><h3>${esc(l.title||'درس بدون عنوان')}</h3><p>${esc(l.description||'شرح مبسط بالصوت والصورة مع تدريبات بعد كل جزء.')}</p><div class="lesson-progress"><span style="width:${pct}%"></span></div><small class="muted">${Number(l.completed_sections||0)} من ${Number(l.total_sections||l.sections_count||0)} أجزاء · ${pct}%</small><div class="lesson-actions"><button class="btn small" type="button">${done?'▶ مراجعة الدرس':'▶ شاهد الدرس'}</button>${done?'<span class="badge">مكتمل ✓</span>':''}</div></div></article>`;
+   return `<article class="lesson-card" onclick="openTeachingLesson(${i})"><div class="lesson-video-cover"><span class="lesson-play">▶</span><span class="lesson-video-label">${l.lesson_type==='video'?'▶ درس فيديو':'▶ شرح تفاعلي · '+Number(l.total_sections||l.sections_count||0)+' أجزاء'}</span></div><div class="lesson-card-content"><h3>${esc(l.title||'درس بدون عنوان')}</h3><p>${esc(l.description||'شرح مبسط بالصوت والصورة مع تدريبات بعد كل جزء.')}</p>${l.lesson_type==='video'?'':'<div class="lesson-progress"><span style="width:'+pct+'%"></span></div><small class="muted">'+Number(l.completed_sections||0)+' من '+Number(l.total_sections||l.sections_count||0)+' أجزاء · '+pct+'%</small>'}<div class="lesson-actions"><button class="btn small" type="button">${done?'▶ مراجعة الدرس':'▶ شاهد الدرس'}</button>${done?'<span class="badge">مكتمل ✓</span>':''}</div></div></article>`;
   }).join('');
  }catch(e){console.error('load teaching lessons',e);box.innerHTML=`<div class="lesson-empty">تعذر تحميل الدروس: ${esc(e.message||'خطأ في الاتصال')}</div>`;}
 }
@@ -2172,7 +2172,11 @@ async function openTeachingLesson(index){
   const progress=progressRes.data||{};
   const doneSections=Number(progress.completed_sections||0);
   teachingSectionIndex=doneSections>=activeTeachingData.sections.length?activeTeachingData.sections.length:Math.max(0,doneSections);
-  renderTeachingSection();
+  if(activeTeachingData.lesson_type==='video') {
+   const videoUrl=activeTeachingData.video_url||lesson.video_url||'';
+   if(!videoUrl)throw new Error('رابط الفيديو غير متوفر لهذا الدرس');
+   player.innerHTML=`<div class="lesson-player"><div class="lesson-player-head"><div class="lesson-teacher">🎬</div><div><h2 style="margin:0 0 5px">${esc(activeTeachingData.title||lesson.title||'درس فيديو')}</h2><small>مشاهدة الدرس</small></div></div><div class="lesson-player-body"><p>${esc(activeTeachingData.description||'')}</p><video controls playsinline preload="metadata" style="width:100%;max-height:70vh;border-radius:14px;background:#000" src="${esc(videoUrl)}">المتصفح لا يدعم تشغيل الفيديو.</video><div class="lesson-actions"><button class="btn light" onclick="closeTeachingPlayer()">العودة للدروس</button></div></div></div>`;
+  } else { renderTeachingSection(); }
   player.scrollIntoView({behavior:'smooth',block:'start'});
  }catch(e){console.error('open teaching lesson',e);player.innerHTML=`<div class="lesson-empty">تعذر فتح الدرس: ${esc(e.message||'خطأ غير معروف')}</div>`;}
 }

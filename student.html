@@ -1790,7 +1790,7 @@ async function refreshStudentBadges(){
 async function markStudentSeen(fn){if(!profile?.student_code||!db)return;try{const {data}=await db.from('exams').select('id').eq('published',true).eq('target_year',myYear()).eq('target_department','اللغة العربية');if(data)localStorage.setItem(seenKey(),JSON.stringify(data.map(e=>e.id)));}catch(e){}await refreshStudentBadges();}
 
 async function loadExams(){
- const {data,error}=await db.from('exams').select('id,title,description,duration_minutes,total_marks,created_at,subjects(name),exam_questions(id)').eq('published',true).eq('target_year',myYear()).eq('target_department','اللغة العربية').order('created_at',{ascending:false});
+ const {data,error}=await db.from('exams').select('id,title,description,duration_minutes,total_marks,created_at,exam_questions(id)').eq('published',true).eq('target_year',myYear()).eq('target_department','اللغة العربية').order('created_at',{ascending:false});
  if(error){document.getElementById('homeExams').innerHTML='<div class="panel">تعذر تحميل الامتحانات: '+esc(error.message)+'</div>';return}
  examCache=data||[];
  const {data:mine,error:mineError}=await db.rpc('get_student_attempts',{p_student_code:profile.student_code});
@@ -1812,7 +1812,7 @@ async function loadExams(){
    </div>
    <div class="exam-center">
     <h3>${esc(e.title)}</h3>
-    <p class="exam-desc">${esc(e.description || (e.subjects?.name ? 'أسئلة شاملة في مادة ' + e.subjects.name : 'اختبار إلكتروني شامل للمقرر'))}</p>
+    <p class="exam-desc">${esc(e.description || 'اختبار إلكتروني شامل. اقرأ الأسئلة جيدًا قبل الإجابة.')}</p>
     <div class="exam-meta">
      <span>🕒 ${dur} دقيقة</span>
      <span class="sep">|</span>

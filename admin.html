@@ -359,9 +359,10 @@ table{min-width:640px}th,td{padding:13px 14px;font-size:13px}th{background:#f2f7
      <div class="field"><label>الفرقة المستهدفة</label><select id="bookYear"><option value="current">الفرقة المحددة حاليًا</option><option value="الكل">كل الفرق (مشترك)</option></select></div>
      <div class="field"><label>اسم الكتاب / المذكرة</label><input id="bookTitle" placeholder="مثال: مذكرة النحو والصرف - الفرقة الأولى"></div>
      <div class="grid2">
-      <div class="field"><label>صورة غلاف الكتاب (JPG / PNG / WEBP)</label><input id="bookCover" type="file" accept="image/jpeg,image/png,image/webp"></div>
+      <div class="field"><label>صورة غلاف الكتاب (اختياري — يُنشأ غلاف تلقائي)</label><input id="bookCover" type="file" accept="image/jpeg,image/png,image/webp"></div>
       <div class="field"><label>ملف الكتاب (PDF)</label><input id="bookPdf" type="file" accept="application/pdf"></div>
      </div>
+     <div class="field"><label>أو استورد الكتاب من رابط (PDF مباشر)</label><input id="bookLink" type="url" dir="ltr" placeholder="https://.../book.pdf"><span class="hint">روابط مشاركة Gemini/Drive/NotebookLM صفحات ويب؛ إن تعذر سحبها نزّل الملف على هاتفك وارفعه من الخانة أعلاه. الرابط المباشر يُنزَّل ويُخزَّن في المنصة، وإن منع الموقع التنزيل يُحفظ الرابط نفسه.</span></div>
      <button id="uploadBookBtn" class="btn gold" onclick="uploadBook()">رفع الكتاب ونشره في المكتبة</button>
     </div>
     <div class="panel"><h3>الكتب الموجودة في المكتبة</h3>
@@ -379,7 +380,16 @@ table{min-width:640px}th,td{padding:13px 14px;font-size:13px}th{background:#f2f7
       <div class="field"><label>عنوان الدرس</label><input id="teachingTitle" placeholder="مثال: علامات الإعراب الأصلية"></div>
       <div class="field"><label>الفرقة المستهدفة</label><select id="teachingYear"><option>الأولى</option><option>الثانية</option><option>الثالثة</option><option>الرابعة</option></select></div>
      </div>
-     <div id="teachingVideoFields" class="field hidden"><label>رابط فيديو مباشر (MP4 أو WebM)</label><input id="teachingVideoUrl" type="url" dir="ltr" placeholder="https://example.com/lesson.mp4"><span class="hint">ضع رابط ملف فيديو مباشر قابل للتشغيل، وليس رابط مشاركة NotebookLM أو YouTube.</span></div>
+     <div id="teachingVideoFields" class="field hidden"><label>الفيديو</label>
+      <div style="padding:12px;border:1px dashed var(--line);border-radius:12px;margin-bottom:10px"><b>① رفع فيديو من الهاتف أو الجهاز</b>
+       <input id="teachingVideoFile" type="file" accept="video/*" style="margin-top:8px">
+       <button type="button" id="teachingVideoUploadBtn" class="btn gold small" style="margin-top:8px" onclick="teachingUploadVideo()">رفع الفيديو للمنصة</button></div>
+      <div style="padding:12px;border:1px dashed var(--line);border-radius:12px;margin-bottom:10px"><b>② استيراد من رابط (NotebookLM أو غيره)</b>
+       <input id="teachingVideoImport" type="url" dir="ltr" placeholder="https://..." style="margin-top:8px">
+       <button type="button" id="teachingVideoImportBtn" class="btn light small" style="margin-top:8px" onclick="teachingImportVideo()">استيراد وتنزيل في المنصة</button></div>
+      <label>رابط الفيديو الحالي (يُملأ تلقائيًا بعد الرفع/الاستيراد)</label><input id="teachingVideoUrl" type="url" dir="ltr" placeholder="https://example.com/lesson.mp4">
+      <div id="teachingVideoStatus" class="hint"></div>
+      <span class="hint">روابط المشاركة (NotebookLM / Gemini / YouTube) صفحات ويب وليست ملفات، ولا يسمح المتصفح بتنزيلها مباشرة. من NotebookLM اضغط تنزيل (Download) للفيديو على هاتفك ثم ارفعه من الخيار ①. الروابط المباشرة لملفات MP4/WebM تُستورد تلقائيًا.</span></div>
      <div class="field"><label>وصف مختصر</label><input id="teachingDescription" placeholder="نبذة بسيطة عن الدرس"></div>
      <div class="grid2">
       <div class="field"><label>الأفاتار</label><select id="teachingAvatar"><option value="teacher_1">المعلم الأول</option><option value="teacher_2">المعلم الثاني</option><option value="teacher_3">المعلم الثالث</option></select></div>
@@ -819,27 +829,53 @@ async function loadResults(){
 }
 
 /* ---------- المكتبة ---------- */
+function makeCover(title){
+ return new Promise(res=>{const c=document.createElement('canvas');c.width=400;c.height=560;const g=c.getContext('2d');
+  const gr=g.createLinearGradient(0,0,400,560);gr.addColorStop(0,'#0f3d2e');gr.addColorStop(1,'#1f6f54');g.fillStyle=gr;g.fillRect(0,0,400,560);
+  g.strokeStyle='#d4af37';g.lineWidth=6;g.strokeRect(20,20,360,520);
+  g.fillStyle='#fff';g.textAlign='center';g.direction='rtl';g.font='bold 34px Cairo,Tahoma,sans-serif';
+  const words=title.split(' ');let line='',y=240,lines=[];
+  words.forEach(w=>{const t=line?line+' '+w:w;if(g.measureText(t).width>320&&line){lines.push(line);line=w}else line=t});lines.push(line);
+  y=280-(lines.length-1)*24;lines.slice(0,6).forEach((l,i)=>g.fillText(l,200,y+i*48));
+  c.toBlob(b=>res(b),'image/jpeg',.9)});
+}
 async function uploadBook(){
- const title=$('bookTitle').value.trim(),coverFile=$('bookCover').files[0],pdfFile=$('bookPdf').files[0],btn=$('uploadBookBtn');
+ const title=$('bookTitle').value.trim(),coverFile=$('bookCover').files[0],pdfFile=$('bookPdf').files[0],link=$('bookLink').value.trim(),btn=$('uploadBookBtn');
  if(!title){toast('اكتب اسم الكتاب أولًا',true);return}
- if(!coverFile){toast('اختر صورة غلاف الكتاب',true);return}
- if(!pdfFile){toast('اختر ملف الكتاب بصيغة PDF',true);return}
- if(pdfFile.type!=='application/pdf'){toast('يجب أن يكون الملف بصيغة PDF',true);return}
- btn.disabled=true;btn.textContent='جاري رفع الغلاف والملف...';
+ if(!pdfFile&&!link){toast('اختر ملف PDF أو ضع رابط الكتاب',true);return}
+ if(pdfFile&&pdfFile.type!=='application/pdf'){toast('يجب أن يكون الملف بصيغة PDF',true);return}
+ btn.disabled=true;btn.textContent='جاري التجهيز...';
  try{
   const uid=crypto.randomUUID();
-  const coverExt=(coverFile.name.split('.').pop()||'jpg').toLowerCase();
+  let coverBlob=coverFile,coverType=coverFile?coverFile.type:'image/jpeg',coverExt=coverFile?(coverFile.name.split('.').pop()||'jpg').toLowerCase():'jpg';
+  if(!coverBlob)coverBlob=await makeCover(title);
   const coverPath=`covers/${uid}.${coverExt}`,pdfPath=`pdfs/${uid}.pdf`;
-  const {error:coverErr}=await db.storage.from('library').upload(coverPath,coverFile,{contentType:coverFile.type});
+  const {error:coverErr}=await db.storage.from('library').upload(coverPath,coverBlob,{contentType:coverType});
   if(coverErr)throw coverErr;
-  const {data:cu}=db.storage.from('library').getPublicUrl(coverPath);
-  const {error:pdfErr}=await db.storage.from('library').upload(pdfPath,pdfFile,{contentType:'application/pdf'});
-  if(pdfErr)throw pdfErr;
-  const {data:pu}=db.storage.from('library').getPublicUrl(pdfPath);
-  const {error:dbErr}=await db.from('library_books').insert({title,cover_url:cu.publicUrl,pdf_url:pu.publicUrl,academic_year:$('bookYear').value==='الكل'?'الكل':year});
+  const cu=db.storage.from('library').getPublicUrl(coverPath).data;
+  let pdfUrl,note='';
+  if(pdfFile){
+   btn.textContent='جاري رفع الكتاب...';
+   const {error:pdfErr}=await db.storage.from('library').upload(pdfPath,pdfFile,{contentType:'application/pdf'});
+   if(pdfErr)throw pdfErr;
+   pdfUrl=db.storage.from('library').getPublicUrl(pdfPath).data.publicUrl;
+  }else{
+   btn.textContent='جاري استيراد الكتاب من الرابط...';
+   try{
+    const res=await fetch(link);if(!res.ok)throw new Error('HTTP '+res.status);
+    const blob=await res.blob();
+    if(!/pdf/i.test(blob.type)&&!/\.pdf(\?|$)/i.test(link))throw new Error('ليس ملف PDF');
+    const {error:pe}=await db.storage.from('library').upload(pdfPath,blob,{contentType:'application/pdf'});
+    if(pe)throw pe;
+    pdfUrl=db.storage.from('library').getPublicUrl(pdfPath).data.publicUrl;
+   }catch(err){
+    pdfUrl=link;note=' (تعذر تنزيل الملف، تم حفظ الرابط كما هو)';
+   }
+  }
+  const {error:dbErr}=await db.from('library_books').insert({title,cover_url:cu.publicUrl,pdf_url:pdfUrl,academic_year:$('bookYear').value==='الكل'?'الكل':year});
   if(dbErr)throw dbErr;
-  toast('تم رفع الكتاب ونشره بنجاح');
-  $('bookTitle').value='';$('bookCover').value='';$('bookPdf').value='';
+  toast('تم نشر الكتاب في المكتبة'+note);
+  $('bookTitle').value='';$('bookCover').value='';$('bookPdf').value='';$('bookLink').value='';
   await loadBooks();
  }catch(e){toast('خطأ أثناء الرفع: '+(e.message||'خطأ غير معروف'),true)}
  finally{btn.disabled=false;btn.textContent='رفع الكتاب ونشره في المكتبة'}
@@ -866,8 +902,45 @@ function teachingToggleType(){
  const preview=$('teachingPreviewBtn');if(preview)preview.classList.toggle('hidden',video);
  const sample=$('teachingSampleBtn');if(sample)sample.classList.toggle('hidden',video);
 }
+
+/* رفع واستيراد الفيديو */
+function vStatus(t,err){const e=$('teachingVideoStatus');if(e){e.textContent=t;e.style.color=err?'#c0392b':''}}
+async function putVideo(blob,ext,type){
+ const path=`videos/${crypto.randomUUID()}.${ext}`;
+ const {error}=await db.storage.from('lessons-videos').upload(path,blob,{contentType:type||'video/mp4',upsert:false});
+ if(error){if(/bucket/i.test(error.message||''))throw new Error('حاوية التخزين lessons-videos غير موجودة. أنشئها في Supabase كما في ملف الإعداد.');throw error}
+ return {path,url:db.storage.from('lessons-videos').getPublicUrl(path).data.publicUrl};
+}
+async function teachingUploadVideo(){
+ const f=$('teachingVideoFile').files[0],btn=$('teachingVideoUploadBtn');
+ if(!f){vStatus('اختر ملف فيديو أولًا',1);return}
+ if(!/^video\//.test(f.type)&&!/\.(mp4|webm|mov|m4v)$/i.test(f.name)){vStatus('الملف ليس فيديو',1);return}
+ btn.disabled=true;vStatus('جاري رفع الفيديو ('+(f.size/1048576).toFixed(1)+' MB)... لا تغلق الصفحة');
+ try{const ext=(f.name.split('.').pop()||'mp4').toLowerCase();const r=await putVideo(f,ext,f.type||'video/mp4');$('teachingVideoUrl').value=r.url;$('teachingVideoUrl').dataset.path=r.path;vStatus('✅ تم رفع الفيديو. اضغط "حفظ الدرس" لإتمام النشر.')}
+ catch(e){vStatus('تعذر الرفع: '+(e.message||e)+' — قد يكون الفيديو أكبر من الحد المسموح في Supabase.',1)}
+ finally{btn.disabled=false}
+}
+async function teachingImportVideo(){
+ const u=$('teachingVideoImport').value.trim(),btn=$('teachingVideoImportBtn');
+ if(!/^https?:\/\//i.test(u)){vStatus('الصق رابطًا صحيحًا يبدأ بـ https://',1);return}
+ btn.disabled=true;vStatus('جاري محاولة تنزيل الفيديو من الرابط...');
+ try{
+  const res=await fetch(u);
+  if(!res.ok)throw new Error('HTTP '+res.status);
+  const ct=(res.headers.get('content-type')||'').toLowerCase();
+  if(!ct.startsWith('video/')&&!ct.includes('octet-stream'))throw new Error('الرابط صفحة ويب وليس ملف فيديو');
+  const blob=await res.blob();
+  const ext=ct.includes('webm')?'webm':'mp4';
+  vStatus('تم التنزيل، جاري الرفع للمنصة...');
+  const r=await putVideo(blob,ext,ct.startsWith('video/')?ct.split(';')[0]:'video/mp4');
+  $('teachingVideoUrl').value=r.url;$('teachingVideoUrl').dataset.path=r.path;
+  vStatus('✅ تم استيراد الفيديو وتخزينه داخل المنصة. اضغط "حفظ الدرس".');
+ }catch(e){
+  vStatus('تعذر الاستيراد التلقائي ('+(e.message||e)+'). روابط المشاركة من NotebookLM/Gemini محمية ولا يمكن للمتصفح سحبها. نزّل الفيديو على هاتفك ثم ارفعه من الخيار ①، أو ضع رابط ملف مباشر.',1);
+ }finally{btn.disabled=false}
+}
 function teachingNewLesson(){
- $('teachingTitle').value='';$('teachingYear').value=year||'الأولى';$('teachingDescription').value='';$('teachingAvatar').value='teacher_1';$('teachingPublished').value='false';$('teachingJson').value='';$('teachingVideoUrl').value='';$('teachingType').value='interactive';$('teachingEditorError').textContent='';$('teachingPreviewBox').classList.add('hidden');$('lessonEditorHeading').textContent='إضافة درس جديد';$('teachingJson').dataset.lessonId='';teachingToggleType();
+ $('teachingTitle').value='';$('teachingYear').value=year||'الأولى';$('teachingDescription').value='';$('teachingAvatar').value='teacher_1';$('teachingPublished').value='false';$('teachingJson').value='';$('teachingVideoUrl').value='';$('teachingVideoUrl').dataset.path='';if($('teachingVideoFile'))$('teachingVideoFile').value='';if($('teachingVideoImport'))$('teachingVideoImport').value='';vStatus('');$('teachingType').value='interactive';$('teachingEditorError').textContent='';$('teachingPreviewBox').classList.add('hidden');$('lessonEditorHeading').textContent='إضافة درس جديد';$('teachingJson').dataset.lessonId='';teachingToggleType();
 }
 function teachingSample(){return {title:'عنوان الدرس',description:'شرح مبسط للدرس',target_year:'الأولى',avatar:'teacher_1',published:false,sections:[{section_order:1,title:'الجزء الأول',explanation:'اكتب هنا الشرح الكامل.',simple_explanation:'اكتب شرحًا مبسطًا جدًا باللهجة العربية السهلة، كأن المدرس يشرح لطالب لأول مرة.',narration:'النص الذي سيقرؤه صوت المدرس، جمل قصيرة وواضحة.',image_url:'https://example.com/lesson-image.jpg',image_alt:'وصف الصورة',question:'ما الإجابة الصحيحة؟',options:['الإجابة الأولى','الإجابة الثانية','الإجابة الثالثة','الإجابة الرابعة'],correct_index:0,feedback:'هذا هو التفسير المبسط للإجابة الصحيحة.'}],final_questions:[{question_order:1,question:'سؤال المراجعة النهائي؟',options:['اختيار أ','اختيار ب','اختيار ج','اختيار د'],correct_index:0,feedback:'تفسير الإجابة.'}]};}
 function teachingLoadSample(){const x=teachingSample();$('teachingTitle').value=x.title;$('teachingYear').value=x.target_year;$('teachingDescription').value=x.description;$('teachingJson').value=JSON.stringify({sections:x.sections,final_questions:x.final_questions},null,2);}
@@ -880,7 +953,7 @@ function teachingReadJson(){
   const video_url=$('teachingVideoUrl').value.trim();
   if(!video_url)throw new Error('أضف رابط الفيديو المباشر');
   if(!/^https?:\/\//i.test(video_url))throw new Error('رابط الفيديو يجب أن يبدأ بـ https:// أو http://');
-  return {...base,video_url,video_path:null,sections:[],final_questions:[]};
+  return {...base,video_url,video_path:$('teachingVideoUrl').dataset.path||null,sections:[],final_questions:[]};
  }
  let data;try{data=JSON.parse($('teachingJson').value)}catch(e){throw new Error('صيغة JSON غير صحيحة: '+e.message)}
  if(!data||typeof data!=='object'||Array.isArray(data))throw new Error('يجب أن يكون محتوى JSON كائنًا');

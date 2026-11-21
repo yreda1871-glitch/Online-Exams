@@ -970,6 +970,15 @@ th{background:var(--light-blue);color:var(--navy-dark);font-weight:700}
 button,.btn{touch-action:manipulation}input,textarea,select{font-size:16px!important}
 
 /* Exam notifications card */
+.msg-head{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:14px;flex-wrap:wrap}
+.msg-head h2{margin:0}.msg-tools button{border:1px solid #cfd8e8;background:#fff;border-radius:10px;padding:6px 12px;font-family:inherit;cursor:pointer}
+.msg-list{display:flex;flex-direction:column;gap:12px}
+.msg-row{display:flex;align-items:flex-end;gap:10px}
+.msg-row img{width:46px;height:46px;border-radius:50%;object-fit:cover;border:2px solid #d4af37;background:#fff;flex:none}
+.msg-bubble{background:#fff;border:1px solid #e3e8f2;border-radius:18px 18px 18px 4px;padding:10px 14px;max-width:80%;line-height:1.8;box-shadow:0 2px 8px rgba(15,35,80,.06)}
+.msg-row.unread .msg-bubble{border-color:#1a73e8;background:#eef5ff}
+.msg-bubble .m-t{font-weight:600;color:#1f2937}.msg-bubble .m-d{font-size:12px;color:#7a869a;margin-top:4px}
+.msg-empty{text-align:center;color:#7a869a;padding:30px}
 .notif-card{display:flex;align-items:center;gap:14px;background:var(--light-blue);border:1px solid var(--border-line);border-radius:18px;padding:14px 18px;margin-bottom:16px;line-height:1.6}
 .notif-card .btn{margin-right:auto;flex-shrink:0}
 
@@ -1171,9 +1180,9 @@ button,.btn{touch-action:manipulation}input,textarea,select{font-size:16px!impor
   </div>
  </div>
  <div id="topUser" class="topuser hidden">
-  <button class="notif-btn" onclick="showPage('exams', document.querySelectorAll('.nav button')[1])" title="الامتحانات الجديدة" aria-label="الإشعارات">
-   🔔
-   <span id="topNotifBadge" class="notif-dot"></span>
+  <button class="notif-btn" onclick="openMessages()" title="الرسائل" aria-label="الرسائل">
+   💬
+   <span id="msgBadge" class="notif-dot"></span>
   </button>
   <button class="top-avatar-button" onclick="chooseAvatar()" aria-label="تغيير الصورة">
    <img id="topAvatar" class="avatar" alt="صورة الطالب">
@@ -1298,6 +1307,12 @@ button,.btn{touch-action:manipulation}input,textarea,select{font-size:16px!impor
    </div>
    
    <!-- الملف الشخصي -->
+   <!-- صندوق الرسائل -->
+   <div id="messagesPage" class="hidden">
+    <div class="msg-head"><h2>💬 الرسائل</h2><div class="msg-tools"><button id="dailyRemindBtn" onclick="dailyEnableReminder()">🔔 تفعيل التذكير اليومي</button></div></div>
+    <div id="msgList" class="msg-list"></div>
+   </div>
+
    <div id="profilePage" class="hidden">
     <div class="section-bar">
       <div class="section-title-wrap"><h2>ملفي الشخصي 👤</h2></div>
@@ -1640,6 +1655,7 @@ async function openStudent(p){
  await loadExams();
  await loadMyResults();
  renderNotifCard();
+ initDaily();
  checkNewExams();
  subscribeExamsLive();
  showBuddy();
@@ -1789,7 +1805,7 @@ async function logout(){localStorage.removeItem('exam_student_code');location.re
 async function restoreStudent(){const code=localStorage.getItem('exam_student_code');if(!code)return;try{await ensureDb();const {data,error}=await db.rpc('login_student',{p_student_code:code});if(error||!data||data.status!=='ok'||!data.profile){localStorage.removeItem('exam_student_code');return;}await openStudent(data.profile);}catch(e){console.warn('restore student session failed',e);}}
 
 function showPage(page,btn){
- ['home','exams','profile','leaders','library','lessons'].forEach(p=>document.getElementById(p+'Page').classList.toggle('hidden',p!==page));
+ ['home','exams','profile','leaders','library','lessons','messages'].forEach(p=>document.getElementById(p+'Page').classList.toggle('hidden',p!==page));
  document.querySelectorAll('.nav button').forEach(b=>b.classList.remove('active'));if(btn)btn.classList.add('active');
  if(page==='profile'){Promise.resolve(loadMyResults()).then(()=>setTimeout(()=>{if(!document.getElementById('profilePage').classList.contains('hidden'))profileBuddy();},350));}
  if(page==='leaders'){
@@ -1797,6 +1813,7 @@ function showPage(page,btn){
  }
  if(page==='exams'){markStudentSeen('mark_student_exams_seen');loadExams();}
  if(page==='library')loadLibrary();
+ if(page==='messages')renderInbox(true);
  if(page==='lessons')loadTeachingLessons();
 }
 
@@ -2233,6 +2250,81 @@ function date(v){return v?new Date(v).toLocaleString('ar-EG'):'—'}
 /* ===== إشعارات الامتحانات الجديدة ===== */
 if('serviceWorker' in navigator)navigator.serviceWorker.register('sw.js').catch(()=>{});
 const notifIcon='data:image/svg+xml;charset=UTF-8,'+encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" width="128" height="128"><rect width="128" height="128" rx="28" fill="#0D2B56"/><text x="64" y="88" font-size="70" text-anchor="middle">🎓</text></svg>');
+
+/* ===== رسائل الأفاتار اليومية ===== */
+const DAILY_TIPS=[
+['💪','كل صفحة تذاكرها النهاردة بتقرّبك من النجاح. ابدأ بخطوة صغيرة وكمّل.'],
+['⏱️','ذاكر 25 دقيقة بتركيز كامل ثم ارتح 5 دقائق. التركيز أهم من عدد الساعات.'],
+['📚','راجع درس الأمس قبل ما تبدأ درس جديد، المراجعة السريعة بتثبّت المعلومة.'],
+['🌟','أنت أقدر مما تتخيل. الثقة بتبدأ لما تحل أول سؤال.'],
+['✍️','اكتب القاعدة بإيدك بعد ما تفهمها؛ الكتابة بتخلي الحفظ أسرع.'],
+['😴','النوم الكافي جزء من المذاكرة. ٧ ساعات نوم تساوي ساعات من الفهم.'],
+['🎯','حل امتحان تجريبي كل يوم، وراجع أخطاءك أكتر من إجاباتك الصح.'],
+['💧','اشرب مياه وخد نفس عميق قبل الامتحان، الهدوء نص الإجابة.'],
+['🔁','الخطأ مش فشل، ده تلميح لنقطة محتاجة مراجعة. حلّلها وكمّل.'],
+['🧠','اشرح الدرس لنفسك بصوت عالي؛ لو عرفت تشرحه يبقى فهمته.'],
+['📵','اقفل الموبايل وقت المذاكرة ٣٠ دقيقة وشوف الفرق في التركيز.'],
+['🏆','النجاح مجموع مجهودات صغيرة بتتكرر كل يوم.'],
+['🎬','جرّب قسم الشرح التفاعلي النهاردة، الفهم بالصوت والصورة أسهل.'],
+['📖','فيه كتب ومذكرات في المكتبة، حمّل واحدة وابدأ بأول صفحة.'],
+['🌅','ذاكر الصعب في أول اليوم وأنت نشيط، والسهل آخر اليوم.'],
+['🤝','ذاكر مع زميل مرة في الأسبوع وتبادلوا الأسئلة.'],
+['📝','لخّص كل درس في 5 أسطر، والتلخيص هو مراجعتك الأخيرة.'],
+['🚀','لسه فيه وقت! أي تقدم النهاردة أحسن من الانتظار لبكرة.'],
+['❤️','فخور بمجهودك. استمر، وأنا معاك خطوة بخطوة.'],
+['⭐','قارن نفسك بنفسك أمس، مش بغيرك.']
+];
+const dailyKey=()=>'daily_state_'+(profile?.student_code||'');
+function dailyDayNum(){const d=new Date();return Math.floor((Date.UTC(d.getFullYear(),d.getMonth(),d.getDate()))/864e5)}
+var dailyOffset=0;
+function dailyPick(){const n=DAILY_TIPS.length;const seed=(dailyDayNum()+(parseInt((profile?.student_code||'0').replace(/\D/g,''))||0))%n;return DAILY_TIPS[(seed+dailyOffset)%n]}
+const inboxKey=()=>'inbox_'+(profile?.student_code||'');
+function inboxGet(){try{return JSON.parse(localStorage.getItem(inboxKey())||'[]')}catch(e){return[]}}
+function inboxSave(l){try{localStorage.setItem(inboxKey(),JSON.stringify(l.slice(0,60)))}catch(e){}}
+function inboxAdd(text,id){
+ const l=inboxGet();if(id&&l.some(m=>m.id===id))return;
+ l.unshift({id:id||('m'+Date.now()),text,ts:Date.now(),read:false});inboxSave(l);updateMsgBadge();
+}
+function updateMsgBadge(){setBadge('msgBadge',inboxGet().filter(m=>!m.read).length)}
+function dailyEnsureToday(){
+ if(!profile)return;
+ const id='daily-'+dailyDayNum();const saved=dailyOffset;dailyOffset=0;const t=dailyPick();dailyOffset=saved;
+ inboxAdd(t[0]+' '+firstName()+'، '+t[1],id);
+}
+function renderInbox(markRead){
+ const box=document.getElementById('msgList');if(!box||!profile)return;
+ const g=(typeof buddyGender!=='undefined'&&buddyGender==='f');
+ let src='';try{const set=buddyImgs[g?'f':'m'];src=set&&set.happy||''}catch(e){}
+ const l=inboxGet();
+ box.innerHTML=l.length?l.map(m=>{const d=new Date(m.ts);return `<div class="msg-row ${m.read?'':'unread'}"><img src="${src}" alt=""><div class="msg-bubble"><div class="m-t">${esc2(m.text)}</div><div class="m-d">${d.toLocaleDateString('ar-EG')} ${d.toLocaleTimeString('ar-EG',{hour:'2-digit',minute:'2-digit'})}</div></div></div>`}).join(''):'<div class="msg-empty">لا توجد رسائل بعد</div>';
+ if(markRead){inboxSave(l.map(m=>({...m,read:true})));updateMsgBadge()}
+ const b=document.getElementById('dailyRemindBtn');
+ if(b){const on=('Notification' in window)&&Notification.permission==='granted'&&localStorage.getItem('daily_remind')==='1';b.classList.toggle('hidden',on)}
+}
+function esc2(t){return String(t).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
+function openMessages(){showPage('messages',null)}
+async function dailyEnableReminder(){
+ if(!('Notification' in window)){toast('متصفحك لا يدعم الإشعارات.');return}
+ let p=Notification.permission;if(p==='default')p=await Notification.requestPermission();
+ if(p==='granted'){try{localStorage.setItem('daily_remind','1')}catch(e){}toast('تم تفعيل التذكير اليومي ✅');dailyNotifyIfDue(true);renderNotifCard()}
+ else toast('لم يتم السماح بالإشعارات.');
+ renderInbox(false);
+}
+async function dailyNotifyIfDue(force){
+ if(!profile)return;
+ let on=false;try{on=localStorage.getItem('daily_remind')==='1'}catch(e){}
+ if(!on||!('Notification' in window)||Notification.permission!=='granted')return;
+ const today=String(dailyDayNum());let st={};try{st=JSON.parse(localStorage.getItem(dailyKey())||'{}')}catch(e){}
+ if(st.last===today&&!force)return;
+ if(new Date().getHours()<9&&!force)return;
+ const saved=dailyOffset;dailyOffset=0;const t=dailyPick();dailyOffset=saved;
+ const title='رسالة اليوم من صديقك 💌',o={body:t[0]+' '+firstName()+'، '+t[1],icon:notifIcon,badge:notifIcon,tag:'daily-tip',dir:'rtl',lang:'ar',data:{url:location.href.split('#')[0]+'#messages'}};
+ try{const reg=await navigator.serviceWorker?.getRegistration();if(reg)await reg.showNotification(title,o);else new Notification(title,o)}catch(e){try{new Notification(title,o)}catch(_){}}
+ try{localStorage.setItem(dailyKey(),JSON.stringify({last:today}))}catch(e){}
+}
+let dailyTimer=null;
+function initDaily(){dailyEnsureToday();updateMsgBadge();renderInbox(false);dailyNotifyIfDue();if(location.hash==='#messages')openMessages();clearInterval(dailyTimer);dailyTimer=setInterval(dailyNotifyIfDue,600000)}
+document.addEventListener('visibilitychange',()=>{if(!document.hidden)dailyNotifyIfDue()});
 let examsChannel=null,checkingExams=false;
 const knownKey=()=>'exam_known_ids_'+(profile?.student_code||'');
 function renderNotifCard(){
@@ -2249,8 +2341,9 @@ async function notifyNewExam(list){
  const title=list.length===1?'امتحان جديد 📝':list.length+' امتحانات جديدة 📝';
  const body=list.map(e=>e.title).join(' • ');
  toast(title+' — '+body);
+ try{inboxAdd('📝 '+title+': '+body,'exam-'+list.map(e=>e.id).join('-'))}catch(e){}
  if(!('Notification' in window)||Notification.permission!=='granted')return;
- const o={body,icon:notifIcon,badge:notifIcon,tag:'new-exam',renotify:true,dir:'rtl',lang:'ar',data:{url:location.href}};
+ const o={body,icon:notifIcon,badge:notifIcon,tag:'new-exam',renotify:true,dir:'rtl',lang:'ar',data:{url:location.href.split('#')[0]+'#messages'}};
  try{const reg=await navigator.serviceWorker?.getRegistration();if(reg){await reg.showNotification(title,o);return}}catch(e){}
  try{new Notification(title,o)}catch(e){}
 }

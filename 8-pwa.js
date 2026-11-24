@@ -113,6 +113,6 @@ function watchOffer(){
   },1500);
 }
 })();
-;(function(){var s=document.createElement("script");s.src="10-verify.js?v=1";document.head.appendChild(s)})();
-;(function(){var s=document.createElement("script");s.src="11-leaders.js?v=1";document.head.appendChild(s)})();
-;(function(){var s=document.createElement("script");s.src="12-exam-ux.js?v=2";document.head.appendChild(s)})();
+;(function(){var s=document.createElement("script");s.src="10-verify.js?v=2";document.head.appendChild(s)})();
+;(function(){var s=document.createElement("script");s.src="11-leaders.js?v=2";document.head.appendChild(s)})();
+;(function(){var s=document.createElement("script");s.src="12-exam-ux.js?v=3";document.head.appendChild(s)})();

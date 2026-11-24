@@ -64,6 +64,10 @@ function paint(){
   }else if(s==='none'){
     c.className='vf-card';
     c.innerHTML='<div class="vf-ico">'+SVG_SHIELD+'</div><div class="vf-txt"><b>طلب التوثيق</b><small>أكمل ٣ خطوات: صورة واسمك الثلاثي ونبذة قصيرة، وهتاخد علامة "ملف مكتمل".</small></div><button class="vf-btn" id="vfStart">طلب التوثيق</button>';
+  }else if(s==='error'){
+    c.className='vf-card';
+    c.innerHTML='<div class="vf-ico">'+SVG_SHIELD+'</div><div class="vf-txt"><b>طلب التوثيق</b><small>تعذر تحميل حالة التوثيق. تأكد من الإنترنت وحاول تاني.</small></div><button type="button" class="vf-btn" id="vfRetry">إعادة المحاولة</button>';
+    const r=document.getElementById('vfRetry');if(r)r.onclick=function(){st={status:'loading'};loadStatus()};
   }else{c.className='';c.innerHTML=''}
   const b=document.getElementById('vfStart')||document.getElementById('vfEdit');
   if(b)b.onclick=openForm;

@@ -40,7 +40,7 @@ function wrap(){
   if(typeof window.buddySay==='function'&&!window.buddySay.__w){
     var o=window.buddySay;
     window.buddySay=function(a){
-      try{if(a&&mobile()&&buddyGender&&(a.duration||0)>9000)a=Object.assign({},a,{duration:9000})}catch(e){}
+      try{if(a&&!a.voiceId&&mobile()&&buddyGender&&(a.duration||0)>9000)a=Object.assign({},a,{duration:9000})}catch(e){}
       return o.call(this,a);
     };window.buddySay.__w=1;
   }
@@ -54,4 +54,29 @@ function wrap(){
   }
 }
 wrap();setTimeout(wrap,800);setTimeout(wrap,2500);
+
+/* 3) الصوت على الموبايل: iOS وأندرويد مش بيعتبروا pointerdown لمسة تفتح الصوت. بنفتحه بأول click/touchend ونستخدم عنصر صوت واحد */
+(function(){
+  var shared=new Audio();shared.preload='auto';
+  var SIL='data:audio/wav;base64,UklGRiQAAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQAAAAA=';
+  var primed=false;
+  function ok(){try{return typeof BUDDY_AUDIO==='object'&&typeof playBuddyVoice==='function'}catch(e){return false}}
+  window.playBuddyVoice=function(){
+    var id=buddyVoicePending;if(!id||buddyVoiceMuted)return;
+    var src=BUDDY_AUDIO[id];if(!src)return;
+    buddyVoicePending=null;
+    try{shared.pause();shared.src=src;shared.currentTime=0;buddyVoice=shared;
+      var p=shared.play();if(p&&p.catch)p.catch(function(){buddyVoicePending=id});
+    }catch(e){buddyVoicePending=id}
+  };
+  function unlock(){
+    if(!ok())return;
+    try{buddyVoiceUnlocked=true}catch(e){}
+    try{
+      if(buddyVoicePending&&!buddyVoiceMuted){window.playBuddyVoice();primed=true;return}
+      if(!primed){primed=true;shared.src=SIL;var p=shared.play();if(p&&p.then)p.then(function(){shared.pause()}).catch(function(){primed=false})}
+    }catch(e){}
+  }
+  ['click','touchend','pointerup','keydown'].forEach(function(ev){document.addEventListener(ev,unlock,{passive:true,capture:true})});
+})();
 })();

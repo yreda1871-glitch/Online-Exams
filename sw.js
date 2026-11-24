@@ -11,7 +11,7 @@ self.addEventListener('fetch', e => {
   if (req.method !== 'GET') return;
   const url = new URL(req.url);
   if (url.origin !== self.location.origin) return;
-  e.respondWith(fetch(req).then(res => {
+  e.respondWith(fetch(req,{cache:'no-cache'}).then(res => {
     if (res && res.ok) { const copy = res.clone(); caches.open(CACHE).then(c => c.put(req, copy)).catch(() => {}); }
     return res;
   }).catch(() => caches.match(req).then(r => r || (req.mode === 'navigate' ? caches.match('student.html') : undefined) || Response.error())));

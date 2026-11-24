@@ -3,7 +3,7 @@
 'use strict';
 if(window.__cxLoaded)return;window.__cxLoaded=true;
 var NQ=40,TL=12,PAGE_SIZE=20;
-var CATN2={all:'🎲 مختلط',din:'🕌 ديني',cul:'📖 ثقافي',gen:'🌍 عام',qur:'📿 قرآن',tv:'🎬 مسلسلات'};
+var CATN2={math:'🧮 حساب',all:'🎲 مختلط',din:'🕌 ديني',cul:'📖 ثقافي',gen:'🌍 عام',qur:'📿 قرآن',tv:'🎬 مسلسلات'};
 var css=document.createElement('style');
 css.textContent=[
 '#cx{position:fixed;inset:0;z-index:100000;display:flex;justify-content:center;background:radial-gradient(120% 80% at 50% 0%,#17306b 0%,#0a1a42 55%,#050d27 100%);color:#fff;font-family:Cairo,Tahoma,Arial,sans-serif;direction:rtl;overflow:hidden}',
@@ -193,17 +193,78 @@ async function loadMe(){
   try{var d=await rpc('contest2_board',{p_code:c});if(d&&d.me){me=Object.assign({loaded:true},d.me);me.rows=d.rows||[];if(root&&!root.classList.contains('hidden')&&root.dataset.screen==='home')home(true)}}catch(e){me.loaded=true}
 }
 /* ---------- اختيار الأسئلة ---------- */
+/* ---------- مولّد أسئلة (حساب + معلومات عامة) ---------- */
+var CAPS=[['مصر','القاهرة'],['السعودية','الرياض'],['الإمارات','أبو ظبي'],['قطر','الدوحة'],['الكويت','مدينة الكويت'],['البحرين','المنامة'],['عُمان','مسقط'],['الأردن','عمّان'],['لبنان','بيروت'],['سوريا','دمشق'],['العراق','بغداد'],['فلسطين','القدس'],['اليمن','صنعاء'],['ليبيا','طرابلس'],['تونس','تونس'],['الجزائر','الجزائر'],['المغرب','الرباط'],['السودان','الخرطوم'],['الصومال','مقديشو'],['موريتانيا','نواكشوط'],['تركيا','أنقرة'],['إيران','طهران'],['باكستان','إسلام آباد'],['أفغانستان','كابول'],['فرنسا','باريس'],['ألمانيا','برلين'],['إيطاليا','روما'],['إسبانيا','مدريد'],['بريطانيا','لندن'],['اليونان','أثينا'],['روسيا','موسكو'],['الصين','بكين'],['اليابان','طوكيو'],['الهند','نيودلهي'],['كوريا الجنوبية','سول'],['إندونيسيا','جاكرتا'],['ماليزيا','كوالالمبور'],['أمريكا','واشنطن'],['كندا','أوتاوا'],['البرازيل','برازيليا'],['الأرجنتين','بوينس آيرس'],['المكسيك','مكسيكو سيتي'],['أستراليا','كانبيرا'],['جنوب أفريقيا','بريتوريا'],['نيجيريا','أبوجا'],['إثيوبيا','أديس أبابا'],['كينيا','نيروبي'],['السويد','ستوكهولم'],['النرويج','أوسلو'],['هولندا','أمستردام']];
+var GOVS=[['الإسكندرية','الإسكندرية'],['الجيزة','الجيزة'],['القليوبية','بنها'],['الشرقية','الزقازيق'],['الدقهلية','المنصورة'],['الغربية','طنطا'],['المنوفية','شبين الكوم'],['البحيرة','دمنهور'],['كفر الشيخ','كفر الشيخ'],['دمياط','دمياط'],['بورسعيد','بورسعيد'],['الإسماعيلية','الإسماعيلية'],['السويس','السويس'],['الفيوم','الفيوم'],['بني سويف','بني سويف'],['المنيا','المنيا'],['أسيوط','أسيوط'],['سوهاج','سوهاج'],['قنا','قنا'],['الأقصر','الأقصر'],['أسوان','أسوان'],['مطروح','مرسى مطروح'],['البحر الأحمر','الغردقة'],['الوادي الجديد','الخارجة'],['شمال سيناء','العريش'],['جنوب سيناء','الطور']];
+var ELS=[['الهيدروجين','H'],['الهيليوم','He'],['الكربون','C'],['النيتروجين','N'],['الأكسجين','O'],['الصوديوم','Na'],['المغنيسيوم','Mg'],['الألومنيوم','Al'],['الكالسيوم','Ca'],['الحديد','Fe'],['النحاس','Cu'],['الزنك','Zn'],['الفضة','Ag'],['الذهب','Au'],['الكلور','Cl'],['البوتاسيوم','K']];
+var PLANETS=['عطارد','الزهرة','الأرض','المريخ','المشتري','زحل','أورانوس','نبتون'];
+var DAYS=['السبت','الأحد','الإثنين','الثلاثاء','الأربعاء','الخميس','الجمعة'];
+function ri(a,b){return a+Math.floor(Math.random()*(b-a+1))}
+function mkNum(ans,near){
+  var s={},o=[ans];s[ans]=1;var c=near||[1,-1,10,-10,2,-2,5,-5,100,-100];shuffle(c);
+  for(var i=0;i<c.length&&o.length<4;i++){var v=ans+c[i];if(v>=0&&!s[v]){s[v]=1;o.push(v)}}
+  var t=0;while(o.length<4&&t++<50){var v2=ans+ri(-20,20);if(v2>=0&&!s[v2]){s[v2]=1;o.push(v2)}}
+  var ix=shuffle([0,1,2,3]);return {o:ix.map(function(j){return String(o[j])}),c:ix.indexOf(0)};
+}
+function mkTxt(ans,pool){
+  var o=[ans],p=shuffle(pool.filter(function(x){return x!==ans}));o=o.concat(p.slice(0,3));
+  var ix=shuffle([0,1,2,3]);return {o:ix.map(function(j){return o[j]}),c:ix.indexOf(0)};
+}
+function mkQ(l,cat,q,m){return {cat:cat,l:l,q:q,o:m.o,c:m.c}}
+var GEN={
+ 1:[
+  function(){var a=ri(10,99),b=ri(10,99);return mkQ(1,'math','ناتج ('+a+' + '+b+') = ؟',mkNum(a+b))},
+  function(){var a=ri(30,99),b=ri(10,a-1);return mkQ(1,'math','ناتج ('+a+' − '+b+') = ؟',mkNum(a-b))},
+  function(){var a=ri(2,12),b=ri(2,12);return mkQ(1,'math','ناتج ('+a+' × '+b+') = ؟',mkNum(a*b,[a,-a,b,-b,1,-1,10,-10]))},
+  function(){var x=CAPS[ri(0,CAPS.length-1)];return mkQ(1,'gen','ما عاصمة '+x[0]+'؟',mkTxt(x[1],CAPS.map(function(y){return y[1]})))},
+  function(){var x=CAPS[ri(0,CAPS.length-1)];return mkQ(1,'gen',x[1]+' هي عاصمة أي دولة؟',mkTxt(x[0],CAPS.map(function(y){return y[0]})))},
+  function(){var d=ri(0,6),n=ri(2,20);return mkQ(1,'gen','لو النهاردة '+DAYS[d]+'، فبعد '+n+' يوم يكون اليوم؟',mkTxt(DAYS[(d+n)%7],DAYS))},
+  function(){var i=ri(0,7);return mkQ(1,'gen','ترتيب كوكب '+PLANETS[i]+' في المجموعة الشمسية بعدًا عن الشمس هو؟',mkTxt(['الأول','الثاني','الثالث','الرابع','الخامس','السادس','السابع','الثامن'][i],['الأول','الثاني','الثالث','الرابع','الخامس','السادس','السابع','الثامن']))}
+ ],
+ 2:[
+  function(){var a=ri(100,999),b=ri(100,999);return mkQ(2,'math','ناتج ('+a+' + '+b+') = ؟',mkNum(a+b,[10,-10,100,-100,1,-1,20,-20]))},
+  function(){var a=ri(500,999),b=ri(100,a-1);return mkQ(2,'math','ناتج ('+a+' − '+b+') = ؟',mkNum(a-b,[10,-10,100,-100,1,-1,20,-20]))},
+  function(){var a=ri(11,25),b=ri(3,9);return mkQ(2,'math','ناتج ('+a+' × '+b+') = ؟',mkNum(a*b,[a,-a,b,-b,10,-10,1,-1]))},
+  function(){var p=[10,20,25,50,75][ri(0,4)],b=ri(2,40)*20;return mkQ(2,'math','كام '+p+'٪ من '+b+'؟',mkNum(p*b/100,[5,-5,10,-10,20,-20]))},
+  function(){var a=ri(5,30),b=ri(5,30);if(a===b)b++;return mkQ(2,'math','مستطيل طوله '+a+' سم وعرضه '+b+' سم، مساحته بالسم² تساوي؟',mkNum(a*b,[a,-a,b,-b,10,-10,2*(a+b)-a*b]))},
+  function(){var a=ri(5,40),b=ri(5,40);return mkQ(2,'math','محيط مستطيل طوله '+a+' سم وعرضه '+b+' سم بالسم يساوي؟',mkNum(2*(a+b),[a,-a,b,-b,2,-2,10,-10]))},
+  function(){var h=ri(2,15);return mkQ(2,'math',h+' ساعة تساوي كم دقيقة؟',mkNum(h*60,[60,-60,10,-10,30,-30,100,-100]))},
+  function(){var k=ri(2,19);return mkQ(2,'math',k+' كيلومتر تساوي كم متر؟',mkNum(k*1000,[1000,-1000,100,-100,500,-500,10000]))},
+  function(){var n=ri(13,30);return mkQ(2,'math','ناتج ('+n+')² = ؟',mkNum(n*n,[n,-n,10,-10,2*n,-2*n,1,-1]))},
+  function(){var a=ri(1,40),d=ri(2,9);return mkQ(2,'math','أكمل المتتالية: '+a+'، '+(a+d)+'، '+(a+2*d)+'، '+(a+3*d)+'، ؟',mkNum(a+4*d,[1,-1,d,-d,2,-2,10]))},
+  function(){var x=GOVS[ri(0,GOVS.length-1)];return mkQ(2,'gen','ما عاصمة محافظة '+x[0]+'؟',mkTxt(x[1],GOVS.map(function(y){return y[1]})))},
+  function(){var x=ELS[ri(0,ELS.length-1)];return mkQ(2,'gen','الرمز الكيميائي لعنصر '+x[0]+' هو؟',mkTxt(x[1],ELS.map(function(y){return y[1]})))}
+ ],
+ 3:[
+  function(){var a=ri(12,49),b=ri(12,49);return mkQ(3,'math','ناتج ('+a+' × '+b+') = ؟',mkNum(a*b,[a,-a,b,-b,10,-10,20,-20,100,-100]))},
+  function(){var m=ri(2,9),x=ri(2,15),k=ri(1,20);return mkQ(3,'math','لو '+m+'س + '+k+' = '+(m*x+k)+'، فقيمة س تساوي؟',mkNum(x,[1,-1,2,-2,3,4,-3]))},
+  function(){var a=ri(10,30),b=ri(3,9);return mkQ(3,'math','ناتج ('+a+'² − '+b+'²) = ؟',mkNum(a*a-b*b,[10,-10,2*a,-2*a,2*b,1,-1,20]))},
+  function(){var n=ri(10,40);return mkQ(3,'math','مجموع الأعداد من 1 إلى '+n+' يساوي؟',mkNum(n*(n+1)/2,[n,-n,1,-1,10,-10,n+1,-(n+1)]))},
+  function(){var a=ri(5,15),r=[2,3][ri(0,1)];return mkQ(3,'math','أكمل المتتالية: '+a+'، '+a*r+'، '+a*r*r+'، '+a*r*r*r+'، ؟',mkNum(a*r*r*r*r,[a,-a,r,-r,10,-10,a*r]))},
+  function(){var m=ri(10,60),s=ri(1,4);var v=[m-s,m,m+s,m+s*2];var sum=v[0]+v[1]+v[2]+v[3];if(sum%4){v[3]+=4-sum%4}sum=v[0]+v[1]+v[2]+v[3];return mkQ(3,'math','متوسط الأعداد '+v.join('، ')+' يساوي؟',mkNum(sum/4,[1,-1,2,-2,3,-3,4]))},
+  function(){var p=[15,35,45,12,30,60][ri(0,5)],b=ri(2,30)*20;while((p*b)%100){b+=20}return mkQ(3,'math','كام '+p+'٪ من '+b+'؟',mkNum(p*b/100,[5,-5,10,-10,20,-20,3,-3]))},
+  function(){var a=ri(110,990),b=ri(3,9);return mkQ(3,'math','ناتج ('+a+' × '+b+') = ؟',mkNum(a*b,[10,-10,100,-100,a,-a,b,-b]))}
+ ]
+};
+
+var PLAN=[[1,1,1,1,1,1,2,2,2,2],[1,1,2,2,2,2,2,2,3,3],[2,2,2,2,3,3,3,3,3,3],[2,3,3,3,3,3,3,3,3,3]];
 function pick(cat){
-  var key='cx_used_'+code(),used=[];try{used=JSON.parse(localStorage.getItem(key)||'[]')}catch(e){}
-  var all=QB.map(function(_,i){return i}).filter(function(i){return cat==='all'||QB[i].cat===cat});
-  var pool=all.filter(function(i){return used.indexOf(i)<0});
-  if(pool.length<NQ){used=[];pool=all.slice()}
-  var by={1:[],2:[],3:[]};shuffle(pool).forEach(function(i){(by[QB[i].l]||by[1]).push(i)});
-  var plan=[1,1,1,1,2,2,2,2,3,3],out=[];
-  plan.forEach(function(l){var o=[l,l===3?2:l+1,l===1?2:l-1,1,2,3];for(var k=0;k<o.length;k++){var arr=by[o[k]];if(arr&&arr.length){out.push(arr.shift());return}}});
-  if(out.length<NQ){shuffle(pool).forEach(function(i){if(out.length<NQ&&out.indexOf(i)<0)out.push(i)})}
-  try{localStorage.setItem(key,JSON.stringify(used.concat(out).slice(-120)))}catch(e){}
-  return out.slice(0,NQ).map(function(i){var x=QB[i],ix=shuffle([0,1,2,3]);return {cat:x.cat,l:x.l,q:x.q,o:ix.map(function(j){return x.o[j]}),c:ix.indexOf(x.c)}});
+  var key='cx_seen_'+code(),seen=[];try{seen=JSON.parse(localStorage.getItem(key)||'[]')}catch(e){}
+  var sset={};seen.forEach(function(k){sset[k]=1});
+  var useGen=(cat==='all'||cat==='gen'),out=[],cur={};
+  var base=QB.filter(function(x){return cat==='all'||x.cat===cat});
+  var by={1:[],2:[],3:[]};shuffle(base).forEach(function(x){if(!sset[x.q])(by[x.l]||by[1]).push(x)});
+  function fromCur(l){var o=[l,l===3?2:l+1,l===1?2:l-1,1,2,3];for(var k=0;k<o.length;k++){var arr=by[o[k]];while(arr&&arr.length){var x=arr.shift();if(!cur[x.q]){var ix=shuffle([0,1,2,3]);return {cat:x.cat,l:x.l,q:x.q,o:ix.map(function(j){return x.o[j]}),c:ix.indexOf(x.c)}}}}return null}
+  function fromGen(l){for(var t=0;t<60;t++){var f=GEN[l][ri(0,GEN[l].length-1)],q=f();if(!cur[q.q]&&!sset[q.q])return q}return f()}
+  PLAN.forEach(function(grp){grp.forEach(function(l){
+    var q=null;
+    if(!useGen||Math.random()<.4)q=fromCur(l);
+    if(!q&&useGen)q=fromGen(l);
+    if(!q){q=fromCur(l)||fromCur(2)}
+    if(!q){var x=QB[ri(0,QB.length-1)];var ix=shuffle([0,1,2,3]);q={cat:x.cat,l:x.l,q:x.q,o:ix.map(function(j){return x.o[j]}),c:ix.indexOf(x.c)}}
+    cur[q.q]=1;out.push(q)})});
+  try{localStorage.setItem(key,JSON.stringify(seen.concat(out.map(function(q){return q.q})).slice(-700)))}catch(e){}
+  return out;
 }
 /* ---------- البطولة (إقصاء من 16 لاعب) ---------- */
 
@@ -455,7 +516,7 @@ function answer(k){
   if(ok){sfxCheer();var pp=document.createElement('div');pp.className='cx-pop';pp.textContent=['برافو! 👏','ممتاز! 🔥','كمّل كده! 💪','جامد! ⭐'][Math.random()*4|0];root.appendChild(pp);later(function(){pp.remove()},950)}else sfxWrong();
   later(oppTurn,1300);
 }
-function next(){S.i++;if(S.i>=PERQ)duelEnd();else question()}
+function next(){S.i++;var a=S.mine.filter(Boolean).length,b=S.theirs.filter(Boolean).length,rm=PERQ-S.mine.length,ro=PERQ-S.theirs.length;if(S.i>=PERQ||a>b+ro||b>a+rm){S.early=S.i<PERQ;duelEnd()}else question()}
 function quitAsk(){
   if(!S&&!B){close();return}
   var ov=document.createElement('div');ov.className='cx-ov';

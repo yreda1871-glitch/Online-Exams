@@ -108,6 +108,9 @@ css2.textContent+=Array.apply(null,Array(17)).map(function(_,i){return '.cx-conf
 document.head.appendChild(css2);
 
 var css3=document.createElement('style');css3.textContent=[
+'.cx-note{margin:12px 0 4px;background:rgba(56,189,248,.1);border:1px solid rgba(56,189,248,.3);border-radius:14px;padding:10px 12px;font-size:12.5px;line-height:1.7;color:#cfe6ff}',
+'.cx-dr{opacity:0;animation:cxdr .45s ease-out forwards}',
+'@keyframes cxdr{from{opacity:0;transform:translateY(14px) scale(.96)}to{opacity:1;transform:none}}',
 '.cx-mav,.cx-sav{width:30px;height:30px;border-radius:50%;object-fit:cover;border:2px solid rgba(255,255,255,.25);flex:0 0 30px}',
 '.cx-sav{display:block;margin:0 auto 4px;width:46px;height:46px;flex:none}',
 '.cx-vsov{position:absolute;inset:0;z-index:9;display:flex;flex-direction:column;align-items:center;justify-content:center;background:radial-gradient(circle at 50% 45%,#1b3b86,#050d27 70%);overflow:hidden;transition:opacity .35s}',
@@ -195,6 +198,7 @@ function avOf(seat){
   var src='';
   try{
     if(seat.me){src=(typeof avatarSrc==='function'&&profile&&avatarSrc(profile.avatar_url))||(typeof myMascot==='function'?myMascot():'')}
+    else if(seat.src){src=seat.src}
     else{var g=seat.g||'m';src=(typeof AVATAR_SQ!=='undefined'&&AVATAR_SQ[g])||''}
   }catch(e){}
   return src;
@@ -215,18 +219,33 @@ var RN=['دور الـ16','ربع النهائي','نصف النهائي','ال�
 var NAMES=['أحمد','محمد','محمود','مصطفى','عمر','علي','يوسف','إبراهيم','حسن','كريم','طارق','سامي','هدى','سارة','مريم','نور','آية','منى','ياسمين','دينا','رنا','ليلى','هبة','إسراء','خالد','ماجد','وليد','أسماء','فاطمة','عبدالله'];
 var PERQ=5;
 var FEM=['هدى','سارة','مريم','نور','آية','منى','ياسمين','دينا','رنا','ليلى','هبة','إسراء','أسماء','فاطمة'];
-function mkSeats(){
-  var names=[];
-  var pool=shuffle(NAMES.slice());
-  var fam=['السيد','حسن','علي','محمود','إبراهيم','عبدالله','فتحي','سالم'];
-  while(names.length<15&&pool.length){names.push(pool.shift()+' '+fam[Math.random()*fam.length|0])}
+async function realPool(){
+  var out=[];
+  try{
+    var d=await rpc('get_student_leaderboard',{p_student_code:code()});
+    var mine=String((profile&&profile.full_name)||'').trim();
+    (d||[]).forEach(function(x){
+      var full=String(x.full_name||'').trim();if(!full||full===mine)return;
+      var src='';try{src=(typeof avatarSrc==='function'&&avatarSrc(x.avatar_url))||''}catch(e){}
+      var g='m';try{g=(typeof guessGender==='function'&&guessGender(full))||'m'}catch(e){}
+      if(!src){try{src=(typeof AVATAR_SQ!=='undefined'&&AVATAR_SQ[g])||''}catch(e){}}
+      out.push({n:firstName(full),src:src,g:g});
+    });
+  }catch(e){}
+  return out;
+}
+async function mkSeats(){
+  var real=shuffle(await realPool()),seen={},list=[];
+  real.forEach(function(r){if(list.length<15&&!seen[r.n]){seen[r.n]=1;list.push(r)}});
+  var pool=shuffle(NAMES.slice()),fam=['السيد','حسن','علي','محمود','إبراهيم','عبدالله','فتحي','سالم'];
+  while(list.length<15&&pool.length){var f=pool.shift();list.push({n:f+' '+fam[Math.random()*fam.length|0],g:FEM.indexOf(f)>=0?'f':'m'})}
   var seats=[{n:'أنت',me:true,s:0.5}];
-  names.slice(0,15).forEach(function(n){seats.push({n:n.trim(),me:false,s:Math.random(),g:FEM.indexOf(n.split(' ')[0])>=0?'f':'m'})});
-  var o=shuffle(seats.slice(1));seats=[seats[0]].concat(o);
+  list.forEach(function(r){seats.push({n:r.n,me:false,s:Math.random(),g:r.g||'m',src:r.src||''})});
   seats.forEach(function(s,i){s.id=i});
   return shuffle(seats);
 }
-function acc(s,r){return Math.min(.95,Math.max(.4,.55+r*.04+(s.s-.5)*.28))}
+var BASE=[.5,.63,.76,.88],SPD=[.75,.6,.45,.32];
+function acc(s,r){return Math.min(.95,Math.max(.4,BASE[Math.min(r,3)]+(s.s-.5)*.12))}
 function simMatch(a,b,r){var x=0,y=0,pa=acc(a,r),pb=acc(b,r);for(var i=0;i<PERQ;i++){if(Math.random()<pa)x++;if(Math.random()<pb)y++}if(x===y){return Math.random()<(a.s/(a.s+b.s+.001))?a:b}return x>y?a:b}
 function home(keep){
   clearT();S=null;B=null;root.dataset.screen='home';
@@ -243,16 +262,28 @@ function home(keep){
   $('#cxGo').onclick=start;$('#cxLb').onclick=board;
 }
 var B=null;
-function start(){
+async function start(){
   if(!code()){toast('سجّل دخولك الأول');return}
   var qs=pick(home.cat||'all');
   if(qs.length<PERQ*2){toast('مفيش أسئلة كفاية دلوقتي');return}
   while(qs.length<PERQ*4)qs=qs.concat(shuffle(qs).slice(0,PERQ*4-qs.length));
-  var seats=mkSeats();
+  var seats=await mkSeats();
   B={qs:qs,seats:seats,alive:seats.slice(),r:0,wins:0,correct:0,asked:0,log:[],used5050:false,history:[]};
-  bracketView();
+  drawView();
 }
 function pairs(alive){var p=[];for(var i=0;i<alive.length;i+=2)p.push([alive[i],alive[i+1]]);return p}
+
+function drawView(){
+  clearT();root.dataset.screen='draw';ac();
+  var pr=pairs(B.alive);
+  var cards=pr.map(function(p,i){var mine=p[0].me||p[1].me;return '<div class="cx-m cx-dr'+(mine?' mine':'')+'" style="animation-delay:'+(0.5+i*0.28).toFixed(2)+'s">'+avHtml(p[0],'cx-mav')+'<span class="'+(p[0].me?'me':'')+'">'+E(p[0].me?myName():p[0].n)+'</span><i>ضد</i><span class="'+(p[1].me?'me':'')+'">'+E(p[1].me?myName():p[1].n)+'</span>'+avHtml(p[1],'cx-mav')+'</div>'}).join('');
+  var body='<div class="cx-round"><small>قرعة البطولة</small><h2>🎲 تم سحب المواجهات<br><span>16 متسابق · '+RN[0]+'</span></h2></div>'+
+   '<div class="cx-note">🤖 باقي المتسابقين لاعبين بالكمبيوتر بأسماء من قائمة المتفوقين. وكل دور بتقابل خصم أذكى وأقوى من اللي قبله.</div>'+
+   '<div class="cx-ms">'+cards+'</div>';
+  shell('قرعة البطولة','سحب عشوائي',body,'<button class="cx-btn" id="cxDrawGo">تمام، ابدأ ▶</button>',function(){quitAsk()});
+  pr.forEach(function(p,i){later(function(){tone(520+i*45,0,.09,'triangle',.12)},500+i*280)});
+  $('#cxDrawGo').onclick=bracketView;
+}
 function myPair(){return pairs(B.alive).filter(function(p){return p[0].me||p[1].me})[0]}
 function bracketView(){
   clearT();root.dataset.screen='bracket';
@@ -284,7 +315,7 @@ function question(){
   root.querySelectorAll('.cx-opt').forEach(function(b){b.onclick=function(){answer(+b.dataset.k)}});
   $('#cxL1').onclick=fifty;
   $('#cxSnd').onclick=function(){try{localStorage.setItem('cx_snd',sndOn()?'0':'1')}catch(e){}this.textContent=sndOn()?'🔊':'🔇';ac()};
-  var pa=acc(S.opp,B.r),oOk=Math.random()<pa,oT=(2.5+Math.random()*(TL*0.7)*(1.15-S.opp.s*.5));
+  var pa=acc(S.opp,B.r),oOk=Math.random()<pa,oT=(1.2+TL*SPD[Math.min(B.r,3)]*(1.1-S.opp.s*.3)+Math.random()*1.5);
   S.oOk=oOk;S.oT=Math.min(TL-.5,oT);
   tick=setInterval(function(){
     var el=(Date.now()-S.t0)/1000;S.left=Math.max(0,TL-el);

@@ -29,7 +29,7 @@ css.textContent=`
 .vf-photo .vf-btn{background:#EBF4FF;color:#1877F2}
 .vf-consent{display:flex;gap:9px;align-items:flex-start;margin-top:12px;font-size:12.5px;line-height:1.7;color:#334155}
 .vf-consent input{margin-top:5px;width:18px;height:18px;flex:0 0 18px}
-.vf-err{color:#DC2626;font-size:13px;font-weight:700;min-height:18px;margin-top:8px}
+.vf-step{display:flex;gap:10px;align-items:flex-start;padding:12px 0;border-bottom:1px solid #E2E8F0}.vf-step:last-of-type{border-bottom:0}.vf-dot{flex:0 0 28px;height:28px;border-radius:50%;background:#E2E8F0;color:#94A3B8;display:flex;align-items:center;justify-content:center;margin-top:2px}.vf-dot svg{width:16px;height:16px}.vf-step.done .vf-dot{background:#16A34A;color:#fff}.vf-body{flex:1;min-width:0}.vf-body>b{display:block;font-size:14.5px;margin-bottom:6px}.vf-hint{font-size:12.5px;color:#DC2626;font-weight:700;margin-top:4px;min-height:0}.vf-actions .vf-btn[disabled]{background:#94A3B8;opacity:1}.vf-err{color:#DC2626;font-size:13px;font-weight:700;min-height:18px;margin-top:8px}
 .vf-actions{display:flex;gap:8px;margin-top:10px}
 .vf-actions .vf-btn{flex:1;padding:12px}
 .vf-actions .vf-btn.sec{background:#F1F5F9;color:#334155}
@@ -63,7 +63,7 @@ function paint(){
     c.innerHTML='<div class="vf-ico">'+SVG_SHIELD+'</div><div class="vf-txt"><b>تم إيقاف علامة اكتمال الملف</b><small>من الإدارة'+(st.revoke_reason?': '+esc(st.revoke_reason):'')+'. تواصل مع الإدارة لو محتاج توضيح.</small></div>';
   }else if(s==='none'){
     c.className='vf-card';
-    c.innerHTML='<div class="vf-ico">'+SVG_SHIELD+'</div><div class="vf-txt"><b>طلب التوثيق</b><small>أكمل اسمك الثلاثي ونبذة قصيرة (والصورة اختيارية) وهتاخد علامة "ملف مكتمل".</small></div><button class="vf-btn" id="vfStart">طلب التوثيق</button>';
+    c.innerHTML='<div class="vf-ico">'+SVG_SHIELD+'</div><div class="vf-txt"><b>طلب التوثيق</b><small>أكمل ٣ خطوات: صورة واسمك الثلاثي ونبذة قصيرة، وهتاخد علامة "ملف مكتمل".</small></div><button class="vf-btn" id="vfStart">طلب التوثيق</button>';
   }else{c.className='';c.innerHTML=''}
   const b=document.getElementById('vfStart')||document.getElementById('vfEdit');
   if(b)b.onclick=openForm;
@@ -82,21 +82,33 @@ function modal(){
   if(m)return m;
   m=document.createElement('div');m.id='vfModal';m.className='vf-modal';
   m.innerHTML='<div class="vf-sheet" role="dialog" aria-modal="true"><h3>طلب التوثيق</h3>'
-   +'<div class="vf-note">التوثيق هنا معناه إن ملفك الشخصي مكتمل (اسم ثلاثي ونبذة). المنصة مش بتتحقق من هويتك الحقيقية.</div>'
-   +'<label for="vfName">الاسم الثلاثي الكامل</label><input id="vfName" type="text" maxlength="80" autocomplete="off" placeholder="مثال: أحمد محمد علي">'
-   +'<label>صورتك الشخصية (اختياري)</label><div class="vf-photo"><img id="vfImg" alt="" src="data:image/gif;base64,R0lGODlhAQABAAAAACH5BAEKAAEALAAAAAABAAEAAAICTAEAOw=="><button type="button" class="vf-btn" id="vfPick">اختر صورة</button></div>'
-   +'<input id="vfFile" type="file" accept="image/jpeg,image/png,image/webp" style="display:none">'
-   +'<label for="vfBio">نبذة قصيرة عنك</label><textarea id="vfBio" maxlength="300" placeholder="طالب في الفرقة ... بحب ..."></textarea>'
-   +'<label class="vf-consent" for="vfConsent"><input id="vfConsent" type="checkbox"><span>أوافق على حفظ بياناتي (وصورتي لو رفعتها) في المنصة. الصورة خاصة ولا تظهر إلا لي ولإدارة المنصة، ولا تظهر لباقي الطلاب.</span></label>'
+   +'<div class="vf-note">التوثيق معناه إن ملفك الشخصي مكتمل. المنصة مش بتتحقق من هويتك الحقيقية.</div>'
+   +'<div class="vf-step" id="vfS1"><div class="vf-dot">'+SVG_CHECK+'</div><div class="vf-body"><b>١. أضف صورتك</b><div class="vf-photo"><img id="vfImg" alt="" src="data:image/gif;base64,R0lGODlhAQABAAAAACH5BAEKAAEALAAAAAABAAEAAAICTAEAOw=="><button type="button" class="vf-btn" id="vfPick">اختر صورة</button></div><input id="vfFile" type="file" accept="image/jpeg,image/png,image/webp" style="display:none"></div></div>'
+   +'<div class="vf-step" id="vfS2"><div class="vf-dot">'+SVG_CHECK+'</div><div class="vf-body"><b>٢. اسمك الثلاثي الكامل</b><input id="vfName" type="text" maxlength="80" autocomplete="off" placeholder="مثال: أحمد محمد علي"><div class="vf-hint" id="vfNameHint"></div></div></div>'
+   +'<div class="vf-step" id="vfS3"><div class="vf-dot">'+SVG_CHECK+'</div><div class="vf-body"><b>٣. نبذة قصيرة عنك</b><textarea id="vfBio" maxlength="300" placeholder="طالب في الفرقة ... بحب ..."></textarea><div class="vf-hint" id="vfBioHint"></div></div></div>'
    +'<div class="vf-err" id="vfErr"></div>'
-   +'<div class="vf-actions"><button class="vf-btn" id="vfSend">إرسال وتفعيل العلامة</button><button class="vf-btn sec" id="vfCancel">إلغاء</button></div></div>';
+   +'<div class="vf-actions"><button class="vf-btn" id="vfSend" disabled>توثيق</button><button class="vf-btn sec" id="vfCancel">إلغاء</button></div></div>';
   document.body.appendChild(m);
   m.addEventListener('click',e=>{if(e.target===m)close()});
   m.querySelector('#vfCancel').onclick=close;
   m.querySelector('#vfPick').onclick=()=>m.querySelector('#vfFile').click();
   m.querySelector('#vfFile').onchange=onFile;
   m.querySelector('#vfSend').onclick=send;
+  m.querySelector('#vfName').oninput=refresh;m.querySelector('#vfBio').oninput=refresh;
   return m;
+}
+function nameOk(){const n=document.getElementById('vfName').value.replace(/\s+/g,' ').trim();return n.split(' ').filter(Boolean).length>=3&&n.length>=8}
+function bioOk(){return document.getElementById('vfBio').value.trim().length>=10}
+function refresh(){
+  const n=document.getElementById('vfName').value.replace(/\s+/g,' ').trim();
+  const words=n.split(' ').filter(Boolean).length;
+  const d1=!!photoData,d2=nameOk(),d3=bioOk();
+  document.getElementById('vfS1').classList.toggle('done',d1);
+  document.getElementById('vfS2').classList.toggle('done',d2);
+  document.getElementById('vfS3').classList.toggle('done',d3);
+  document.getElementById('vfNameHint').textContent=(n&&!d2)?(words<3?'اكتب اسمك ثلاثي (ثلاث كلمات على الأقل).':'الاسم قصير جدًا.'):'';
+  document.getElementById('vfBioHint').textContent=(document.getElementById('vfBio').value.trim()&&!d3)?'اكتب نبذة من 10 أحرف على الأقل.':'';
+  document.getElementById('vfSend').disabled=!(d1&&d2&&d3)||busy;
 }
 function close(){const m=document.getElementById('vfModal');if(m)m.classList.remove('show')}
 function err(t){document.getElementById('vfErr').textContent=t||''}
@@ -104,10 +116,9 @@ function openForm(){
   const m=modal();photoData=null;err('');
   m.querySelector('#vfName').value=(st.full_name)||'';
   m.querySelector('#vfBio').value=(st.bio)||'';
-  m.querySelector('#vfConsent').checked=false;
   m.querySelector('#vfImg').src=(st.photo)||'data:image/gif;base64,R0lGODlhAQABAAAAACH5BAEKAAEALAAAAAABAAEAAAICTAEAOw==';
   if(st.photo)photoData=st.photo;
-  m.classList.add('show');
+  m.classList.add('show');refresh();
 }
 function onFile(ev){
   const f=ev.target.files&&ev.target.files[0];err('');
@@ -123,7 +134,7 @@ function onFile(ev){
     while(d.length>380000&&q>.4){q-=.1;d=cv.toDataURL('image/jpeg',q)}
     URL.revokeObjectURL(url);
     if(d.length>440000){err('تعذر ضغط الصورة. جرّب صورة أصغر.');return}
-    photoData=d;document.getElementById('vfImg').src=d;
+    photoData=d;document.getElementById('vfImg').src=d;refresh();
   };
   img.onerror=()=>{URL.revokeObjectURL(url);err('تعذر قراءة الصورة.')};
   img.src=url;ev.target.value='';
@@ -132,19 +143,18 @@ async function send(){
   if(busy)return;
   const name=document.getElementById('vfName').value.replace(/\s+/g,' ').trim();
   const bio=document.getElementById('vfBio').value.trim();
-  const ok=document.getElementById('vfConsent').checked;
-  if(name.split(' ').filter(Boolean).length<3||name.length<8){err('اكتب اسمك ثلاثي كامل.');return}
+  if(name.split(' ').filter(Boolean).length<3||name.length<8){err('اكتب اسمك ثلاثي.');return}
+  if(!photoData){err('أضف صورتك.');return}
   if(bio.length<10){err('اكتب نبذة قصيرة (10 أحرف على الأقل).');return}
-  if(!ok){err('لازم توافق على الإقرار الأول.');return}
-  busy=true;const b=document.getElementById('vfSend');b.disabled=true;b.textContent='جاري الإرسال...';err('');
+  busy=true;const b=document.getElementById('vfSend');b.disabled=true;b.textContent='جاري التوثيق...';err('');
   try{
-    const {data,error}=await db.rpc('submit_verification',{p_student_code:profile.student_code,p_full_name:name,p_bio:bio,p_photo:photoData||null,p_consent:true});
+    const {data,error}=await db.rpc('submit_verification',{p_student_code:profile.student_code,p_full_name:name,p_bio:bio,p_photo:photoData});
     if(error)throw error;
     if(!data||data.status!=='verified')throw new Error((data&&data.message)||'تعذر إكمال الطلب.');
     st={status:'verified',full_name:data.full_name,bio:data.bio,photo:photoData||st.photo};
     close();paint();T('تم تفعيل علامة "ملف مكتمل" على ملفك.');
   }catch(e){err(e.message||'حصل خطأ، جرّب تاني.')}
-  finally{busy=false;b.disabled=false;b.textContent='إرسال وتفعيل العلامة'}
+  finally{busy=false;refresh();b.textContent='توثيق'}
 }
 let last='';
 function hook(){

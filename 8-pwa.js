@@ -72,7 +72,7 @@ async function doInstall(){
 window.installPlatform=doInstall;
 function refresh(){
   const hidden=standalone()||LS.get('pwa_installed')==='1'||(+LS.get('pwa_pill_hide')||0)>Date.now();
-  const sv=document.getElementById('studentView');pill.classList.toggle('show',!hidden&&!!sv&&!sv.classList.contains('hidden'));
+  const sv=document.getElementById('studentView'),hp=document.getElementById('homePage'),cm=document.getElementById('contestModal');const busy=!hp||hp.offsetParent===null||(cm&&!cm.classList.contains('hidden'))||!!document.querySelector('.ai-shell')&&document.querySelector('.ai-shell').offsetParent!==null;pill.classList.toggle('show',!hidden&&!!sv&&!sv.classList.contains('hidden')&&!busy);
 }
 pill.addEventListener('click',e=>{if(e.target.classList.contains('pwa-x')){LS.set('pwa_pill_hide',String(Date.now()+7*864e5));refresh();return}doInstall()});
 

@@ -55,28 +55,16 @@ function wrap(){
 }
 wrap();setTimeout(wrap,800);setTimeout(wrap,2500);
 
-/* 3) الصوت على الموبايل: iOS وأندرويد مش بيعتبروا pointerdown لمسة تفتح الصوت. بنفتحه بأول click/touchend ونستخدم عنصر صوت واحد */
+/* 3) إيقاف صوت المساعد (الأفاتار) بالكامل: النص يفضل زي ما هو */
 (function(){
-  var shared=new Audio();shared.preload='auto';
-  var SIL='data:audio/wav;base64,UklGRiQAAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQAAAAA=';
-  var primed=false;
-  function ok(){try{return typeof BUDDY_AUDIO==='object'&&typeof playBuddyVoice==='function'}catch(e){return false}}
-  window.playBuddyVoice=function(){
-    var id=buddyVoicePending;if(!id||buddyVoiceMuted)return;
-    var src=BUDDY_AUDIO[id];if(!src)return;
-    buddyVoicePending=null;
-    try{shared.pause();shared.src=src;shared.currentTime=0;buddyVoice=shared;
-      var p=shared.play();if(p&&p.catch)p.catch(function(){buddyVoicePending=id});
-    }catch(e){buddyVoicePending=id}
-  };
-  function unlock(){
-    if(!ok())return;
-    try{buddyVoiceUnlocked=true}catch(e){}
+  var css2=document.createElement('style');css2.textContent='.buddy-voice-tools{display:none!important}';document.head.appendChild(css2);
+  function kill(){
     try{
-      if(buddyVoicePending&&!buddyVoiceMuted){window.playBuddyVoice();primed=true;return}
-      if(!primed){primed=true;shared.src=SIL;var p=shared.play();if(p&&p.then)p.then(function(){shared.pause()}).catch(function(){primed=false})}
+      window.queueBuddyVoice=function(){try{buddyVoicePending=null}catch(e){}};
+      window.playBuddyVoice=function(){try{buddyVoicePending=null}catch(e){}};
+      if(typeof stopBuddyVoice==='function')stopBuddyVoice();
     }catch(e){}
   }
-  ['click','touchend','pointerup','keydown'].forEach(function(ev){document.addEventListener(ev,unlock,{passive:true,capture:true})});
+  kill();setTimeout(kill,800);setTimeout(kill,2500);
 })();
 })();

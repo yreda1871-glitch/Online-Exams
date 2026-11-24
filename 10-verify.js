@@ -63,7 +63,7 @@ function paint(){
     c.innerHTML='<div class="vf-ico">'+SVG_SHIELD+'</div><div class="vf-txt"><b>تم إيقاف علامة اكتمال الملف</b><small>من الإدارة'+(st.revoke_reason?': '+esc(st.revoke_reason):'')+'. تواصل مع الإدارة لو محتاج توضيح.</small></div>';
   }else if(s==='none'){
     c.className='vf-card';
-    c.innerHTML='<div class="vf-ico">'+SVG_SHIELD+'</div><div class="vf-txt"><b>طلب التوثيق</b><small>أكمل اسمك الثلاثي وصورتك ونبذة قصيرة وهتاخد علامة "ملف مكتمل".</small></div><button class="vf-btn" id="vfStart">طلب التوثيق</button>';
+    c.innerHTML='<div class="vf-ico">'+SVG_SHIELD+'</div><div class="vf-txt"><b>طلب التوثيق</b><small>أكمل اسمك الثلاثي ونبذة قصيرة (والصورة اختيارية) وهتاخد علامة "ملف مكتمل".</small></div><button class="vf-btn" id="vfStart">طلب التوثيق</button>';
   }else{c.className='';c.innerHTML=''}
   const b=document.getElementById('vfStart')||document.getElementById('vfEdit');
   if(b)b.onclick=openForm;
@@ -82,12 +82,12 @@ function modal(){
   if(m)return m;
   m=document.createElement('div');m.id='vfModal';m.className='vf-modal';
   m.innerHTML='<div class="vf-sheet" role="dialog" aria-modal="true"><h3>طلب التوثيق</h3>'
-   +'<div class="vf-note">التوثيق هنا معناه إن ملفك الشخصي مكتمل (اسم ثلاثي وصورة ونبذة). المنصة مش بتتحقق من هويتك الحقيقية.</div>'
+   +'<div class="vf-note">التوثيق هنا معناه إن ملفك الشخصي مكتمل (اسم ثلاثي ونبذة). المنصة مش بتتحقق من هويتك الحقيقية.</div>'
    +'<label for="vfName">الاسم الثلاثي الكامل</label><input id="vfName" type="text" maxlength="80" autocomplete="off" placeholder="مثال: أحمد محمد علي">'
-   +'<label>صورتك الشخصية</label><div class="vf-photo"><img id="vfImg" alt="" src="data:image/gif;base64,R0lGODlhAQABAAAAACH5BAEKAAEALAAAAAABAAEAAAICTAEAOw=="><button type="button" class="vf-btn" id="vfPick">اختر صورة</button></div>'
+   +'<label>صورتك الشخصية (اختياري)</label><div class="vf-photo"><img id="vfImg" alt="" src="data:image/gif;base64,R0lGODlhAQABAAAAACH5BAEKAAEALAAAAAABAAEAAAICTAEAOw=="><button type="button" class="vf-btn" id="vfPick">اختر صورة</button></div>'
    +'<input id="vfFile" type="file" accept="image/jpeg,image/png,image/webp" style="display:none">'
    +'<label for="vfBio">نبذة قصيرة عنك</label><textarea id="vfBio" maxlength="300" placeholder="طالب في الفرقة ... بحب ..."></textarea>'
-   +'<label class="vf-consent" for="vfConsent"><input id="vfConsent" type="checkbox"><span>أوافق على رفع صورتي وبياناتي لإدارة المنصة لمراجعتها. الصورة خاصة ومحفوظة بشكل آمن، ولا تظهر إلا لي ولإدارة المنصة، ولا تظهر لباقي الطلاب.</span></label>'
+   +'<label class="vf-consent" for="vfConsent"><input id="vfConsent" type="checkbox"><span>أوافق على حفظ بياناتي (وصورتي لو رفعتها) في المنصة. الصورة خاصة ولا تظهر إلا لي ولإدارة المنصة، ولا تظهر لباقي الطلاب.</span></label>'
    +'<div class="vf-err" id="vfErr"></div>'
    +'<div class="vf-actions"><button class="vf-btn" id="vfSend">إرسال وتفعيل العلامة</button><button class="vf-btn sec" id="vfCancel">إلغاء</button></div></div>';
   document.body.appendChild(m);
@@ -134,15 +134,14 @@ async function send(){
   const bio=document.getElementById('vfBio').value.trim();
   const ok=document.getElementById('vfConsent').checked;
   if(name.split(' ').filter(Boolean).length<3||name.length<8){err('اكتب اسمك ثلاثي كامل.');return}
-  if(!photoData){err('اختر صورتك الشخصية.');return}
   if(bio.length<10){err('اكتب نبذة قصيرة (10 أحرف على الأقل).');return}
   if(!ok){err('لازم توافق على الإقرار الأول.');return}
   busy=true;const b=document.getElementById('vfSend');b.disabled=true;b.textContent='جاري الإرسال...';err('');
   try{
-    const {data,error}=await db.rpc('submit_verification',{p_student_code:profile.student_code,p_full_name:name,p_bio:bio,p_photo:photoData,p_consent:true});
+    const {data,error}=await db.rpc('submit_verification',{p_student_code:profile.student_code,p_full_name:name,p_bio:bio,p_photo:photoData||null,p_consent:true});
     if(error)throw error;
     if(!data||data.status!=='verified')throw new Error((data&&data.message)||'تعذر إكمال الطلب.');
-    st={status:'verified',full_name:data.full_name,bio:data.bio,photo:photoData};
+    st={status:'verified',full_name:data.full_name,bio:data.bio,photo:photoData||st.photo};
     close();paint();T('تم تفعيل علامة "ملف مكتمل" على ملفك.');
   }catch(e){err(e.message||'حصل خطأ، جرّب تاني.')}
   finally{busy=false;b.disabled=false;b.textContent='إرسال وتفعيل العلامة'}

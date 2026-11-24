@@ -425,7 +425,7 @@ table{min-width:640px}th,td{padding:13px 14px;font-size:13px}th{background:#f2f7
    <!-- المساعد الذكي -->
    <div id="verifyPage" class="hidden">
     <div class="pagehead"><div><h2>توثيق الملفات الشخصية</h2><div class="sub" id="verifyCount"></div></div><button class="btn light small" onclick="loadVerifications()">تحديث ↻</button></div>
-    <div class="notice info" style="margin-bottom:12px">العلامة معناها "ملف مكتمل" (اسم ثلاثي وصورة ونبذة) وليست تحققًا من الهوية. الصور خاصة وتظهر هنا للإدارة فقط. تقدر تسحب العلامة وتسترجعها.</div>
+    <div class="notice info" style="margin-bottom:12px">العلامة معناها "ملف مكتمل" (اسم ثلاثي ونبذة، والصورة اختيارية) وليست تحققًا من الهوية. الصور خاصة وتظهر هنا للإدارة فقط. تقدر تسحب العلامة وتسترجعها.</div>
     <div class="panel"><div class="toolbar"><input id="verifySearch" placeholder="ابحث بالاسم أو الكود..." oninput="filterTable('verifyTable',this.value)"></div>
      <div class="tablewrap"><table id="verifyTable"><thead><tr><th>الصورة</th><th>الاسم والنبذة</th><th>الحالة</th><th>إجراء</th></tr></thead><tbody></tbody></table></div></div>
    </div>
@@ -558,7 +558,7 @@ async function loadVerifications(){
  if(!items.length){body.innerHTML='<tr><td class="loading" colspan="4">لا توجد طلبات توثيق بعد</td></tr>';return}
  body.innerHTML=items.map(v=>{
   const rev=v.status==='revoked';
-  return `<tr><td><img src="${esc(v.photo)}" alt="" style="width:46px;height:46px;border-radius:50%;object-fit:cover"></td><td style="white-space:normal;min-width:130px"><b>${esc(v.full_name)}</b><br><small dir="ltr">${esc(v.student_code)}</small><br><small>${esc(v.bio)}</small></td><td>${rev?'<span style="color:#b91c1c;font-weight:800">مسحوبة</span>'+(v.revoke_reason?'<br><small>'+esc(v.revoke_reason)+'</small>':''):'<span style="color:#15803d;font-weight:800">ملف مكتمل</span>'}</td><td>${rev?`<button class="btn light small" onclick="setVerification('${esc(v.student_code)}','verified')">استرجاع</button>`:`<button class="btn red small" onclick="setVerification('${esc(v.student_code)}','revoked')">سحب العلامة</button>`}</td></tr>`}).join('');
+  return `<tr><td>${v.photo?`<img src="${esc(v.photo)}" alt="" style="width:46px;height:46px;border-radius:50%;object-fit:cover">`:'<span class="muted">بدون صورة</span>'}</td><td style="white-space:normal;min-width:130px"><b>${esc(v.full_name)}</b><br><small dir="ltr">${esc(v.student_code)}</small><br><small>${esc(v.bio)}</small></td><td>${rev?'<span style="color:#b91c1c;font-weight:800">مسحوبة</span>'+(v.revoke_reason?'<br><small>'+esc(v.revoke_reason)+'</small>':''):'<span style="color:#15803d;font-weight:800">ملف مكتمل</span>'}</td><td>${rev?`<button class="btn light small" onclick="setVerification('${esc(v.student_code)}','verified')">استرجاع</button>`:`<button class="btn red small" onclick="setVerification('${esc(v.student_code)}','revoked')">سحب العلامة</button>`}</td></tr>`}).join('');
 }
 async function setVerification(code,status){
  let reason='';

@@ -113,3 +113,4 @@ function watchOffer(){
   },1500);
 }
 })();
+;(function(){var s=document.createElement("script");s.src="10-verify.js?v=1";document.head.appendChild(s)})();

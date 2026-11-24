@@ -257,6 +257,7 @@ table{min-width:640px}th,td{padding:13px 14px;font-size:13px}th{background:#f2f7
     <button data-page="library" onclick="showPage('library',this)"><i>📚</i>المكتبة</button>
     <button data-page="lessons" onclick="showPage('lessons',this)"><i>🎓</i>الشرح التفاعلي</button>
     <button data-page="assistant" onclick="showPage('assistant',this)"><i>🤖</i>المساعد الذكي</button>
+    <button data-page="verify" onclick="showPage('verify',this)"><i>✔</i>توثيق الملفات</button>
     <div class="sep"></div>
     <button class="danger" data-page="reset" onclick="showPage('reset',this)"><i>↻</i>تصفير البيانات</button>
    </div>
@@ -422,6 +423,13 @@ table{min-width:640px}th,td{padding:13px 14px;font-size:13px}th{background:#f2f7
    </div>
 
    <!-- المساعد الذكي -->
+   <div id="verifyPage" class="hidden">
+    <div class="pagehead"><div><h2>توثيق الملفات الشخصية</h2><div class="sub" id="verifyCount"></div></div><button class="btn light small" onclick="loadVerifications()">تحديث ↻</button></div>
+    <div class="notice info" style="margin-bottom:12px">العلامة معناها "ملف مكتمل" (اسم ثلاثي وصورة ونبذة) وليست تحققًا من الهوية. الصور خاصة وتظهر هنا للإدارة فقط. تقدر تسحب العلامة وتسترجعها.</div>
+    <div class="panel"><div class="toolbar"><input id="verifySearch" placeholder="ابحث بالاسم أو الكود..." oninput="filterTable('verifyTable',this.value)"></div>
+     <div class="tablewrap"><table id="verifyTable"><thead><tr><th>الصورة</th><th>الاسم</th><th>الكود</th><th>النبذة</th><th>الحالة</th><th>إجراء</th></tr></thead><tbody></tbody></table></div></div>
+   </div>
+
    <div id="assistantPage" class="hidden">
     <div class="pagehead"><div><h2>المساعد الذكي</h2><div class="sub">محادثات الطلاب مع المساعد — ردك يظهر للطالب في صفحته فورًا</div></div><button class="btn light small" onclick="loadAssistant()">تحديث ↻</button></div>
     <div class="ai-admin-grid">
@@ -457,7 +465,7 @@ const SUPABASE_ANON_KEY = "sb_publishable_Ug3xBkJESfI973ZpOeXLFA_wjPoExD-";
 const ADMIN_PASSWORD = "Yussefreda123@#$";
 const db = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 const DEFAULT_YEAR='الأولى', DEFAULT_DEPT='اللغة العربية';
-const PAGES=['overview','students','exams','results','library','lessons','chat','assistant','reset'];
+const PAGES=['overview','students','exams','results','library','lessons','chat','assistant','verify','reset'];
 const YEARS=['الأولى','الثانية','الثالثة','الرابعة'];
 const FIRST_YEAR_PASSWORD='2006';
 let year='الثانية';
@@ -535,8 +543,29 @@ function showPage(name,btn){
  if(name==='lessons')loadTeachingLessons();
  if(name==='chat')loadChat();
  if(name==='assistant')loadAssistant();
+ if(name==='verify')loadVerifications();
  if(name==='reset')$('resetYearLabel').textContent='الفرقة '+year;
  window.scrollTo({top:0,behavior:'smooth'});
+}
+
+/* ---------- توثيق الملفات (اكتمال البيانات) ---------- */
+async function loadVerifications(){
+ const body=document.querySelector('#verifyTable tbody');body.innerHTML=loadingRow(6);
+ const {data,error}=await db.rpc('admin_list_verifications',{p_admin_password:ADMIN_PASSWORD});
+ if(error||!data||data.status!=='ok'){body.innerHTML='<tr><td class="loading" colspan="6">تعذر تحميل البيانات</td></tr>';return}
+ const items=data.items||[];
+ $('verifyCount').textContent=items.length+' طلب';
+ if(!items.length){body.innerHTML='<tr><td class="loading" colspan="6">لا توجد طلبات توثيق بعد</td></tr>';return}
+ body.innerHTML=items.map(v=>{
+  const rev=v.status==='revoked';
+  return `<tr><td><img src="${esc(v.photo)}" alt="" style="width:46px;height:46px;border-radius:50%;object-fit:cover"></td><td>${esc(v.full_name)}</td><td dir="ltr">${esc(v.student_code)}</td><td style="max-width:260px;white-space:normal">${esc(v.bio)}</td><td>${rev?'<span style="color:#b91c1c;font-weight:800">مسحوبة</span>'+(v.revoke_reason?'<br><small>'+esc(v.revoke_reason)+'</small>':''):'<span style="color:#15803d;font-weight:800">ملف مكتمل</span>'}</td><td>${rev?`<button class="btn light small" onclick="setVerification('${esc(v.student_code)}','verified')">استرجاع</button>`:`<button class="btn red small" onclick="setVerification('${esc(v.student_code)}','revoked')">سحب العلامة</button>`}</td></tr>`}).join('');
+}
+async function setVerification(code,status){
+ let reason='';
+ if(status==='revoked'){reason=prompt('سبب سحب العلامة (اختياري):')??null;if(reason===null)return}
+ const {data,error}=await db.rpc('admin_set_verification',{p_admin_password:ADMIN_PASSWORD,p_student_code:code,p_status:status,p_reason:reason});
+ if(error||!data||data.status!=='ok'){toast('تعذر تنفيذ العملية',true);return}
+ toast(status==='revoked'?'تم سحب العلامة':'تم استرجاع العلامة');loadVerifications();
 }
 function goExams(){showPage('exams')}
 

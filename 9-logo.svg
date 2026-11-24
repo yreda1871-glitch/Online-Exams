@@ -1,0 +1,18 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+<defs>
+<linearGradient id="bg" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#1E5BC6"/><stop offset="1" stop-color="#0A2347"/></linearGradient>
+<linearGradient id="gd" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#FFD166"/><stop offset="1" stop-color="#F59E0B"/></linearGradient>
+</defs>
+<rect width="512" height="512" fill="url(#bg)"/><g transform="translate(256 262) scale(1.14) translate(-256 -236)">
+<!-- open book -->
+<path d="M256 392 C214 366 150 360 96 372 V228 C150 216 214 222 256 248 Z" fill="#FFFFFF"/>
+<path d="M256 392 C298 366 362 360 416 372 V228 C362 216 298 222 256 248 Z" fill="#DCE9FF"/>
+<path d="M256 248 V392" stroke="#0A2347" stroke-width="6" opacity=".35"/>
+<!-- check mark on left page -->
+<path d="M150 300 l28 30 l56 -62" fill="none" stroke="#16A34A" stroke-width="22" stroke-linecap="round" stroke-linejoin="round"/>
+<!-- graduation cap -->
+<path d="M256 76 L420 150 L256 224 L92 150 Z" fill="url(#gd)"/>
+<path d="M164 186 V232 C164 252 206 268 256 268 C306 268 348 252 348 232 V186 L256 228 Z" fill="#F2B233"/>
+<path d="M420 150 V212" stroke="#FFD166" stroke-width="10" stroke-linecap="round"/>
+<circle cx="420" cy="222" r="14" fill="#FFD166"/>
+</g></svg>

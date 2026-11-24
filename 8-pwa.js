@@ -4,14 +4,23 @@
 if(window.__pwaLoaded)return;window.__pwaLoaded=true;
 const head=document.head;
 function add(tag,attrs){const e=document.createElement(tag);for(const k in attrs)e.setAttribute(k,attrs[k]);head.appendChild(e);return e}
-if(!document.querySelector('link[rel="manifest"]'))add('link',{rel:'manifest',href:'7-manifest.webmanifest'});
-add('link',{rel:'apple-touch-icon',href:'5-apple-touch-icon.png'});
+if(!document.querySelector('link[rel="manifest"]'))add('link',{rel:'manifest',href:'7-manifest.webmanifest?v=2'});
+add('link',{rel:'apple-touch-icon',href:'5-apple-touch-icon.png?v=2'});
 if(!document.querySelector('meta[name="theme-color"]'))add('meta',{name:'theme-color',content:'#0D2B56'});
 add('meta',{name:'apple-mobile-web-app-capable',content:'yes'});
 add('meta',{name:'mobile-web-app-capable',content:'yes'});
-add('meta',{name:'apple-mobile-web-app-title',content:'منصة الطلاب'});
+add('meta',{name:'apple-mobile-web-app-title',content:'الامتحانات الجامعية'});
 add('meta',{name:'apple-mobile-web-app-status-bar-style',content:'black-translucent'});
 
+
+/* الشعار الجديد: الهيدر وشاشة الدخول والأيقونة */
+function swapLogo(){
+  const LOGO='9-logo.svg?v=2';
+  document.querySelectorAll('.brand .mark img,.authlogo img').forEach(i=>{if(i.getAttribute('src')!==LOGO)i.setAttribute('src',LOGO)});
+  document.querySelectorAll('link[rel="icon"],link[rel="shortcut icon"]').forEach(l=>l.remove());
+  if(!document.querySelector('link[data-logo]')){const l=add('link',{rel:'icon',type:'image/svg+xml',href:LOGO});l.setAttribute('data-logo','1')}
+}
+swapLogo();
 const standalone=()=>(window.matchMedia&&matchMedia('(display-mode: standalone)').matches)||navigator.standalone===true;
 const isIOS=/iphone|ipad|ipod/i.test(navigator.userAgent)||(navigator.platform==='MacIntel'&&navigator.maxTouchPoints>1);
 const LS={get(k){try{return localStorage.getItem(k)}catch(e){return null}},set(k,v){try{localStorage.setItem(k,v)}catch(e){}}};
@@ -79,7 +88,7 @@ pill.addEventListener('click',e=>{if(e.target.classList.contains('pwa-x')){LS.se
 window.addEventListener('beforeinstallprompt',e=>{e.preventDefault();deferred=e;refresh()});
 window.addEventListener('appinstalled',()=>{LS.set('pwa_installed','1');deferred=null;refresh()});
 
-function mount(){fixBell();document.body.appendChild(pill);document.body.appendChild(modal);refresh();setInterval(refresh,4000);watchOffer()}
+function mount(){fixBell();swapLogo();document.body.appendChild(pill);document.body.appendChild(modal);refresh();setInterval(refresh,4000);watchOffer()}
 if(document.body)mount();else document.addEventListener('DOMContentLoaded',mount);
 
 if('serviceWorker' in navigator)navigator.serviceWorker.register('sw.js').catch(()=>{});

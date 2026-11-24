@@ -9,16 +9,18 @@ css.textContent=
 '@media(max-width:740px){.buddy{top:calc(8px + env(safe-area-inset-top,0px));width:calc(100% - 16px)}.buddy-avatar{width:56px}.buddy-bubble{padding:10px 12px 13px}.buddy-text{font-size:13px;line-height:1.6}.buddy-title{font-size:13px}}';
 document.head.appendChild(css);
 
-/* 1) زر الخروج من الامتحان: مش بيسلّم ومش بيحسب محاولة، والإجابات بتتحفظ على الجهاز */
+/* 1) زر الخروج: بيسلّم الامتحان بالإجابات الحالية وبيتصحح (محاولة واحدة) */
 function build(){
   var head=document.querySelector('#examModal .exam-head');
   if(!head||document.getElementById('examExitBtn'))return;
   var b=document.createElement('button');b.type='button';b.id='examExitBtn';b.className='exam-exit';b.textContent='✕ خروج';b.hidden=true;
   b.onclick=function(){
     try{if(!activeExam||examReviewMode)return}catch(e){return}
-    if(!confirm('تخرج من الامتحان؟\n\nمش هيتسلّم ومش هيتحسب لك درجة دلوقتي، وتقدر تفتحه تاني وتكمّله بإجاباتك المحفوظة.'))return;
-    closeExamModal();
-    if(typeof toast==='function')toast('خرجت من الامتحان. تقدر ترجعله في أي وقت.');
+    if(b.dataset.busy)return;
+    var n=0,tot=0;try{tot=(activeExam.questions||[]).length;n=Object.keys(examSelections).length}catch(e){}
+    if(!confirm('الخروج من الامتحان؟\n\nهيتسلّم الامتحان فورًا وتتصحح إجاباتك الحالية ('+n+' من '+tot+'). الأسئلة اللي ما جاوبتش عنها هتتحسب صفر، ومش هتقدر تعيد المحاولة.'))return;
+    b.dataset.busy='1';b.disabled=true;
+    Promise.resolve(submitCurrentExam(true)).finally(function(){delete b.dataset.busy;b.disabled=false});
   };
   var t=head.querySelector('#examTimer');head.insertBefore(b,t);
   head.style.alignItems='center';

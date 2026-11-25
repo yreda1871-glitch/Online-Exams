@@ -2301,7 +2301,7 @@ async function loadLibrary(){
   return;
  }
  box.innerHTML = data.map(b => `
-  <article class="book-card">
+  <article class="book-card" data-book-id="${esc(b.id)}">
    <h3 class="book-card-title">${esc(b.title)}</h3>
    <img src="${esc(b.cover_url)}" alt="${esc(b.title)}" class="book-card-cover" loading="lazy">
    <button onclick="downloadPdf('${esc(b.pdf_url)}', '${esc(b.title)}.pdf')" class="btn book-card-btn">
@@ -2309,6 +2309,18 @@ async function loadLibrary(){
    </button>
   </article>
  `).join('');
+ if(window.__pointBook)setTimeout(spotNewBook,500);
+}
+const NEW_BOOK_ID='bd463d03-81c5-498c-a00c-f845f07cfbc9',NEW_BOOK_NAME='كتاب علوم القرآن';
+function spotNewBook(){
+ window.__pointBook=false;
+ const c=document.querySelector('.book-card[data-book-id="'+NEW_BOOK_ID+'"]');
+ if(!c)return;
+ try{localStorage.setItem('newbook_'+NEW_BOOK_ID+'_'+(profile?.student_code||''),'1')}catch(e){}
+ c.scrollIntoView({behavior:'smooth',block:'center'});
+ c.style.transition='box-shadow .4s,transform .4s';
+ let n=0;const t=setInterval(()=>{const on=n%2===0;c.style.boxShadow=on?'0 0 0 4px #f5b301,0 0 28px rgba(245,179,1,.8)':'';c.style.transform=on?'scale(1.04)':'';if(++n>9){clearInterval(t);c.style.boxShadow='0 0 0 3px #f5b301';c.style.transform=''}},500);
+ buddySay({title:'📖 كتاب جديد',text:'شوف الكتاب ده، اسمه "'+NEW_BOOK_NAME+'". اتكتب من جديد بشكل واضح ومرتب، دوس "تحميل الكتاب" وذاكر منه.',mood:'tip',tone:'info',duration:16000,actions:[]});
 }
 
 async function downloadPdf(url, filename) {
@@ -2687,6 +2699,7 @@ function showBuddy(){
   if(open>0){text=`نورت يا ${name}!${tail} ${G('جاهز','جاهزة')} للامتحان النهاردة؟ عندك ${open} ${open===1?'امتحان':'امتحانات'} متاحة.`;acts.push({label:'يلا نبدأ ▶',cls:'green',fn:()=>goPage('exams')});}
   else if(!(examCache||[]).length){text=`نورت يا ${name}!${tail} مفيش امتحانات حالياً، استغل الوقت و${G('ذاكر','ذاكري')} 📚`;}
   else{text=`عاش يا ${name}! خلّصت كل الامتحانات المتاحة. أنا ${G('فخور','فخورة')} بيك!`;title='🎉 شغل عالي';mood='cheer';}
+  try{if(!localStorage.getItem('newbook_'+NEW_BOOK_ID+'_'+(profile?.student_code||''))){text+=` وفيه كتاب جديد في المكتبة: "${NEW_BOOK_NAME}" 📖`;acts.push({label:'📚 وريني الكتاب',cls:'gold',fn:()=>{window.__pointBook=true;goPage('library')}});}}catch(e){}
   buddySay({text,title,mood,tone:'info',actions:acts,duration:28000,welcomeVideo:true,voiceId:'welcome_v1'});
  });
 }
@@ -2781,7 +2794,7 @@ let sprAnimNext=false;function sprStatic(){clearInterval(sprT);sprSet(0)}
 {const _bs=buddySay;buddySay=function(o){_bs(o);const a=sprAnimNext;sprAnimNext=false;a?sprPlay('happy'):sprStatic();wvShow(!!(o&&o.welcomeVideo))};
  const _cb=closeBuddy;closeBuddy=function(){const el=document.getElementById('buddy'),was=el&&!el.classList.contains('hidden');_cb();try{document.getElementById('buddyVid').pause()}catch(e){}if(was){clearInterval(sprT);sprSet(0);const f=buddyNext;buddyNext=null;if(f)setTimeout(f,450)}};
  const _sh=showBuddy;showBuddy=function(){sprAnimNext=true;_sh();sprAnimNext=false};
- const _sp=showPage;showPage=function(p,b){_sp(p,b);if(p==='library'&&profile&&buddyGender&&!localStorage.getItem(libKey()))setTimeout(()=>libTour(0),600)}}
+ const _sp=showPage;showPage=function(p,b){_sp(p,b);if(p==='library'&&profile&&buddyGender&&!window.__pointBook&&!localStorage.getItem(libKey()))setTimeout(()=>libTour(0),600)}}
 function askGender(){return new Promise(res=>{const m=document.getElementById('genderModal');
  m.querySelector('[data-g=m] img').src=BUDDY_IMG_M;m.querySelector('[data-g=f] img').src=BUDDY_IMG_F;m.classList.remove('hidden');
  m.onclick=e=>{const b=e.target.closest('[data-g]');if(!b)return;m.classList.add('hidden');res(b.dataset.g)}})}

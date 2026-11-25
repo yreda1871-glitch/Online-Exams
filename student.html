@@ -2699,7 +2699,7 @@ function showBuddy(){
   if(open>0){text=`نورت يا ${name}!${tail} ${G('جاهز','جاهزة')} للامتحان النهاردة؟ عندك ${open} ${open===1?'امتحان':'امتحانات'} متاحة.`;acts.push({label:'يلا نبدأ ▶',cls:'green',fn:()=>goPage('exams')});}
   else if(!(examCache||[]).length){text=`نورت يا ${name}!${tail} مفيش امتحانات حالياً، استغل الوقت و${G('ذاكر','ذاكري')} 📚`;}
   else{text=`عاش يا ${name}! خلّصت كل الامتحانات المتاحة. أنا ${G('فخور','فخورة')} بيك!`;title='🎉 شغل عالي';mood='cheer';}
-  try{if(!localStorage.getItem('newbook_'+NEW_BOOK_ID+'_'+(profile?.student_code||''))){text+=` وفيه كتاب جديد في المكتبة: "${NEW_BOOK_NAME}" 📖`;acts.push({label:'📚 وريني الكتاب',cls:'gold',fn:()=>{window.__pointBook=true;goPage('library')}});}}catch(e){}
+  try{if(!localStorage.getItem('newbook_'+NEW_BOOK_ID+'_'+(profile?.student_code||''))){text+=` وفيه كتاب جديد في المكتبة: "${NEW_BOOK_NAME}" 📖`;acts.push({label:'📚 وريني الكتاب',cls:'gold',fn:()=>{window.__pointBook=true;goPage('library')}});setTimeout(()=>{try{if(!window.__pointBook&&!localStorage.getItem('newbook_'+NEW_BOOK_ID+'_'+(profile?.student_code||''))){window.__pointBook=true;goPage('library')}}catch(e){}},5500);}}catch(e){}
   buddySay({text,title,mood,tone:'info',actions:acts,duration:28000,welcomeVideo:true,voiceId:'welcome_v1'});
  });
 }

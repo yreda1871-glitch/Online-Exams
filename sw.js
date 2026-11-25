@@ -1,5 +1,5 @@
 // Service Worker: يعرض الإشعارات ويفتح المنصة عند الضغط عليها
-const CACHE = 'platform-v1';
+const CACHE = 'platform-v2-stopped';
 self.addEventListener('install', () => self.skipWaiting());
 self.addEventListener('activate', e => e.waitUntil(
   caches.keys().then(ks => Promise.all(ks.filter(k => k !== CACHE).map(k => caches.delete(k)))).then(() => self.clients.claim())

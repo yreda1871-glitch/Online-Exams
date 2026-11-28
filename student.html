@@ -2293,6 +2293,45 @@ async function resendPendingEssays(btn){
   toast('تعذر إرسال بعض الإجابات المقالية. ستبقى محفوظة على هذا الجهاز.');
  }
 }
+function showEssayGradingWait(){
+ document.getElementById('examModalSub').textContent='جاري تصحيح إجاباتك، انتظر';
+ document.getElementById('examTimer').textContent='⏳';
+ document.getElementById('examModalBody').innerHTML='<div class="exam-result"><div style="font-size:42px">⏳</div><h2>جاري تصحيح إجاباتك، انتظر</h2><p class="muted">يتم الآن تصحيح الأسئلة المقالية آليًا ثم عرض النتيجة الكاملة.</p></div>';
+ const b=document.getElementById('submitExamBtn');b.disabled=true;b.textContent='جاري التصحيح...';
+}
+async function gradeEssayWithAI(questionText,modelAnswer,studentAnswer,maxMarks){
+ maxMarks=Number(maxMarks)||10;
+ const sys='أنت معلم مادة علوم القرآن تصحح إجابة مقالية لطالب. أعد فقط رقمًا صحيحًا هو درجة الطالب من 0 إلى '+maxMarks+' بدون أي نص آخر.';
+ let prompt='السؤال: '+questionText+'\n\n';
+ if(modelAnswer)prompt+='الإجابة النموذجية للمعلم: '+modelAnswer+'\n\n';
+ prompt+='إجابة الطالب: '+studentAnswer+'\n\nقيّم إجابة الطالب بالمقارنة مع الإجابة النموذجية (أو بمدى صحتها علميًا إن لم توجد إجابة نموذجية)، مع التساهل في الصياغة والتركيز على المعنى. أعد رقمًا من 0 إلى '+maxMarks+' فقط.';
+ const r=await fetch('https://text.pollinations.ai/',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({model:'openai',messages:[{role:'system',content:sys},{role:'user',content:prompt}]})});
+ if(!r.ok)throw new Error('grader http '+r.status);
+ const t=await r.text();
+ const m=String(t).match(/-?\d+(?:\.\d+)?/);
+ if(!m)throw new Error('grader parse');
+ return Math.max(0,Math.min(maxMarks,Math.round(Number(m[0]))));
+}
+async function runEssayGrading(essayAnswers){
+ const out={graded:[],failed:false,totals:null};
+ try{
+  const {data,error}=await db.rpc('get_essay_model_answers',{p_student_code:profile.student_code,p_attempt_id:activeExam.attempt_id});
+  if(error)throw error;
+  if(!data||data.status!=='ok')throw new Error('essay models: '+(data&&data.status));
+  const models={};(data.essays||[]).forEach(e=>{models[String(e.question_id)]=e;});
+  for(const x of essayAnswers){
+   const m=models[String(x.q.id)]||{};
+   try{
+    const score=await gradeEssayWithAI(essayText(x.q),m.model_answer||'',x.a,Number(x.q.marks||m.marks||10));
+    const {data:sv,error:sve}=await db.rpc('save_essay_grade',{p_student_code:profile.student_code,p_attempt_id:activeExam.attempt_id,p_question_id:x.q.id,p_answer_text:x.a,p_score:score,p_feedback:''});
+    if(sve)throw sve;
+    if(sv&&sv.status==='ok')out.totals={score:sv.score,total_marks:sv.total_marks,percentage:sv.percentage};
+    out.graded.push({qid:x.q.id,score:score,max:Number(x.q.marks||m.marks||10)});
+   }catch(e){console.warn('تعذر التصحيح الآلي لسؤال مقالي:',e);out.failed=true;}
+  }
+ }catch(e){console.warn('تعذر بدء التصحيح الآلي:',e);out.failed=true;}
+ return out;
+}
 async function submitCurrentExam(auto=false){
  if(!activeExam||examReviewMode)return;
  const unanswered=(activeExam.questions||[]).filter(q=>isEssayQ(q)?!String(examSelections[q.id]||'').trim():examSelections[q.id]===undefined).length;
@@ -2307,25 +2346,28 @@ async function submitCurrentExam(auto=false){
   clearInterval(examTimerHandle);
   const essayAnswers=essayQs.map(q=>({q,a:String(examSelections[q.id]||'').trim()})).filter(x=>x.a);
   let essayDelivery='none';
+  let essayGrades=null;
   if(essayAnswers.length){
+   showEssayGradingWait();
+   essayGrades=await runEssayGrading(essayAnswers);
    const examTitle=activeExam.title||((examCache.find(x=>x.id===activeExam.__examId)||{}).title)||'الامتحان';
-   const msg='📋 إجابات الأسئلة المقالية - '+examTitle+'\n\n'+essayAnswers.map((x,i)=>'س'+(i+1)+': '+essayText(x.q)+'\nالإجابة: '+x.a).join('\n\n');
+   const msg='📋 إجابات الأسئلة المقالية - '+examTitle+'\n\n'+essayAnswers.map((x,i)=>{const g=essayGrades&&essayGrades.graded.find(y=>String(y.qid)===String(x.q.id));return 'س'+(i+1)+': '+essayText(x.q)+'\nالإجابة: '+x.a+(g?'\nالدرجة الآلية: '+g.score+' / '+g.max:'');}).join('\n\n');
    try{await sendEssayAnswersToTeacher(msg);essayDelivery='sent';}catch(e){console.warn('تعذر إرسال إجابات المقالي:',e);essayDelivery='failed';pendingEssayDelivery={attemptId:activeExam.attempt_id,msg};savePendingEssayRecord(profile.student_code,{attemptId:activeExam.attempt_id,examId:activeExam.__examId||null,examTitle,msg,at:Date.now()});}
   }
   if(essayDelivery!=='failed')localStorage.removeItem('exam_answers_'+activeExam.attempt_id);
   
-  const percentage = Number(data.percentage || 0);
+  const percentage = Number((essayGrades&&essayGrades.totals?essayGrades.totals.percentage:data.percentage) || 0);
   if (percentage >= 50) {
     playSuccessSound();
   } else {
     playFailSound();
   }
 
-  showExamResult(data,essayDelivery);
+  showExamResult(essayGrades&&essayGrades.totals?essayGrades.totals:data,essayDelivery,essayGrades);
   await loadExams();await loadMyResults();
  }catch(e){toast('حدث خطأ أثناء التسليم: '+(e.message||'خطأ غير معروف'));btn.classList.remove('hidden');btn.disabled=false;btn.textContent='إعادة محاولة التسليم';btn.onclick=()=>submitCurrentExam(true);}
 }
-function showExamResult(result,essayDelivery){
+function showExamResult(result,essayDelivery,essayGrades){
  essayDelivery=essayDelivery||'none';
  examReviewMode=true;
  document.getElementById('examModalSub').textContent='تم حفظ إجاباتك وتصحيح الامتحان بنجاح';
@@ -2338,8 +2380,14 @@ function showExamResult(result,essayDelivery){
  const statusText = isSuccess ? 'مبروك! لقد نجحت في الامتحان' : 'عفواً، لم تحقق نسبة النجاح';
  
  const hasEssayQs=(activeExam.questions||[]).some(isEssayQ);
- const essayNote=hasEssayQs?(essayDelivery==='sent'?'<p class="muted">أُرسلت إجابات الأسئلة المقالية للمعلم وتُصحح يدويًا خارج الدرجة أعلاه.</p>':essayDelivery==='failed'?'<p class="muted" id="essayDeliveryNote" style="color:var(--red-accent);font-weight:bold">تعذر إرسال إجابات الأسئلة المقالية للمعلم. إجاباتك محفوظة على هذا الجهاز ولن تُفقد.</p><p><button type="button" class="btn" id="essayRetryBtn" onclick="retryEssayDelivery(this)">إعادة إرسال الإجابات المقالية</button></p>':'<p class="muted">لم تُكتب إجابات للأسئلة المقالية، فلا يوجد ما يُرسل للمعلم.</p>'):'';
- document.getElementById('examModalBody').innerHTML=`<div class="exam-result"><div style="font-size:42px">${emoji}</div><h2>${statusText}</h2><p>${hasEssayQs?'درجتك المبدئية (قبل التصحيح اليدوي للأسئلة المقالية)':'درجتك النهائية'}</p><strong>${Number(result.score||0)} / ${Number(result.total_marks||0)}</strong><p style="font-size:20px;color:${isSuccess?'var(--emerald-green)':'var(--red-accent)'};font-weight:bold">${pct.toFixed(1)}%</p><p class="muted">تم حفظ نتيجتك في حسابك.</p>${hasEssayQs?'<p class="muted">الدرجة أعلاه للأسئلة الموضوعية فقط وقد تتغير بعد تصحيح المعلم للأسئلة المقالية.</p>':''}${essayNote}</div>`;
+ const graded=(essayGrades&&essayGrades.graded)||[];
+ const gradedOk=hasEssayQs&&graded.length>0;
+ const essaySum=graded.reduce((sm,g)=>sm+Number(g.score||0),0);
+ const essayMax=graded.reduce((sm,g)=>sm+Number(g.max||10),0);
+ const objScore=gradedOk?Math.max(0,Math.round((Number(result.score||0)-essaySum)*100)/100):null;
+ const partialEssay=hasEssayQs&&essayGrades&&essayGrades.failed;
+ const essayNote=hasEssayQs?(essayDelivery==='sent'?'<p class="muted">أُرسلت إجابات الأسئلة المقالية للمعلم.</p>':essayDelivery==='failed'?'<p class="muted" id="essayDeliveryNote" style="color:var(--red-accent);font-weight:bold">تعذر إرسال إجابات الأسئلة المقالية للمعلم. إجاباتك محفوظة على هذا الجهاز ولن تُفقد.</p><p><button type="button" class="btn" id="essayRetryBtn" onclick="retryEssayDelivery(this)">إعادة إرسال الإجابات المقالية</button></p>':'<p class="muted">لم تُكتب إجابات للأسئلة المقالية، فلا يوجد ما يُرسل للمعلم.</p>'):'';
+ document.getElementById('examModalBody').innerHTML=`<div class="exam-result"><div style="font-size:42px">${emoji}</div><h2>${statusText}</h2><p>${hasEssayQs?(gradedOk?(partialEssay?'درجتك (بعض المقالي لم يُصحح آليًا وسيراجعه المعلم)':'درجتك النهائية'):'درجتك المبدئية (قبل التصحيح اليدوي للأسئلة المقالية)'):'درجتك النهائية'}</p><strong>${Number(result.score||0)} / ${Number(result.total_marks||0)}</strong><p style="font-size:20px;color:${isSuccess?'var(--emerald-green)':'var(--red-accent)'};font-weight:bold">${pct.toFixed(1)}%</p><p class="muted">تم حفظ نتيجتك في حسابك.</p>${gradedOk?`<p class="muted">الأسئلة الموضوعية: ${objScore} — الأسئلة المقالية (تصحيح آلي): ${essaySum} من ${essayMax}</p>`:(hasEssayQs?'<p class="muted">الدرجة أعلاه للأسئلة الموضوعية فقط وقد تتغير بعد تصحيح المعلم للأسئلة المقالية.</p>':'')}${essayNote}</div>`;
  document.getElementById('examProgress').textContent='تم التسليم';
  document.getElementById('prevQuestionBtn').classList.add('hidden');document.getElementById('nextQuestionBtn').classList.add('hidden');
  document.getElementById('submitExamBtn').classList.remove('hidden');document.getElementById('submitExamBtn').textContent='إغلاق';document.getElementById('submitExamBtn').disabled=false;document.getElementById('submitExamBtn').onclick=closeExamModal;
@@ -2353,7 +2401,13 @@ async function showReviewNotice(id){
   document.getElementById('examModalTitle').textContent='مراجعة: '+(examCache.find(x=>x.id===id)?.title||'الامتحان');
   document.getElementById('examModalSub').textContent=`النتيجة: ${data.score} / ${data.total_marks} — ${Number(data.percentage||0).toFixed(1)}%`;
   document.getElementById('examTimer').textContent='التصحيح';
-  document.getElementById('examModalBody').innerHTML=(data.questions||[]).filter(q=>!isEssayQ(q)).map((q,i)=>{
+  document.getElementById('examModalBody').innerHTML=(data.questions||[]).map((q,i)=>{
+   if(isEssayQ(q)){
+    const _ans=(q.essay_answer&&String(q.essay_answer).trim())?esc(q.essay_answer):'لم تُكتب إجابة.';
+    const _sc=(q.essay_score!==null&&q.essay_score!==undefined)?`<p><strong>درجة التصحيح الآلي: ${Number(q.essay_score)} / ${Number(q.essay_max_score||q.marks||10)}</strong></p>`:'<p class="muted">لم تُصحح هذه الإجابة آليًا بعد، وسيراجعها المعلم.</p>';
+    const _ma=q.model_answer?`<div class="exam-option review-correct"><span><strong>الإجابة النموذجية:</strong> ${esc(q.model_answer)}</span></div>`:'';
+    return `<article class="exam-question"><h3><span>${i+1}.</span>${esc(essayText(q))}</h3><div class="exam-option"><span><strong>إجابتك:</strong> ${_ans}</span></div>${_sc}${_ma}</article>`;
+   }
    const opts=examOptions(q.options);
    return `<article class="exam-question"><h3><span>${i+1}.</span>${esc(q.question_text)}</h3>${opts.map((op,j)=>`<div class="exam-option ${j===Number(q.correct_option)?'review-correct':''} ${q.selected_option!==null&&j===Number(q.selected_option)&&!q.is_correct?'review-wrong':''}"><span>${esc(op)} ${j===Number(q.correct_option)?'✓ الإجابة الصحيحة':''} ${q.selected_option!==null&&j===Number(q.selected_option)?' — إجابتك':''}</span></div>`).join('')}</article>`;
   }).join('');

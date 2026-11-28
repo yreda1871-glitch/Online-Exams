@@ -2149,7 +2149,7 @@ function renderActiveExam(){
  questionAdvanceLocked=false;
  if(!Array.isArray(activeExam?.questions)||!activeExam.questions.length){toast('الامتحان لا يحتوي على أسئلة قابلة للعرض.');return;}
  document.getElementById('examModalTitle').textContent=activeExam.title||'الامتحان';
- document.getElementById('examModalSub').textContent='لكل سؤال 30 ثانية. اختر إجابة للانتقال فورًا، أو انتظر حتى ينتهي الوقت.';
+ document.getElementById('examModalSub').textContent='لكل سؤال 30 ثانية (والسؤال المقالي 3 دقائق). اختر إجابة للانتقال فورًا، أو انتظر حتى ينتهي الوقت للانتقال تلقائيًا.';
  document.getElementById('examModal').classList.remove('hidden');
  document.getElementById('examModalActions').classList.remove('hidden');
  document.getElementById('prevQuestionBtn').classList.add('hidden');
@@ -2167,7 +2167,7 @@ function renderCurrentExamQuestion(){
  document.getElementById('examProgress').textContent=`السؤال ${currentQuestionIndex+1} من ${questions.length}`;
  if(isEssayQ(q)){
   const last=currentQuestionIndex>=questions.length-1;
-  document.getElementById('examModalBody').innerHTML=`<article class="exam-question"><h3><span>${currentQuestionIndex+1}.</span>${esc(essayText(q))} <small class="muted">(سؤال مقالي - ${esc(q.marks)} درجة - يصححه المعلم)</small></h3><textarea id="essayAnswerBox" rows="6" style="width:100%;box-sizing:border-box;padding:12px;border-radius:12px;border:1px solid rgba(255,255,255,.18);background:rgba(255,255,255,.07);color:inherit;font:500 15px 'Cairo',Tahoma,Arial,sans-serif;resize:vertical" placeholder="اكتب إجابتك هنا...">${esc(String(examSelections[q.id]===undefined?'':examSelections[q.id]))}</textarea><button type="button" class="btn" style="margin-top:12px" onclick="advanceTimedQuestion()">${last?'تسليم الامتحان':'السؤال التالي ⬅'}</button></article>`;
+  document.getElementById('examModalBody').innerHTML=`<article class="exam-question"><h3><span>${currentQuestionIndex+1}.</span>${esc(essayText(q))} <small class="muted">(سؤال مقالي - 3 دقائق - ${esc(q.marks)} درجة - يصححه المعلم)</small></h3><textarea id="essayAnswerBox" rows="6" style="width:100%;box-sizing:border-box;padding:12px;border-radius:12px;border:1px solid rgba(255,255,255,.18);background:rgba(255,255,255,.07);color:inherit;font:500 15px 'Cairo',Tahoma,Arial,sans-serif;resize:vertical" placeholder="اكتب إجابتك هنا...">${esc(String(examSelections[q.id]===undefined?'':examSelections[q.id]))}</textarea><button type="button" class="btn" style="margin-top:12px" onclick="advanceTimedQuestion()">${last?'تسليم الامتحان':'السؤال التالي ⬅'}</button></article>`;
   const ta=document.getElementById('essayAnswerBox');
   ta.addEventListener('input',()=>{examSelections[q.id]=ta.value;if(activeExam&&activeExam.attempt_id){try{localStorage.setItem('exam_answers_'+activeExam.attempt_id,JSON.stringify(examSelections))}catch(e){}}});
  }else{
@@ -2183,12 +2183,12 @@ function moveExamQuestion(step){
 function startQuestionTimer(){
  clearInterval(examTimerHandle);
  const cq=((activeExam&&activeExam.questions)||[])[currentQuestionIndex];
- if(cq&&isEssayQ(cq)){const eb=document.getElementById('examTimer');eb.textContent='سؤال مقالي - بلا وقت محدد';eb.style.color='#ffffff';return}
- let remaining=30;
+ const essayQ=cq&&isEssayQ(cq);
+ let remaining=essayQ?180:30;
  const box=document.getElementById('examTimer');
  const tick=()=>{
-  box.textContent=remaining+' ثانية';
-  box.style.color=remaining<=5?'#ffd0d0':'#ffffff';
+  box.textContent=remaining>=60?(Math.floor(remaining/60)+':'+String(remaining%60).padStart(2,'0')):(remaining+' ثانية');
+  box.style.color=remaining<=(essayQ?30:5)?'#ffd0d0':'#ffffff';
   if(remaining<=0){
    clearInterval(examTimerHandle);
    toast('انتهى وقت السؤال، سيتم الانتقال تلقائيًا.');

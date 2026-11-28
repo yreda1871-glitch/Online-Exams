@@ -2213,6 +2213,28 @@ function advanceTimedQuestion(){
  renderCurrentExamQuestion();
  startQuestionTimer();
 }
+let pendingEssayDelivery=null;
+async function sendEssayAnswersToTeacher(msg){
+ const {data:dup,error:selErr}=await db.from('assistant_messages').select('id').eq('student_code',profile.student_code).eq('sender','student').eq('message',msg).limit(1);
+ if(selErr)throw selErr;
+ if(dup&&dup.length)return;
+ const {error}=await db.from('assistant_messages').insert({student_code:profile.student_code,student_name:profile.full_name||'',sender:'student',message:msg});
+ if(error)throw error;
+}
+async function retryEssayDelivery(btn){
+ if(!pendingEssayDelivery)return;
+ if(btn){btn.disabled=true;btn.textContent='جارٍ إعادة الإرسال...';}
+ try{
+  await sendEssayAnswersToTeacher(pendingEssayDelivery.msg);
+  try{localStorage.removeItem('exam_answers_'+pendingEssayDelivery.attemptId);}catch(e){}
+  pendingEssayDelivery=null;
+  const note=document.getElementById('essayDeliveryNote');if(note){note.style.color='var(--emerald-green)';note.textContent='أُرسلت إجابات الأسئلة المقالية للمعلم وتُصحح يدويًا خارج الدرجة أعلاه.';}
+  const rb=document.getElementById('essayRetryBtn');if(rb)rb.classList.add('hidden');
+ }catch(e){
+  if(btn){btn.disabled=false;btn.textContent='إعادة إرسال الإجابات المقالية';}
+  toast('تعذر إرسال الإجابات المقالية: '+(e.message||'خطأ غير معروف'));
+ }
+}
 async function submitCurrentExam(auto=false){
  if(!activeExam||examReviewMode)return;
  const unanswered=(activeExam.questions||[]).filter(q=>isEssayQ(q)?!String(examSelections[q.id]||'').trim():examSelections[q.id]===undefined).length;
@@ -2225,13 +2247,14 @@ async function submitCurrentExam(auto=false){
   if(error)throw error;
   if(!data||!['submitted','already_submitted'].includes(data.status))throw new Error('تعذر تسليم الإجابات: '+(data?.status||'استجابة غير صحيحة'));
   clearInterval(examTimerHandle);
-  localStorage.removeItem('exam_answers_'+activeExam.attempt_id);
   const essayAnswers=essayQs.map(q=>({q,a:String(examSelections[q.id]||'').trim()})).filter(x=>x.a);
+  let essayDelivery='none';
   if(essayAnswers.length){
    const examTitle=activeExam.title||((examCache.find(x=>x.id===activeExam.__examId)||{}).title)||'الامتحان';
    const msg='📋 إجابات الأسئلة المقالية - '+examTitle+'\n\n'+essayAnswers.map((x,i)=>'س'+(i+1)+': '+essayText(x.q)+'\nالإجابة: '+x.a).join('\n\n');
-   try{await db.from('assistant_messages').insert({student_code:profile.student_code,student_name:profile.full_name||'',sender:'student',message:msg})}catch(e){console.warn('تعذر إرسال إجابات المقالي:',e)}
+   try{await sendEssayAnswersToTeacher(msg);essayDelivery='sent';}catch(e){console.warn('تعذر إرسال إجابات المقالي:',e);essayDelivery='failed';pendingEssayDelivery={attemptId:activeExam.attempt_id,msg};}
   }
+  if(essayDelivery!=='failed')localStorage.removeItem('exam_answers_'+activeExam.attempt_id);
   
   const percentage = Number(data.percentage || 0);
   if (percentage >= 50) {
@@ -2240,11 +2263,12 @@ async function submitCurrentExam(auto=false){
     playFailSound();
   }
 
-  showExamResult(data);
+  showExamResult(data,essayDelivery);
   await loadExams();await loadMyResults();
  }catch(e){toast('حدث خطأ أثناء التسليم: '+(e.message||'خطأ غير معروف'));btn.classList.remove('hidden');btn.disabled=false;btn.textContent='إعادة محاولة التسليم';btn.onclick=()=>submitCurrentExam(true);}
 }
-function showExamResult(result){
+function showExamResult(result,essayDelivery){
+ essayDelivery=essayDelivery||'none';
  examReviewMode=true;
  document.getElementById('examModalSub').textContent='تم حفظ إجاباتك وتصحيح الامتحان بنجاح';
  document.getElementById('examTimer').textContent='انتهى';
@@ -2255,7 +2279,9 @@ function showExamResult(result){
  const emoji = isSuccess ? '🎉' : '💔';
  const statusText = isSuccess ? 'مبروك! لقد نجحت في الامتحان' : 'عفواً، لم تحقق نسبة النجاح';
  
- document.getElementById('examModalBody').innerHTML=`<div class="exam-result"><div style="font-size:42px">${emoji}</div><h2>${statusText}</h2><p>درجتك النهائية</p><strong>${Number(result.score||0)} / ${Number(result.total_marks||0)}</strong><p style="font-size:20px;color:${isSuccess?'var(--emerald-green)':'var(--red-accent)'};font-weight:bold">${pct.toFixed(1)}%</p><p class="muted">تم حفظ نتيجتك في حسابك.</p>${((activeExam.questions||[]).some(isEssayQ))?'<p class="muted">أُرسلت إجابات الأسئلة المقالية للمعلم وتُصحح يدويًا خارج الدرجة أعلاه.</p>':''}</div>`;
+ const hasEssayQs=(activeExam.questions||[]).some(isEssayQ);
+ const essayNote=hasEssayQs?(essayDelivery==='sent'?'<p class="muted">أُرسلت إجابات الأسئلة المقالية للمعلم وتُصحح يدويًا خارج الدرجة أعلاه.</p>':essayDelivery==='failed'?'<p class="muted" id="essayDeliveryNote" style="color:var(--red-accent);font-weight:bold">تعذر إرسال إجابات الأسئلة المقالية للمعلم. إجاباتك محفوظة على هذا الجهاز ولن تُفقد.</p><p><button type="button" class="btn" id="essayRetryBtn" onclick="retryEssayDelivery(this)">إعادة إرسال الإجابات المقالية</button></p>':'<p class="muted">لم تُكتب إجابات للأسئلة المقالية، فلا يوجد ما يُرسل للمعلم.</p>'):'';
+ document.getElementById('examModalBody').innerHTML=`<div class="exam-result"><div style="font-size:42px">${emoji}</div><h2>${statusText}</h2><p>${hasEssayQs?'درجتك المبدئية (قبل التصحيح اليدوي للأسئلة المقالية)':'درجتك النهائية'}</p><strong>${Number(result.score||0)} / ${Number(result.total_marks||0)}</strong><p style="font-size:20px;color:${isSuccess?'var(--emerald-green)':'var(--red-accent)'};font-weight:bold">${pct.toFixed(1)}%</p><p class="muted">تم حفظ نتيجتك في حسابك.</p>${hasEssayQs?'<p class="muted">الدرجة أعلاه للأسئلة الموضوعية فقط وقد تتغير بعد تصحيح المعلم للأسئلة المقالية.</p>':''}${essayNote}</div>`;
  document.getElementById('examProgress').textContent='تم التسليم';
  document.getElementById('prevQuestionBtn').classList.add('hidden');document.getElementById('nextQuestionBtn').classList.add('hidden');
  document.getElementById('submitExamBtn').classList.remove('hidden');document.getElementById('submitExamBtn').textContent='إغلاق';document.getElementById('submitExamBtn').disabled=false;document.getElementById('submitExamBtn').onclick=closeExamModal;

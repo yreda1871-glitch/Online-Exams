@@ -1150,6 +1150,15 @@ button,.btn{touch-action:manipulation}input,textarea,select{font-size:16px!impor
 .review-correct{border-color:var(--emerald-green)!important;background:var(--emerald-bg)!important;color:#065F46!important}
 .review-wrong{border-color:var(--red-accent)!important;background:#FEF2F2!important;color:#991B1B!important}
 
+/* ===== أقسام المواد ===== */
+.subject-tiles{display:flex;flex-wrap:wrap;gap:8px;margin:0 0 14px;grid-column:1/-1}
+.subject-tile{display:flex;align-items:center;gap:6px;padding:8px 12px;border:1.5px solid #E2E8F0;background:#fff;border-radius:999px;cursor:pointer;font:inherit;font-size:13px;font-weight:600;color:#334155;position:relative;transition:all .15s}
+.subject-tile:hover{border-color:#93C5FD}
+.subject-tile.active{background:#1D4ED8;border-color:#1D4ED8;color:#fff}
+.subject-tile-count{background:#F1F5F9;color:#475569;border-radius:999px;padding:1px 8px;font-size:11px}
+.subject-tile.active .subject-tile-count{background:rgba(255,255,255,.25);color:#fff}
+.subject-tile-badge{position:absolute;top:-8px;left:-6px;background:#DC2626;color:#fff;border-radius:999px;padding:1px 7px;font-size:10px;font-weight:700;box-shadow:0 2px 6px rgba(220,38,38,.4)}
+.subject-heading{grid-column:1/-1;font-weight:800;font-size:16px;color:#0F172A;margin:12px 0 0;padding-right:4px}
 /* الشرح التفاعلي */
 .lesson-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:14px;margin-top:16px}
 .lesson-card{background:#fff;border:1px solid var(--border-line);border-radius:18px;padding:18px;box-shadow:0 5px 18px rgba(15,52,104,.06)}
@@ -2052,14 +2061,61 @@ async function refreshStudentBadges(){
 }
 async function markStudentSeen(fn){if(!profile?.student_code||!db)return;try{const {data}=await db.from('exams').select('id').eq('published',true).eq('target_year',myYear()).eq('target_department','اللغة العربية');if(data)localStorage.setItem(seenKey(),JSON.stringify(data.map(e=>e.id)));}catch(e){}await refreshStudentBadges();}
 
-async function loadExams(){
- const {data,error}=await db.from('exams').select('id,title,description,duration_minutes,total_marks,created_at,exam_questions(id)').eq('published',true).eq('target_year',myYear()).eq('target_department','اللغة العربية').order('created_at',{ascending:false});
- if(error){document.getElementById('homeExams').innerHTML='<div class="panel">تعذر تحميل الامتحانات: '+esc(error.message)+'</div>';return}
- examCache=data||[];
- const {data:mine,error:mineError}=await db.rpc('get_student_attempts',{p_student_code:profile.student_code});
- if(mineError){document.getElementById('homeExams').innerHTML='<div class="panel">تعذر تحميل نتائجك: '+esc(mineError.message)+'</div>';return}
- attempts=mine||[];
- const html=examCache.map((e, idx)=>{
+// ================= أقسام المواد (9) =================
+const SUBJECTS=[
+ {n:'علوم القرآن',i:'📖'},
+ {n:'النحو والصرف',i:'✍️'},
+ {n:'الأدب الجاهلي',i:'🏜️'},
+ {n:'النقد الأدبي',i:'⚖️'},
+ {n:'القضايا المجتمعية',i:'🌍'},
+ {n:'الفن المصري القديم',i:'🏺'},
+ {n:'الفنون القبطية والإسلامية',i:'🕌'},
+ {n:'مدخل إلى الدراسات الأدبية',i:'📚'},
+ {n:'فن الرسم',i:'🎨'}
+];
+const OTHER_SUBJECT='مواد أخرى';
+let subjectFilter={exams:'الكل',library:'الكل',lessons:'الكل'};
+let libraryCache=[];
+function subjectNameOf(item){const s=String(item&&item.subject||'');return SUBJECTS.some(x=>x.n===s)?s:OTHER_SUBJECT}
+function subjectSeenMap(){try{return JSON.parse(localStorage.getItem('subject_seen_'+((profile&&profile.student_code)||''))||'{}')}catch(e){return{}}}
+function markSubjectSeen(area,subj){const m=subjectSeenMap();m[area]=m[area]||{};m[area][subj]=new Date().toISOString();try{localStorage.setItem('subject_seen_'+((profile&&profile.student_code)||''),JSON.stringify(m))}catch(e){}}
+function subjectNewCount(area,items,subj){const seen=(subjectSeenMap()[area]||{})[subj];return items.filter(x=>subjectNameOf(x)===subj&&(!seen||new Date(x.created_at||0)>new Date(seen))).length}
+function setSubjectFilter(area,subj){
+ subjectFilter[area]=subj;
+ if(subj!=='الكل')markSubjectSeen(area,subj);
+ if(area==='exams')renderExamCards();
+ else if(area==='library')renderBookCards();
+ else if(area==='lessons')renderLessonCards();
+}
+function subjectBar(area,items){
+ const present=SUBJECTS.filter(x=>items.some(it=>subjectNameOf(it)===x.n));
+ const hasOther=items.some(it=>subjectNameOf(it)===OTHER_SUBJECT);
+ const tile=(key,label,icon,count,nc)=>'<button type="button" class="subject-tile'+(subjectFilter[area]===key?' active':'')+'" onclick="setSubjectFilter(\''+area+'\',\''+key+'\')"><span>'+icon+'</span><span>'+label+'</span><span class="subject-tile-count">'+count+'</span>'+(nc?'<span class="subject-tile-badge">'+nc+' جديد</span>':'')+'</button>';
+ let html='<div class="subject-tiles">'+tile('الكل','كل المواد','🗂️',items.length,0);
+ present.forEach(x=>{html+=tile(x.n,x.n,x.i,items.filter(it=>subjectNameOf(it)===x.n).length,subjectNewCount(area,items,x.n))});
+ if(hasOther)html+=tile(OTHER_SUBJECT,OTHER_SUBJECT,'📦',items.filter(it=>subjectNameOf(it)===OTHER_SUBJECT).length,subjectNewCount(area,items,OTHER_SUBJECT));
+ return html+'</div>';
+}
+function groupBySubject(items){
+ const order=SUBJECTS.map(x=>x.n).concat([OTHER_SUBJECT]);
+ const groups={};items.forEach(x=>{const k=subjectNameOf(x);(groups[k]=groups[k]||[]).push(x)});
+ return order.filter(k=>groups[k]).map(k=>({subject:k,items:groups[k]}));
+}
+function subjectHeading(subj){const x=SUBJECTS.find(v=>v.n===subj);return '<div class="subject-heading">'+(x?x.i:'📦')+' '+esc(subj)+'</div>'}
+function groupedCards(area,all,list,cardFor,emptyMsg){
+ let html=subjectBar(area,all);
+ if(!list.length)return html+'<div class="panel muted" style="grid-column:1/-1;text-align:center;">'+emptyMsg+'</div>';
+ if(subjectFilter[area]==='الكل'){
+  groupBySubject(list).forEach(g=>{html+=subjectHeading(g.subject)+'<div style="display:contents">'+g.items.map(cardFor).join('')+'</div>'});
+ }else{
+  html+='<div style="display:contents">'+list.map(cardFor).join('')+'</div>';
+ }
+ return html;
+}
+
+ function renderExamCards(){
+ const list=(subjectFilter.exams==='الكل')?examCache:examCache.filter(e=>subjectNameOf(e)===subjectFilter.exams);
+ const cardFor=(e)=>{
   const done=attempts.find(a=>a.exam_id===e.id&&a.completed);
   const qCount = e.exam_questions?.length || 0;
   const dur = e.duration_minutes || Math.ceil((qCount * 30) / 60) || 30;
@@ -2067,7 +2123,6 @@ async function loadExams(){
   const tagClass = done ? 'done' : 'mint';
   const tagLabel = done ? 'تم الحل' : 'متاح';
   const btnClass = 'btn green exam-action-btn';
-
   return `<article class="examcard">
    <div class="examtop">
     <div class="examicon-circle ${done?'done-ico':''}">${iconSymbol}</div>
@@ -2088,9 +2143,20 @@ async function loadExams(){
       : `<button class="${btnClass}" onclick="startExamNotice('${e.id}')"><span>▶</span> ابدأ الامتحان</button>`}
    </div>
   </article>`;
- }).join('')||'<div class="panel muted" style="grid-column:1/-1;text-align:center;">لا توجد امتحانات منشورة حاليًا. تابع الصفحة لاحقًا.</div>';
+ };
+ const html=groupedCards('exams',examCache,list,cardFor,'لا توجد امتحانات لهذه المادة حاليًا.');
  document.getElementById('homeExams').innerHTML=html;
  document.getElementById('allExams').innerHTML=html;
+ }
+
+async function loadExams(){
+ const {data,error}=await db.from('exams').select('id,title,description,duration_minutes,total_marks,created_at,subject,exam_questions(id)').eq('published',true).eq('target_year',myYear()).eq('target_department','اللغة العربية').order('created_at',{ascending:false});
+ if(error){document.getElementById('homeExams').innerHTML='<div class="panel">تعذر تحميل الامتحانات: '+esc(error.message)+'</div>';return}
+ examCache=data||[];
+ const {data:mine,error:mineError}=await db.rpc('get_student_attempts',{p_student_code:profile.student_code});
+ if(mineError){document.getElementById('homeExams').innerHTML='<div class="panel">تعذر تحميل نتائجك: '+esc(mineError.message)+'</div>';return}
+ attempts=mine||[];
+ renderExamCards();
  
  const completed=attempts.filter(a=>a.completed);
  const avg=completed.length?completed.reduce((s,a)=>s+Number(a.percentage||0),0)/completed.length:0;
@@ -2496,11 +2562,19 @@ async function loadLibrary(){
   box.innerHTML = `<div class="panel">تعذر تحميل المكتبة: ${esc(error.message)}</div>`;
   return;
  }
- if(!data || !data.length){
+ libraryCache = data || [];
+ renderBookCards();
+ if(window.__pointBook)setTimeout(spotNewBook,500);
+}
+function renderBookCards(){
+ const box = document.getElementById('libraryList');
+ const all = libraryCache || [];
+ if(!all.length){
   box.innerHTML = '<div class="panel muted" style="grid-column:1/-1;text-align:center;">لا توجد كتب أو مذكرات مضافة في المكتبة حالياً.</div>';
   return;
  }
- box.innerHTML = data.map(b => `
+ const list = (subjectFilter.library==='الكل') ? all : all.filter(b=>subjectNameOf(b)===subjectFilter.library);
+ const cardFor = b => `
   <article class="book-card" data-book-id="${esc(b.id)}">
    <h3 class="book-card-title">${esc(b.title)}</h3>
    <img src="${esc(b.cover_url)}" alt="${esc(b.title)}" class="book-card-cover" loading="lazy">
@@ -2508,8 +2582,8 @@ async function loadLibrary(){
     <span>📥</span> تحميل الكتاب
    </button>
   </article>
- `).join('');
- if(window.__pointBook)setTimeout(spotNewBook,500);
+ `;
+ box.innerHTML = groupedCards('library', all, list, cardFor, 'لا توجد كتب لهذه المادة حالياً.');
 }
 const NEW_BOOK_ID='bd463d03-81c5-498c-a00c-f845f07cfbc9',NEW_BOOK_NAME='كتاب علوم القرآن';
 function spotNewBook(){
@@ -2552,6 +2626,19 @@ function makeSpeechChunks(text){const clean=String(text||'').replace(/\s+/g,' ')
 function speakLessonChunk(){if(!('speechSynthesis' in window)){toast('المتصفح لا يدعم القراءة الصوتية. جرّب Chrome');return;}stopLessonSpeech();const chunk=lessonSpeechChunks[lessonSpeechIndex];if(!chunk)return;const u=new SpeechSynthesisUtterance(chunk);u.lang='ar-EG';u.rate=.88;u.pitch=1.02;lessonSpeechUtterance=u;lessonSpeechActive=true;document.querySelectorAll('.lesson-teacher').forEach(x=>x.classList.add('speaking'));u.onend=()=>{lessonSpeechActive=false;document.querySelectorAll('.lesson-teacher').forEach(x=>x.classList.remove('speaking'));const b=document.getElementById('lessonSpeakBtn');if(b)b.textContent='▶ استمع مرة أخرى';};u.onerror=()=>{lessonSpeechActive=false;document.querySelectorAll('.lesson-teacher').forEach(x=>x.classList.remove('speaking'));};window.speechSynthesis.speak(u);const b=document.getElementById('lessonSpeakBtn');if(b)b.textContent='🔊 جاري الشرح...';}
 function renderLessonChunk(){const sec=activeTeachingData?.sections?.[teachingSectionIndex];if(!sec)return;const text=String(sec.simple_explanation||sec.narration||sec.explanation||'');lessonSpeechChunks=makeSpeechChunks(text);lessonSpeechIndex=Math.min(lessonSpeechIndex,lessonSpeechChunks.length-1);const node=document.getElementById('lessonStageText');if(node)node.textContent=lessonSpeechChunks[lessonSpeechIndex];const count=document.getElementById('lessonChunkCount');if(count)count.textContent=`الشرح ${lessonSpeechIndex+1} من ${lessonSpeechChunks.length}`;const bar=document.getElementById('lessonChunkBar');if(bar)bar.style.width=((lessonSpeechIndex+1)/lessonSpeechChunks.length*100)+'%';const prev=document.getElementById('lessonChunkPrev'),next=document.getElementById('lessonChunkNext');if(prev)prev.disabled=lessonSpeechIndex===0;if(next)next.textContent=lessonSpeechIndex===lessonSpeechChunks.length-1?'انتهى الشرح · ابدأ التدريب':'الجزء التالي من الشرح ←';}
 function lessonProgressPercent(item){const total=Number(item.total_sections||item.sections_count||0),done=Number(item.completed_sections||0);return total?Math.min(100,Math.round(done/total*100)):0;}
+function renderLessonCards(){
+ const box=document.getElementById('teachingLessonsList');
+ const all=teachingLessonsCache||[];
+ if(!all.length){box.innerHTML='<div class="lesson-empty">📘 لا توجد دروس منشورة لفرقتك حاليًا. ارجع لاحقًا للاطلاع على الدروس الجديدة.</div>';return;}
+ const list=(subjectFilter.lessons==='الكل')?all:all.filter(l=>subjectNameOf(l)===subjectFilter.lessons);
+ const cardFor=(l)=>{
+   const i=all.indexOf(l);
+   const pct=lessonProgressPercent(l),done=!!l.completed;
+   return `<article class="lesson-card" onclick="openTeachingLesson(${i})"><div class="lesson-video-cover">${l.lesson_type==='video'&&l.video_url?`<button class="dl-mini" type="button" title="تحميل الفيديو" onclick="event.stopPropagation();downloadLessonVideo({url:teachingLessonsCache[${i}].video_url,title:teachingLessonsCache[${i}].title})">⬇️</button>`:''}<span class="lesson-play">▶</span><span class="lesson-video-label">${l.lesson_type==='video'?'▶ درس فيديو':'▶ شرح تفاعلي · '+Number(l.total_sections||l.sections_count||0)+' أجزاء'}</span></div><div class="lesson-card-content"><h3>${esc(l.title||'درس بدون عنوان')}</h3><p>${esc(l.description||'شرح مبسط بالصوت والصورة مع تدريبات بعد كل جزء.')}</p>${l.lesson_type==='video'?'':'<div class="lesson-progress"><span style="width:'+pct+'%"></span></div><small class="muted">'+Number(l.completed_sections||0)+' من '+Number(l.total_sections||l.sections_count||0)+' أجزاء · '+pct+'%</small>'}<div class="lesson-actions"><button class="btn small" type="button">${done?'▶ مراجعة الدرس':'▶ شاهد الدرس'}</button>${done?'<span class="badge">مكتمل ✓</span>':''}</div></div></article>`;
+  
+ };
+ box.innerHTML=groupedCards('lessons',all,list,cardFor,'لا توجد دروس لهذه المادة حاليًا.');
+}
 async function loadTeachingLessons(){
  const box=document.getElementById('teachingLessonsList');if(!box||!profile)return;
  box.innerHTML='<div class="lesson-empty">جارٍ تحميل الدروس...</div>';
@@ -2560,11 +2647,7 @@ async function loadTeachingLessons(){
   const {data,error}=await db.rpc('teaching_list_lessons',{p_student_code:profile.student_code});
   if(error)throw error;
   teachingLessonsCache=Array.isArray(data)?data:(data?.lessons||[]);
-  if(!teachingLessonsCache.length){box.innerHTML='<div class="lesson-empty">📘 لا توجد دروس منشورة لفرقتك حاليًا. ارجع لاحقًا للاطلاع على الدروس الجديدة.</div>';return;}
-  box.innerHTML=teachingLessonsCache.map((l,i)=>{
-   const pct=lessonProgressPercent(l),done=!!l.completed;
-   return `<article class="lesson-card" onclick="openTeachingLesson(${i})"><div class="lesson-video-cover">${l.lesson_type==='video'&&l.video_url?`<button class="dl-mini" type="button" title="تحميل الفيديو" onclick="event.stopPropagation();downloadLessonVideo({url:teachingLessonsCache[${i}].video_url,title:teachingLessonsCache[${i}].title})">⬇️</button>`:''}<span class="lesson-play">▶</span><span class="lesson-video-label">${l.lesson_type==='video'?'▶ درس فيديو':'▶ شرح تفاعلي · '+Number(l.total_sections||l.sections_count||0)+' أجزاء'}</span></div><div class="lesson-card-content"><h3>${esc(l.title||'درس بدون عنوان')}</h3><p>${esc(l.description||'شرح مبسط بالصوت والصورة مع تدريبات بعد كل جزء.')}</p>${l.lesson_type==='video'?'':'<div class="lesson-progress"><span style="width:'+pct+'%"></span></div><small class="muted">'+Number(l.completed_sections||0)+' من '+Number(l.total_sections||l.sections_count||0)+' أجزاء · '+pct+'%</small>'}<div class="lesson-actions"><button class="btn small" type="button">${done?'▶ مراجعة الدرس':'▶ شاهد الدرس'}</button>${done?'<span class="badge">مكتمل ✓</span>':''}</div></div></article>`;
-  }).join('');
+  renderLessonCards();
  }catch(e){console.error('load teaching lessons',e);box.innerHTML=`<div class="lesson-empty">تعذر تحميل الدروس: ${esc(e.message||'خطأ في الاتصال')}</div>`;}
 }
 

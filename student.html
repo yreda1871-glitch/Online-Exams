@@ -2312,15 +2312,15 @@ async function gradeEssaysBatch(items){
  catch(e){console.warn('إعادة محاولة التصحيح الآلي:',e);await new Promise(r=>setTimeout(r,8000));return await gradeEssaysBatchOnce(items);}
 }
 async function gradeEssaysBatchOnce(items){
- const sys='أنت معلم مادة علوم القرآن تصحح إجابات مقالية لطالب. أعد فقط أرقام الدرجات مفصولة بفاصلة بنفس ترتيب الأسئلة، بدون أي نص آخر.';
+ const sys='أنت معلم مادة علوم القرآن تصحح إجابات مقالية لطالب. أعد فقط أرقام الدرجات مفصولة بفاصلة بنفس ترتيب الأسئلة، بالأرقام الإنجليزية (0-9) وبدون أي نص أو شرح آخر.';
  let prompt='صحح كل إجابة طالب بالمقارنة مع الإجابة النموذجية (أو بمدى صحتها علميًا إن لم توجد إجابة نموذجية)، مع التساهل في الصياغة والتركيز على المعنى.\n\n';
  items.forEach((x,i)=>{prompt+='السؤال '+(i+1)+': '+essayText(x.q)+'\n';
   if(x.modelAnswer)prompt+='الإجابة النموذجية: '+x.modelAnswer+'\n';
   prompt+='إجابة الطالب: '+x.a+'\n\n';});
- prompt+='أعد '+items.length+' أرقام فقط مفصولة بفاصلة بنفس الترتيب، كل رقم هو درجة الإجابة من 0 إلى 10. مثال: 8,5,9';
+ prompt+='أعد '+items.length+' أرقام فقط مفصولة بفاصلة بنفس الترتيب، كل رقم هو درجة الإجابة من 0 إلى 10. التنسيق المطلوب بالضبط: أرقام إنجليزية مفصولة بفواصل بدون أي كلمة، مثال: 8,5,9';
  const t=await pollinationsChat(sys,prompt);
  const nums=(String(t).match(/-?[0-9٠-٩۰-۹]+(?:[.,٫][0-9٠-٩۰-۹]+)?/g)||[]).map(x=>Number(normArabicNum(x))).filter(n=>isFinite(n));
- if(nums.length<items.length)throw new Error('batch parse: '+String(t).slice(0,80));
+ if(nums.length<items.length){try{localStorage.setItem('essay_grader_last_raw',String(t).slice(0,500));}catch(_){};throw new Error('batch parse: '+String(t).slice(0,80));}
  return nums.slice(0,items.length).map((n,i)=>Math.max(0,Math.min(items[i].max,Math.round(n))));
 }
 async function runEssayGrading(essayAnswers){

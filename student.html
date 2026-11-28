@@ -1401,7 +1401,7 @@ setTimeout(function(){var s=document.getElementById('splashScreen');if(!s)return
     </div>
      <div id="notifCard" class="notif-card hidden">
       <span style="font-size:28px">🔔</span>
-      <div><b>فعّل إشعارات الامتحانات</b><br><span class="muted">هنبلغك على المتصفح فور نزول امتحان جديد.</span></div>
+      <div><b>فعّل إشعارات المنصة</b><br><span class="muted">هنبلغك على المتصفح فور نزول امتحان أو شرح أو كتاب جديد.</span></div>
       <button class="btn small" onclick="enableNotifications()">تفعيل</button>
     </div>
     <div class="welcome">
@@ -3406,6 +3406,10 @@ document.addEventListener('pointerdown',unlockBuddyVoice,{once:true});document.a
 
 setInterval(checkNewExams,30000);
 
+/* عدّاد الزيارات المجهول — معرّف عشوائي محفوظ على الجهاز فقط، بدون أي بيانات شخصية */
+function visitDeviceId(){try{let v=localStorage.getItem('visit_device_id');if(!v){v=(self.crypto&&crypto.randomUUID?crypto.randomUUID():('v'+Date.now().toString(36)+Math.random().toString(36).slice(2,10))).replace(/[^A-Za-z0-9-]/g,'');localStorage.setItem('visit_device_id',v)}return v}catch(e){return ''}}
+async function logVisit(){try{const id=visitDeviceId();if(!id)return;await ensureDb();await db.rpc('log_visit',{p_device_id:id})}catch(e){}}
+logVisit();
 restoreStudent();
 </script>
 </body>

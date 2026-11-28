@@ -1859,6 +1859,7 @@ async function openStudent(p){
  checkNewContent();
  subscribeExamsLive();
  showBuddy();
+ checkPendingEssayResend();
 }
 
 let autoCloseRoyalTimer = null;
@@ -2227,12 +2228,69 @@ async function retryEssayDelivery(btn){
  try{
   await sendEssayAnswersToTeacher(pendingEssayDelivery.msg);
   try{localStorage.removeItem('exam_answers_'+pendingEssayDelivery.attemptId);}catch(e){}
+  removePendingEssayRecord(profile.student_code,pendingEssayDelivery.attemptId);
   pendingEssayDelivery=null;
+  checkPendingEssayResend();
   const note=document.getElementById('essayDeliveryNote');if(note){note.style.color='var(--emerald-green)';note.textContent='أُرسلت إجابات الأسئلة المقالية للمعلم وتُصحح يدويًا خارج الدرجة أعلاه.';}
   const rb=document.getElementById('essayRetryBtn');if(rb)rb.classList.add('hidden');
  }catch(e){
   if(btn){btn.disabled=false;btn.textContent='إعادة إرسال الإجابات المقالية';}
   toast('تعذر إرسال الإجابات المقالية: '+(e.message||'خطأ غير معروف'));
+ }
+}
+const ESSAY_PENDING_PREFIX='essay_pending_';
+function savePendingEssayRecord(studentCode,rec){
+ try{localStorage.setItem(ESSAY_PENDING_PREFIX+studentCode+'_'+rec.attemptId,JSON.stringify(rec));}catch(e){}
+}
+function listPendingEssayRecords(studentCode){
+ const out=[];const pre=ESSAY_PENDING_PREFIX+studentCode+'_';
+ try{for(let i=0;i<localStorage.length;i++){const k=localStorage.key(i);if(k&&k.indexOf(pre)===0){try{const r=JSON.parse(localStorage.getItem(k));if(r&&r.msg)out.push(r);}catch(e){}}}}catch(e){}
+ return out;
+}
+function removePendingEssayRecord(studentCode,attemptId){
+ try{localStorage.removeItem(ESSAY_PENDING_PREFIX+studentCode+'_'+attemptId);}catch(e){}
+}
+function checkPendingEssayResend(){
+ if(!profile||!profile.student_code)return;
+ const recs=listPendingEssayRecords(profile.student_code);
+ let b=document.getElementById('essayResendBanner');
+ if(!recs.length){if(b)b.remove();return;}
+ if(!b){
+  b=document.createElement('div');b.id='essayResendBanner';
+  b.style.cssText='position:sticky;top:0;z-index:2147483000;background:#fff3cd;color:#5c4400;border-bottom:2px solid #e0a800;padding:10px 14px;display:flex;gap:10px;align-items:center;justify-content:center;flex-wrap:wrap;font:600 14px Cairo,Tahoma,Arial,sans-serif;box-shadow:0 2px 10px rgba(0,0,0,.25)';
+  document.body.prepend(b);
+ }
+ const titles=recs.map(r=>r.examTitle||'الامتحان').join('، ');
+ b.innerHTML='';
+ const span=document.createElement('span');
+ span.textContent='⚠️ عندك إجابات مقالية من '+(recs.length>1?recs.length+' محاولات سابقة':'محاولة سابقة')+' ('+titles+') لم تصل للمعلم بعد. إجاباتك محفوظة على هذا الجهاز.';
+ b.appendChild(span);
+ const btn=document.createElement('button');btn.type='button';btn.className='btn';
+ btn.style.cssText='background:#e0a800;border-color:#e0a800;color:#1a1a1a;padding:8px 14px';
+ btn.textContent='إرسالها الآن';
+ btn.onclick=()=>resendPendingEssays(btn);
+ b.appendChild(btn);
+}
+async function resendPendingEssays(btn){
+ if(!profile||!profile.student_code)return;
+ if(btn){btn.disabled=true;btn.textContent='جارٍ الإرسال...';}
+ const recs=listPendingEssayRecords(profile.student_code);
+ let failed=0;
+ try{await ensureDb();}catch(e){}
+ for(const rec of recs){
+  try{
+   await sendEssayAnswersToTeacher(rec.msg);
+   removePendingEssayRecord(profile.student_code,rec.attemptId);
+   try{localStorage.removeItem('exam_answers_'+rec.attemptId);}catch(e){}
+  }catch(e){failed++;console.warn('تعذر إرسال إجابات مقالية محفوظة:',e);}
+ }
+ const b=document.getElementById('essayResendBanner');
+ if(!failed){
+  if(b){b.style.background='#d4edda';b.style.color='#155724';b.style.borderColor='#28a745';b.innerHTML='';const ok=document.createElement('span');ok.textContent='✅ تم إرسال الإجابات المقالية المحفوظة للمعلم.';b.appendChild(ok);setTimeout(()=>{const x=document.getElementById('essayResendBanner');if(x)x.remove();},4000);}
+  toast('تم إرسال الإجابات المقالية المحفوظة للمعلم');
+ }else{
+  if(btn){btn.disabled=false;btn.textContent='إعادة المحاولة';}
+  toast('تعذر إرسال بعض الإجابات المقالية. ستبقى محفوظة على هذا الجهاز.');
  }
 }
 async function submitCurrentExam(auto=false){
@@ -2252,7 +2310,7 @@ async function submitCurrentExam(auto=false){
   if(essayAnswers.length){
    const examTitle=activeExam.title||((examCache.find(x=>x.id===activeExam.__examId)||{}).title)||'الامتحان';
    const msg='📋 إجابات الأسئلة المقالية - '+examTitle+'\n\n'+essayAnswers.map((x,i)=>'س'+(i+1)+': '+essayText(x.q)+'\nالإجابة: '+x.a).join('\n\n');
-   try{await sendEssayAnswersToTeacher(msg);essayDelivery='sent';}catch(e){console.warn('تعذر إرسال إجابات المقالي:',e);essayDelivery='failed';pendingEssayDelivery={attemptId:activeExam.attempt_id,msg};}
+   try{await sendEssayAnswersToTeacher(msg);essayDelivery='sent';}catch(e){console.warn('تعذر إرسال إجابات المقالي:',e);essayDelivery='failed';pendingEssayDelivery={attemptId:activeExam.attempt_id,msg};savePendingEssayRecord(profile.student_code,{attemptId:activeExam.attempt_id,examId:activeExam.__examId||null,examTitle,msg,at:Date.now()});}
   }
   if(essayDelivery!=='failed')localStorage.removeItem('exam_answers_'+activeExam.attempt_id);
   

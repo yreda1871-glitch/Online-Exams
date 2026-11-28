@@ -332,7 +332,7 @@ table{min-width:640px}th,td{padding:13px 14px;font-size:13px}th{background:#f2f7
         <div class="field"><label>نص السؤال *</label><textarea id="qText" rows="3" placeholder="اكتب السؤال هنا"></textarea></div>
         <div class="grid2">
          <div class="field"><label>نوع السؤال</label>
-          <div class="seg"><button id="segMC" class="on" onclick="setQType('multiple_choice')">اختيار من متعدد</button><button id="segTF" onclick="setQType('true_false')">صح / خطأ</button></div></div>
+          <div class="seg"><button id="segMC" class="on" onclick="setQType('multiple_choice')">اختيار من متعدد</button><button id="segTF" onclick="setQType('true_false')">صح / خطأ</button><button id="segES" onclick="setQType('essay')">مقالي</button></div></div>
          <div class="field"><label>درجة السؤال</label><input id="qMarks" type="number" min="0.5" step="0.5" value="1"></div>
         </div>
         <div class="field" style="margin-bottom:6px"><label>الإجابات <span class="muted">— حدّد الدائرة بجوار الإجابة الصحيحة</span></label></div>
@@ -707,17 +707,18 @@ async function loadBuilderQuestions(){
 const LETTERS=['أ','ب','ج','د','هـ','و'];
 function renderQuestions(){
  const qs=B.questions;
- const sum=qs.reduce((a,q)=>a+Number(q.marks||0),0);
+ const sum=qs.filter(q=>String(q.question_text||'').indexOf('[[essay]]')!==0).reduce((a,q)=>a+Number(q.marks||0),0);
+ const essayCount=qs.filter(q=>String(q.question_text||'').indexOf('[[essay]]')===0).length;
  const total=Number(B.exam?.total_marks||0);
  $('qCountPill').textContent=qs.length+' سؤال';
  const mismatch=qs.length&&Math.abs(sum-total)>0.001;
- $('qSummary').innerHTML=`<div>عدد الأسئلة<b>${qs.length}</b></div><div>مجموع درجات الأسئلة<b>${sum}</b></div><div>الدرجة النهائية<b>${total}</b></div>`+(mismatch?`<div class="warn" style="flex-basis:100%">⚠ مجموع الأسئلة لا يساوي الدرجة النهائية. <button class="btn small light" onclick="syncTotalMarks(${sum})">اعتماد ${sum} كدرجة نهائية</button></div>`:'');
+ $('qSummary').innerHTML=`<div>عدد الأسئلة<b>${qs.length}</b></div>${essayCount?`<div>أسئلة مقالية (تصحح يدويًا)<b>${essayCount}</b></div>`:''}<div>مجموع درجات الأسئلة<b>${sum}</b></div><div>الدرجة النهائية<b>${total}</b></div>`+(mismatch?`<div class="warn" style="flex-basis:100%">⚠ مجموع الأسئلة لا يساوي الدرجة النهائية. <button class="btn small light" onclick="syncTotalMarks(${sum})">اعتماد ${sum} كدرجة نهائية</button></div>`:'');
  $('qList').innerHTML=qs.map((q,i)=>{
   const opts=Array.isArray(q.options)?q.options:[];
   return `<div class="qcard ${B.editingId===q.id?'editing':''}">
-   <div class="qcard-top"><span class="qnum">${i+1}</span><div class="qtext">${esc(q.question_text)}</div></div>
+   <div class="qcard-top"><span class="qnum">${i+1}</span><div class="qtext">${esc(String(q.question_text||'').replace(/^\[\[essay\]\]\s*/,''))}</div></div>
    <ul class="qopts">${opts.map((o,k)=>`<li class="${k===Number(q.correct_option)?'ok':''}">${k===Number(q.correct_option)?'✔ ':''}${esc(o)}</li>`).join('')}</ul>
-   <div class="qmeta"><span class="pill type">${q.question_type==='true_false'?'صح / خطأ':'اختيار من متعدد'}</span><span class="muted">${Number(q.marks)} درجة</span>
+   <div class="qmeta"><span class="pill type">${String(q.question_text||'').indexOf('[[essay]]')===0?'مقالي':(q.question_type==='true_false'?'صح / خطأ':'اختيار من متعدد')}</span><span class="muted">${Number(q.marks)} درجة</span>
     <span style="flex:1"></span>
     <button class="btn ghost small" ${i===0?'disabled':''} onclick="moveQuestion(${i},-1)" title="أعلى">▲</button>
     <button class="btn ghost small" ${i===qs.length-1?'disabled':''} onclick="moveQuestion(${i},1)" title="أسفل">▼</button>
@@ -735,12 +736,13 @@ async function syncTotalMarks(sum){
 /* نموذج السؤال */
 function setQType(t,keep){
  B.qType=t;
- $('segMC').classList.toggle('on',t==='multiple_choice');$('segTF').classList.toggle('on',t==='true_false');
+ $('segMC').classList.toggle('on',t==='multiple_choice');$('segTF').classList.toggle('on',t==='true_false');$('segES').classList.toggle('on',t==='essay');
  if(!keep){
   if(t==='true_false')renderOptions(['صح','خطأ'],0);
   else renderOptions(['','','',''],0);
  }
- $('addOptBtn').classList.toggle('hidden',t==='true_false');
+ $('optsBox').classList.toggle('hidden',t==='essay');
+ $('addOptBtn').classList.toggle('hidden',t!=='multiple_choice');
 }
 function renderOptions(opts,correct){
  const tf=B.qType==='true_false';
@@ -779,9 +781,10 @@ function resetQuestionForm(){
 function editQuestion(id){
  const q=B.questions.find(x=>x.id===id);if(!q)return;
  B.editingId=id;
- $('qText').value=q.question_text;$('qMarks').value=q.marks;
- setQType(q.question_type==='true_false'?'true_false':'multiple_choice',true);
- renderOptions(Array.isArray(q.options)?q.options:['',''],Number(q.correct_option)||0);
+ const es=String(q.question_text||'').indexOf('[[essay]]')===0;
+ $('qText').value=es?String(q.question_text).replace(/^\[\[essay\]\]\s*/,''):q.question_text;$('qMarks').value=q.marks;
+ setQType(es?'essay':(q.question_type==='true_false'?'true_false':'multiple_choice'),true);
+ if(!es)renderOptions(Array.isArray(q.options)?q.options:['',''],Number(q.correct_option)||0);
  $('qFormTitle').textContent='تعديل السؤال';$('saveQBtn').textContent='حفظ التعديل';
  $('saveQNextBtn').classList.add('hidden');$('cancelEditBtn').classList.remove('hidden');
  renderQuestions();$('qText').scrollIntoView({behavior:'smooth',block:'center'});$('qText').focus();
@@ -791,11 +794,16 @@ async function saveQuestion(next){
  const text=$('qText').value.trim(),marks=Number($('qMarks').value);
  if(!text){toast('اكتب نص السؤال',true);return}
  if(!(marks>0)){toast('درجة السؤال يجب أن تكون أكبر من صفر',true);return}
- let {opts,correct}=readOptions();
- opts=opts.map(o=>o.trim());
- if(opts.some(o=>!o)){toast('املأ كل الاختيارات أو احذف الفارغ منها',true);return}
- if(new Set(opts).size!==opts.length){toast('يوجد اختيارات مكررة',true);return}
- const row={question_text:text,question_type:B.qType,options:opts,correct_option:correct,marks};
+ let row;
+ if(B.qType==='essay'){
+  row={question_text:'[[essay]] '+text,question_type:'multiple_choice',options:[],correct_option:0,marks};
+ }else{
+  let {opts,correct}=readOptions();
+  opts=opts.map(o=>o.trim());
+  if(opts.some(o=>!o)){toast('املأ كل الاختيارات أو احذف الفارغ منها',true);return}
+  if(new Set(opts).size!==opts.length){toast('يوجد اختيارات مكررة',true);return}
+  row={question_text:text,question_type:B.qType,options:opts,correct_option:correct,marks};
+ }
  B.saving=true;$('saveQBtn').disabled=$('saveQNextBtn').disabled=true;
  try{
   let error;
@@ -866,12 +874,13 @@ async function importExamJson(){
  let obj;try{obj=JSON.parse($('examJson').value)}catch(e){toast('صيغة JSON غير صحيحة',true);return}
  if(!obj.title||!Array.isArray(obj.questions)||!obj.questions.length){toast('تأكد من وجود title وquestions',true);return}
  for(const [i,q] of obj.questions.entries()){
+  if(q.question_type==='essay'){if(!(q.question_text||q.question)){toast(`السؤال المقالي رقم ${i+1} بلا نص`,true);return}continue}
   const opts=q.options||['صح','خطأ'],c=Number(q.correct_option);
   if(!(q.question_text||q.question)||!Array.isArray(opts)||opts.length<2||!Number.isInteger(c)||c<0||c>=opts.length){toast(`السؤال رقم ${i+1} غير صالح (تحقق من النص والخيارات وcorrect_option)`,true);return}
  }
  const {data:exam,error:examErr}=await db.from('exams').insert({subject_id:null,title:obj.title,description:obj.description||'',duration_minutes:obj.duration_minutes||null,total_marks:obj.total_marks||100,published:false,target_year:year,target_department:DEFAULT_DEPT}).select().single();
  if(examErr){fail('تعذر إنشاء الامتحان',examErr);return}
- const rows=obj.questions.map((q,i)=>({exam_id:exam.id,question_text:q.question_text||q.question,question_type:q.question_type||'multiple_choice',options:q.options||['صح','خطأ'],correct_option:Number(q.correct_option),marks:Number(q.marks)||1,question_order:i+1}));
+ const rows=obj.questions.map((q,i)=>{const es=q.question_type==='essay';return {exam_id:exam.id,question_text:(es?'[[essay]] ':'')+(q.question_text||q.question),question_type:es?'multiple_choice':(q.question_type||'multiple_choice'),options:es?[]:(q.options||['صح','خطأ']),correct_option:es?0:Number(q.correct_option),marks:Number(q.marks)||1,question_order:i+1}});
  const {error:qErr}=await db.from('exam_questions').insert(rows);
  if(qErr){await db.from('exams').delete().eq('id',exam.id);fail('خطأ في الأسئلة وتم إلغاء المسودة',qErr);return}
  $('examJson').value='';toast('تم استيراد الامتحان كمسودة. راجعه ثم انشره.');

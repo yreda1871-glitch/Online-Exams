@@ -2403,49 +2403,17 @@ function showEssayGradingWait(){
  document.getElementById('examModalBody').innerHTML='<div class="exam-result"><div style="font-size:42px">⏳</div><h2>جاري تصحيح إجاباتك، انتظر</h2><p class="muted">يتم الآن تصحيح الأسئلة المقالية آليًا ثم عرض النتيجة الكاملة.</p></div>';
  const b=document.getElementById('submitExamBtn');b.disabled=true;b.textContent='جاري التصحيح...';
 }
-function normArabicNum(x){return String(x).replace(/[٠-٩]/g,d=>'٠١٢٣٤٥٦٧٨٩'.indexOf(d)).replace(/[۰-۹]/g,d=>'۰۱۲۳۴۵۶۷۸۹'.indexOf(d)).replace('٫','.');}
-async function pollinationsChat(sys,prompt){
- const body=JSON.stringify({model:'openai',messages:[{role:'system',content:sys},{role:'user',content:prompt}]});
- let r=await fetch('https://text.pollinations.ai/',{method:'POST',headers:{'Content-Type':'application/json'},body:body});
- if(r.status===402){await new Promise(rr=>setTimeout(rr,50000));r=await fetch('https://text.pollinations.ai/',{method:'POST',headers:{'Content-Type':'application/json'},body:body});}
- if(!r.ok)throw new Error('grader http '+r.status);
- return await r.text();
-}
-async function gradeEssaysBatch(items){
- try{return await gradeEssaysBatchOnce(items);}
- catch(e){console.warn('إعادة محاولة التصحيح الآلي:',e);await new Promise(r=>setTimeout(r,8000));return await gradeEssaysBatchOnce(items);}
-}
-async function gradeEssaysBatchOnce(items){
- const sys='أنت معلم مادة علوم القرآن تصحح إجابات مقالية لطالب. أعد فقط أرقام الدرجات مفصولة بفاصلة بنفس ترتيب الأسئلة، بالأرقام الإنجليزية (0-9) وبدون أي نص أو شرح آخر.';
- let prompt='صحح كل إجابة طالب بالمقارنة مع الإجابة النموذجية (أو بمدى صحتها علميًا إن لم توجد إجابة نموذجية)، مع التساهل في الصياغة والتركيز على المعنى.\n\n';
- items.forEach((x,i)=>{prompt+='السؤال '+(i+1)+': '+essayText(x.q)+'\n';
-  if(x.modelAnswer)prompt+='الإجابة النموذجية: '+x.modelAnswer+'\n';
-  prompt+='إجابة الطالب: '+x.a+'\n\n';});
- prompt+='أعد '+items.length+' أرقام فقط مفصولة بفاصلة بنفس الترتيب، كل رقم هو درجة الإجابة من 0 إلى 10. التنسيق المطلوب بالضبط: أرقام إنجليزية مفصولة بفواصل بدون أي كلمة، مثال: 8,5,9';
- const t=await pollinationsChat(sys,prompt);
- const nums=(String(t).match(/-?[0-9٠-٩۰-۹]+/g)||[]).map(x=>Number(normArabicNum(x))).filter(n=>isFinite(n));
- if(nums.length<items.length){try{localStorage.setItem('essay_grader_last_raw',String(t).slice(0,500));}catch(_){};throw new Error('batch parse: '+String(t).slice(0,80));}
- return nums.slice(0,items.length).map((n,i)=>Math.max(0,Math.min(items[i].max,Math.round(n))));
-}
 async function runEssayGrading(essayAnswers){
  const out={graded:[],failed:false,totals:null};
  try{
-  const {data,error}=await db.rpc('get_essay_model_answers',{p_student_code:profile.student_code,p_attempt_id:activeExam.attempt_id});
-  if(error)throw error;
-  if(!data||data.status!=='ok')throw new Error('essay models: '+(data&&data.status));
-  const models={};(data.essays||[]).forEach(e=>{models[String(e.question_id)]=e;});
-  const items=essayAnswers.map(x=>{const m=models[String(x.q.id)]||{};return {q:x.q,a:x.a,modelAnswer:m.model_answer||'',max:Number(x.q.marks||m.marks||10)};});
-  const scores=await gradeEssaysBatch(items);
-  for(let i=0;i<items.length;i++){
-   const x=items[i];
-   try{
-    const {data:sv,error:sve}=await db.rpc('save_essay_grade',{p_student_code:profile.student_code,p_attempt_id:activeExam.attempt_id,p_question_id:x.q.id,p_answer_text:x.a,p_score:scores[i],p_feedback:''});
-    if(sve)throw sve;
-    if(sv&&sv.status==='ok')out.totals={score:sv.score,total_marks:sv.total_marks,percentage:sv.percentage};
-    out.graded.push({qid:x.q.id,score:scores[i],max:x.max});
-   }catch(e){console.warn('تعذر حفظ درجة سؤال مقالي:',e);out.failed=true;}
-  }
- }catch(e){console.warn('تعذر بدء التصحيح الآلي:',e);out.failed=true;}
+  const r=await fetch(SUPABASE_URL+'/functions/v1/essay-grader',{method:'POST',headers:{'Content-Type':'application/json','apikey':SUPABASE_ANON_KEY,'Authorization':'Bearer '+SUPABASE_ANON_KEY},body:JSON.stringify({student_code:profile.student_code,attempt_id:activeExam.attempt_id,answers:essayAnswers.map(x=>({question_id:x.q.id,answer_text:x.a}))})});
+  if(!r.ok)throw new Error('grader http '+r.status);
+  const d=await r.json();
+  if(!d||d.status!=='ok')throw new Error('grader status '+((d&&d.status)||'none'));
+  (d.graded||[]).forEach(g=>out.graded.push({qid:g.question_id,score:Number(g.score),max:Number(g.max)}));
+  if(d.totals)out.totals={score:d.totals.score,total_marks:d.totals.total_marks,percentage:d.totals.percentage};
+  if(out.graded.length<essayAnswers.length)out.failed=true;
+ }catch(e){console.warn('essay grader failed:',e);out.failed=true;}
  return out;
 }
 async function submitCurrentExam(auto=false){

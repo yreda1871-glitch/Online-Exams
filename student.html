@@ -2300,6 +2300,10 @@ function showEssayGradingWait(){
  const b=document.getElementById('submitExamBtn');b.disabled=true;b.textContent='جاري التصحيح...';
 }
 async function gradeEssayWithAI(questionText,modelAnswer,studentAnswer,maxMarks){
+ try{return await gradeEssayWithAIOnce(questionText,modelAnswer,studentAnswer,maxMarks);}
+ catch(e){await new Promise(r=>setTimeout(r,3000));return await gradeEssayWithAIOnce(questionText,modelAnswer,studentAnswer,maxMarks);}
+}
+async function gradeEssayWithAIOnce(questionText,modelAnswer,studentAnswer,maxMarks){
  maxMarks=Number(maxMarks)||10;
  const sys='أنت معلم مادة علوم القرآن تصحح إجابة مقالية لطالب. أعد فقط رقمًا صحيحًا هو درجة الطالب من 0 إلى '+maxMarks+' بدون أي نص آخر.';
  let prompt='السؤال: '+questionText+'\n\n';
@@ -2308,9 +2312,10 @@ async function gradeEssayWithAI(questionText,modelAnswer,studentAnswer,maxMarks)
  const r=await fetch('https://text.pollinations.ai/',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({model:'openai',messages:[{role:'system',content:sys},{role:'user',content:prompt}]})});
  if(!r.ok)throw new Error('grader http '+r.status);
  const t=await r.text();
- const m=String(t).match(/-?\d+(?:\.\d+)?/);
+ const m=String(t).match(/-?[0-9٠-٩۰-۹]+(?:[.,٫][0-9٠-٩۰-۹]+)?/);
  if(!m)throw new Error('grader parse');
- return Math.max(0,Math.min(maxMarks,Math.round(Number(m[0]))));
+ const norm=m[0].replace(/[٠-٩]/g,d=>'٠١٢٣٤٥٦٧٨٩'.indexOf(d)).replace(/[۰-۹]/g,d=>'۰۱۲۳۴۵۶۷۸۹'.indexOf(d)).replace('٫','.');
+ return Math.max(0,Math.min(maxMarks,Math.round(Number(norm))));
 }
 async function runEssayGrading(essayAnswers){
  const out={graded:[],failed:false,totals:null};

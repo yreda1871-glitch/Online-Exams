@@ -254,6 +254,8 @@ table{min-width:640px}th,td{padding:13px 14px;font-size:13px}th{background:#f2f7
     <button data-page="students" onclick="showPage('students',this)"><i>♙</i>الطلاب</button>
     <button data-page="exams" onclick="showPage('exams',this)"><i>✎</i>الامتحانات</button>
     <button data-page="results" onclick="showPage('results',this)"><i>▥</i>النتائج</button>
+    <button data-page="visits" onclick="showPage('visits',this)"><i>👁</i>الزيارات</button>
+    <button data-page="notifs" onclick="showPage('notifs',this)"><i>🔔</i>الإشعارات</button>
     <button data-page="library" onclick="showPage('library',this)"><i>📚</i>المكتبة</button>
     <button data-page="lessons" onclick="showPage('lessons',this)"><i>🎓</i>الشرح التفاعلي</button>
     <button data-page="assistant" onclick="showPage('assistant',this)"><i>🤖</i>المساعد الذكي</button>
@@ -368,6 +370,41 @@ table{min-width:640px}th,td{padding:13px 14px;font-size:13px}th{background:#f2f7
    </div>
 
    <!-- المكتبة -->
+   <!-- الإشعارات -->
+   <div id="notifsPage" class="hidden">
+    <div class="pagehead"><div><h2>الإشعارات</h2><div class="sub">كام طالب فعّل الإشعارات، وكل إشعار اتبعت ومين وصله</div></div><button class="btn light small" onclick="loadPushStats()">تحديث ↻</button></div>
+    <div class="cards">
+     <div class="stat"><small>طلاب مفعّلين</small><strong id="notifStudents">—</strong></div>
+     <div class="stat"><small>أجهزة مسجّلة</small><strong id="notifDevices">—</strong></div>
+     <div class="stat"><small>إشعارات مرسلة</small><strong id="notifSends">—</strong></div>
+     <div class="stat"><small>آخر إشعار</small><strong id="notifLast" style="font-size:15px">—</strong></div>
+    </div>
+    <div class="panel">
+     <div class="panel-head"><div><h3>الطلاب المفعّلين</h3><div class="muted">الطلاب اللي سجّلوا جهازهم لاستقبال الإشعارات</div></div></div>
+     <div id="notifEnabledList"><div class="muted" style="padding:12px">جارٍ التحميل…</div></div>
+    </div>
+    <div class="panel">
+     <div class="panel-head"><div><h3>سجل الإشعارات</h3><div class="muted">آخر 30 إشعار، وكل إشعار مين وصله بالاسم</div></div></div>
+     <div id="notifSendsList"><div class="muted" style="padding:12px">جارٍ التحميل…</div></div>
+    </div>
+   </div>
+
+   <!-- الزيارات -->
+   <div id="visitsPage" class="hidden">
+    <div class="pagehead"><div><h2>سجل الزيارات</h2><div class="sub">عدد من فتح المنصة كل يوم — عدّاد مجهول بدون أي بيانات شخصية</div></div><button class="btn light small" onclick="loadVisitStats()">تحديث ↻</button></div>
+    <div class="cards">
+     <div class="stat"><small>زوار اليوم</small><strong id="visitTodayVisitors">—</strong></div>
+     <div class="stat"><small>فتحات اليوم</small><strong id="visitTodayOpens">—</strong></div>
+     <div class="stat"><small>فتحات آخر 30 يوم</small><strong id="visitPeriodOpens">—</strong></div>
+     <div class="stat"><small>أجهزة مختلفة في 30 يوم</small><strong id="visitPeriodVisitors">—</strong></div>
+    </div>
+    <div class="panel">
+     <div class="panel-head"><div><h3>آخر 30 يوم</h3><div class="muted" id="visitRange"></div></div></div>
+     <div id="visitChart" style="display:flex;align-items:flex-end;gap:5px;height:150px;padding:10px 6px;overflow-x:auto;border-bottom:1px solid #e5e7eb"></div>
+     <div class="tablewrap"><table id="visitsTable"><thead><tr><th>التاريخ</th><th>زوار</th><th>فتحات</th></tr></thead><tbody></tbody></table></div>
+    </div>
+   </div>
+
    <div id="libraryPage" class="hidden">
     <div class="pagehead"><div><h2>إدارة المكتبة الدراسية</h2></div><button class="btn light small" onclick="loadBooks()">تحديث ↻</button></div>
     <div class="panel">
@@ -469,7 +506,7 @@ const SUPABASE_ANON_KEY = "sb_publishable_Ug3xBkJESfI973ZpOeXLFA_wjPoExD-";
 const ADMIN_PASSWORD = "Yussefreda123@#$";
 const db = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 const DEFAULT_YEAR='الأولى', DEFAULT_DEPT='اللغة العربية';
-const PAGES=['overview','students','exams','results','library','lessons','chat','assistant','verify','reset'];
+const PAGES=['overview','students','exams','results','visits','notifs','library','lessons','chat','assistant','verify','reset'];
 const YEARS=['الأولى','الثانية','الثالثة','الرابعة'];
 const FIRST_YEAR_PASSWORD='2006';
 let year='الثانية';
@@ -543,6 +580,8 @@ function showPage(name,btn){
  if(name==='students')loadStudents();
  if(name==='exams'){closeBuilder(true);loadExams()}
  if(name==='results')loadResults();
+ if(name==='visits')loadVisitStats();
+ if(name==='notifs')loadPushStats();
  if(name==='library')loadBooks();
  if(name==='lessons')loadTeachingLessons();
  if(name==='chat')loadChat();
@@ -550,6 +589,60 @@ function showPage(name,btn){
  if(name==='verify')loadVerifications();
  if(name==='reset')$('resetYearLabel').textContent='الفرقة '+year;
  window.scrollTo({top:0,behavior:'smooth'});
+}
+
+/* ---------- الإشعارات ---------- */
+async function loadPushStats(){
+ const sendsBox=$('notifSendsList'), enBox=$('notifEnabledList');
+ if(sendsBox)sendsBox.innerHTML='<div class="muted" style="padding:12px">جارٍ التحميل…</div>';
+ try{
+  const {data,error}=await db.rpc('admin_push_stats',{p_admin_password:ADMIN_PASSWORD});
+  if(error)throw error;
+  if(!data||data.status!=='ok')throw new Error(data&&data.status==='unauthorized'?'كلمة المرور غير صحيحة':'تعذر تحميل الإشعارات');
+  const sends=data.sends||[], enabled=data.enabled||[];
+  $('notifStudents').textContent=Number(data.students||0);
+  $('notifDevices').textContent=Number(data.devices||0);
+  $('notifSends').textContent=sends.length;
+  $('notifLast').textContent=sends.length?new Date(sends[0].at).toLocaleString('ar-EG',{dateStyle:'short',timeStyle:'short'}):'—';
+  if(enBox)enBox.innerHTML=enabled.length?enabled.map(function(x){return '<div style="display:flex;justify-content:space-between;gap:8px;padding:8px 12px;border-bottom:1px solid #eef0f4"><span>'+esc(x.name||'—')+'</span><span class="muted" dir="ltr">'+esc(x.code||'')+'</span></div>'}).join(''):'<div class="muted" style="padding:14px">مفيش ولا طالب مفعّل الإشعارات لحد الآن.</div>';
+  if(sendsBox)sendsBox.innerHTML=sends.length?sends.map(function(s){
+   const kind=s.kind==='exams'?'امتحان':(s.kind==='book'?'كتاب':'شرح');
+   const rc=s.recipients||[];
+   return '<div style="padding:10px 12px;border-bottom:1px solid #eef0f4"><div style="display:flex;justify-content:space-between;gap:8px;flex-wrap:wrap"><b>'+esc(s.title||'')+'</b><span class="muted">'+kind+' · '+new Date(s.at).toLocaleString('ar-EG',{dateStyle:'short',timeStyle:'short'})+'</span></div><div class="muted" style="margin-top:4px">وصل لـ '+Number(s.sent||0)+' من '+Number(s.total||0)+(Number(s.failed||0)?' · فشل '+Number(s.failed):'')+'</div>'+(rc.length?'<div style="margin-top:6px;display:flex;gap:6px;flex-wrap:wrap">'+rc.map(function(r){return '<span style="font-size:12px;background:'+(r.ok?'#ecfdf5':'#fef2f2')+';color:'+(r.ok?'#065f46':'#991b1b')+';border-radius:999px;padding:2px 8px">'+esc(r.name||r.code||'')+'</span>'}).join('')+'</div>':'')+'</div>';
+  }).join(''):'<div class="muted" style="padding:14px">مفيش إشعارات مرسلة لحد الآن.</div>';
+ }catch(err){
+  if(sendsBox)sendsBox.innerHTML='<div class="muted" style="padding:12px">تعذر التحميل: '+esc(err.message||'')+'</div>';
+ }
+}
+
+/* ---------- سجل الزيارات ---------- */
+let visitStatsCache=null;
+async function loadVisitStats(){
+ const tbody=$('visitsTable')?.querySelector('tbody');
+ if(tbody)tbody.innerHTML=loadingRow(3);
+ try{
+  const {data,error}=await db.rpc('admin_visit_stats',{p_admin_password:ADMIN_PASSWORD,p_days:30});
+  if(error)throw error;
+  if(!data||data.status!=='ok')throw new Error(data?.status==='unauthorized'?'كلمة المرور غير صحيحة':'تعذر تحميل الإحصائيات');
+  visitStatsCache=data;
+  const byDay={};
+  (data.days||[]).forEach(r=>{byDay[String(r.day)]=r});
+  const days=[];
+  const today=new Date();
+  for(let i=29;i>=0;i--){const d=new Date(today.getFullYear(),today.getMonth(),today.getDate()-i);const key=d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');const r=byDay[key]||{};days.push({key,visitors:Number(r.visitors||0),opens:Number(r.opens||0)})}
+  const maxOpen=Math.max(1,...days.map(d=>d.opens));
+  const chart=$('visitChart');
+  if(chart){chart.innerHTML=days.map(d=>{const h=Math.round((d.opens/maxOpen)*118);const lbl=d.key.slice(5).split('-').reverse().join('/');return '<div title="'+lbl+' — زوار '+d.visitors+' · فتحات '+d.opens+'" style="flex:1 0 14px;display:flex;flex-direction:column;justify-content:flex-end;align-items:center;height:100%"><div style="width:100%;height:'+Math.max(h,d.opens?4:1)+'px;background:'+(d.opens?'linear-gradient(180deg,#7C3AED,#4C1D95)':'#e5e7eb')+';border-radius:4px 4px 0 0"></div></div>'}).join('')}
+  if(tbody){tbody.innerHTML=days.slice().reverse().map(d=>'<tr><td dir="ltr">'+d.key+'</td><td>'+d.visitors+'</td><td>'+d.opens+'</td></tr>').join('')}
+  $('visitTodayVisitors').textContent=Number(data.today?.visitors||0);
+  $('visitTodayOpens').textContent=Number(data.today?.opens||0);
+  $('visitPeriodOpens').textContent=Number(data.period?.opens||0);
+  $('visitPeriodVisitors').textContent=Number(data.period?.visitors||0);
+  const busy=days.filter(d=>d.opens>0).length;
+  $('visitRange').textContent='أيام فيها زيارات: '+busy+' من 30 — الأعمدة تمثل عدد الفتحات';
+ }catch(err){
+  if(tbody)tbody.innerHTML=emptyRow(3,'تعذر تحميل سجل الزيارات: '+esc(err.message||''));
+ }
 }
 
 /* ---------- توثيق الملفات (اكتمال البيانات) ---------- */

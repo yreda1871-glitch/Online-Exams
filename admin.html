@@ -299,6 +299,7 @@ table{min-width:640px}th,td{padding:13px 14px;font-size:13px}th{background:#f2f7
       </div>
       <div id="jsonBox" class="hidden">
        <div class="field"><label>كود الامتحان JSON</label><textarea id="examJson" rows="9" dir="ltr" style="text-align:left;font-family:monospace" placeholder='{"title":"الامتحان الأول","questions":[{"question_text":"...","question_type":"multiple_choice","options":["أ","ب","ج","د"],"correct_option":1,"marks":1}]}'></textarea></div>
+       <div class="field"><label>المادة</label><select id="examJsonSubject"><option value="">— بدون مادة —</option><option>علوم القرآن</option><option>النحو والصرف</option><option>الأدب الجاهلي</option><option>النقد الأدبي</option><option>القضايا المجتمعية</option><option>الفن المصري القديم</option><option>الفنون القبطية والإسلامية</option><option>مدخل إلى الدراسات الأدبية</option><option>فن الرسم</option></select></div>
        <button class="btn gold" onclick="importExamJson()">استيراد الامتحان الآن</button>
       </div>
      </div>
@@ -320,6 +321,7 @@ table{min-width:640px}th,td{padding:13px 14px;font-size:13px}th{background:#f2f7
        <div class="field"><label>اسم الامتحان *</label><input id="examTitle" placeholder="مثال: امتحان علوم القرآن الأول"></div>
        <div class="field"><label>مدة الامتحان بالدقائق</label><input id="examDuration" type="number" min="1" placeholder="مثال: 30"></div>
        <div class="field"><label>الدرجة النهائية *</label><input id="examMarks" type="number" min="1" value="100"><span class="hint">يمكنك ضبطها تلقائيًا من مجموع درجات الأسئلة لاحقًا.</span></div>
+       <div class="field"><label>المادة</label><select id="examSubject"><option value="">— بدون مادة —</option><option>علوم القرآن</option><option>النحو والصرف</option><option>الأدب الجاهلي</option><option>النقد الأدبي</option><option>القضايا المجتمعية</option><option>الفن المصري القديم</option><option>الفنون القبطية والإسلامية</option><option>مدخل إلى الدراسات الأدبية</option><option>فن الرسم</option></select></div>
       </div>
       <div class="field"><label>وصف / تعليمات الامتحان</label><textarea id="examDesc" rows="2" placeholder="تعليمات أو وصف مختصر (اختياري)"></textarea></div>
       <button id="saveExamBtn" class="btn" onclick="saveExamMeta()">حفظ وإنشاء الامتحان</button>
@@ -371,6 +373,7 @@ table{min-width:640px}th,td{padding:13px 14px;font-size:13px}th{background:#f2f7
     <div class="panel">
      <h3>رفع كتاب جديد (PDF + غلاف)</h3>
      <div class="field"><label>الفرقة المستهدفة</label><select id="bookYear"><option value="current">الفرقة المحددة حاليًا</option><option value="الكل">كل الفرق (مشترك)</option></select></div>
+     <div class="field"><label>المادة</label><select id="bookSubject"><option value="">— بدون مادة —</option><option>علوم القرآن</option><option>النحو والصرف</option><option>الأدب الجاهلي</option><option>النقد الأدبي</option><option>القضايا المجتمعية</option><option>الفن المصري القديم</option><option>الفنون القبطية والإسلامية</option><option>مدخل إلى الدراسات الأدبية</option><option>فن الرسم</option></select></div>
      <div class="field"><label>اسم الكتاب / المذكرة</label><input id="bookTitle" placeholder="مثال: مذكرة النحو والصرف - الفرقة الأولى"></div>
      <div class="grid2">
       <div class="field"><label>صورة غلاف الكتاب (اختياري — يُنشأ غلاف تلقائي)</label><input id="bookCover" type="file" accept="image/jpeg,image/png,image/webp"></div>
@@ -393,6 +396,7 @@ table{min-width:640px}th,td{padding:13px 14px;font-size:13px}th{background:#f2f7
       <div class="field"><label>نوع الدرس</label><select id="teachingType" onchange="teachingToggleType()"><option value="interactive">درس تفاعلي (JSON)</option><option value="video">درس فيديو</option></select></div>
       <div class="field"><label>عنوان الدرس</label><input id="teachingTitle" placeholder="مثال: علامات الإعراب الأصلية"></div>
       <div class="field"><label>الفرقة المستهدفة</label><select id="teachingYear"><option>الأولى</option><option>الثانية</option><option>الثالثة</option><option>الرابعة</option></select></div>
+      <div class="field"><label>المادة</label><select id="teachingSubject"><option value="">— بدون مادة —</option><option>علوم القرآن</option><option>النحو والصرف</option><option>الأدب الجاهلي</option><option>النقد الأدبي</option><option>القضايا المجتمعية</option><option>الفن المصري القديم</option><option>الفنون القبطية والإسلامية</option><option>مدخل إلى الدراسات الأدبية</option><option>فن الرسم</option></select></div>
      </div>
      <div id="teachingVideoFields" class="field hidden"><label>الفيديو</label>
       <div style="padding:12px;border:1px dashed var(--line);border-radius:12px;margin-bottom:10px"><b>① رفع فيديو من الهاتف أو الجهاز</b>
@@ -646,7 +650,7 @@ async function openBuilder(id){
  resetQuestionForm();
  if(!id){
   $('crumbTitle').textContent='امتحان جديد';
-  $('examTitle').value='';$('examDesc').value='';$('examDuration').value='';$('examMarks').value=100;
+  $('examTitle').value='';$('examDesc').value='';$('examDuration').value='';$('examMarks').value=100;$('examSubject').value='';
   $('saveExamBtn').textContent='حفظ وإنشاء الامتحان';
   $('builderStatus').innerHTML='';
   $('questionsArea').classList.add('hidden');
@@ -663,7 +667,7 @@ function applyExam(e){
  B.examId=e.id;B.exam=e;
  $('crumbTitle').textContent=e.title;
  $('examTitle').value=e.title||'';$('examDesc').value=e.description||'';
- $('examDuration').value=e.duration_minutes||'';$('examMarks').value=e.total_marks||100;
+ $('examDuration').value=e.duration_minutes||'';$('examMarks').value=e.total_marks||100;$('examSubject').value=e.subject||'';
  $('saveExamBtn').textContent='حفظ تعديلات البيانات';
  $('builderStatus').innerHTML=`<span class="pill ${e.published?'':'off'}">${e.published?'منشور':'مسودة'}</span>`;
  $('questionsArea').classList.remove('hidden');
@@ -682,7 +686,7 @@ async function saveExamMeta(){
  const total=Number($('examMarks').value),dur=Number($('examDuration').value)||null;
  if(!title){toast('اكتب اسم الامتحان',true);return}
  if(!(total>0)){toast('الدرجة النهائية يجب أن تكون أكبر من صفر',true);return}
- const fields={subject_id:null,title,description:$('examDesc').value.trim(),duration_minutes:dur,total_marks:total};
+ const fields={subject_id:null,subject:$('examSubject').value||null,title,description:$('examDesc').value.trim(),duration_minutes:dur,total_marks:total};
  const btn=$('saveExamBtn');btn.disabled=true;
  try{
   if(!B.examId){
@@ -884,7 +888,7 @@ async function importExamJson(){
   const opts=q.options||['صح','خطأ'],c=Number(q.correct_option);
   if(!(q.question_text||q.question)||!Array.isArray(opts)||opts.length<2||!Number.isInteger(c)||c<0||c>=opts.length){toast(`السؤال رقم ${i+1} غير صالح (تحقق من النص والخيارات وcorrect_option)`,true);return}
  }
- const {data:exam,error:examErr}=await db.from('exams').insert({subject_id:null,title:obj.title,description:obj.description||'',duration_minutes:obj.duration_minutes||null,total_marks:obj.total_marks||100,published:false,target_year:year,target_department:DEFAULT_DEPT}).select().single();
+ const {data:exam,error:examErr}=await db.from('exams').insert({subject_id:null,subject:$('examJsonSubject').value||null,title:obj.title,description:obj.description||'',duration_minutes:obj.duration_minutes||null,total_marks:obj.total_marks||100,published:false,target_year:year,target_department:DEFAULT_DEPT}).select().single();
  if(examErr){fail('تعذر إنشاء الامتحان',examErr);return}
  const rows=obj.questions.map((q,i)=>{const es=q.question_type==='essay';return {exam_id:exam.id,question_text:(es?'[[essay]] ':'')+(q.question_text||q.question),question_type:es?'multiple_choice':(q.question_type||'multiple_choice'),options:es?[]:(q.options||['صح','خطأ']),correct_option:es?0:Number(q.correct_option),marks:Number(q.marks)||1,question_order:i+1}});
  const _ir=await db.rpc('admin_bulk_insert_questions',{p_admin_password:ADMIN_PASSWORD,p_exam_id:exam.id,p_rows:rows});
@@ -947,7 +951,7 @@ async function uploadBook(){
     pdfUrl=link;note=' (تعذر تنزيل الملف، تم حفظ الرابط كما هو)';
    }
   }
-  const {error:dbErr}=await db.from('library_books').insert({title,cover_url:cu.publicUrl,pdf_url:pdfUrl,academic_year:$('bookYear').value==='الكل'?'الكل':year});
+  const {error:dbErr}=await db.from('library_books').insert({title,cover_url:cu.publicUrl,pdf_url:pdfUrl,academic_year:$('bookYear').value==='الكل'?'الكل':year,subject:$('bookSubject').value||null});
   if(dbErr)throw dbErr;
   toast('تم نشر الكتاب في المكتبة'+note);
   $('bookTitle').value='';$('bookCover').value='';$('bookPdf').value='';$('bookLink').value='';
@@ -1015,7 +1019,7 @@ async function teachingImportVideo(){
  }finally{btn.disabled=false}
 }
 function teachingNewLesson(){
- $('teachingTitle').value='';$('teachingYear').value=year||'الأولى';$('teachingDescription').value='';$('teachingAvatar').value='teacher_1';$('teachingPublished').value='false';$('teachingJson').value='';$('teachingVideoUrl').value='';$('teachingVideoUrl').dataset.path='';if($('teachingVideoFile'))$('teachingVideoFile').value='';if($('teachingVideoImport'))$('teachingVideoImport').value='';vStatus('');$('teachingType').value='interactive';$('teachingEditorError').textContent='';$('teachingPreviewBox').classList.add('hidden');$('lessonEditorHeading').textContent='إضافة درس جديد';$('teachingJson').dataset.lessonId='';teachingToggleType();
+ $('teachingTitle').value='';$('teachingYear').value=year||'الأولى';$('teachingDescription').value='';$('teachingSubject').value='';$('teachingAvatar').value='teacher_1';$('teachingPublished').value='false';$('teachingJson').value='';$('teachingVideoUrl').value='';$('teachingVideoUrl').dataset.path='';if($('teachingVideoFile'))$('teachingVideoFile').value='';if($('teachingVideoImport'))$('teachingVideoImport').value='';vStatus('');$('teachingType').value='interactive';$('teachingEditorError').textContent='';$('teachingPreviewBox').classList.add('hidden');$('lessonEditorHeading').textContent='إضافة درس جديد';$('teachingJson').dataset.lessonId='';teachingToggleType();
 }
 function teachingSample(){return {title:'عنوان الدرس',description:'شرح مبسط للدرس',target_year:'الأولى',avatar:'teacher_1',published:false,sections:[{section_order:1,title:'الجزء الأول',explanation:'اكتب هنا الشرح الكامل.',simple_explanation:'اكتب شرحًا مبسطًا جدًا باللهجة العربية السهلة، كأن المدرس يشرح لطالب لأول مرة.',narration:'النص الذي سيقرؤه صوت المدرس، جمل قصيرة وواضحة.',image_url:'https://example.com/lesson-image.jpg',image_alt:'وصف الصورة',question:'ما الإجابة الصحيحة؟',options:['الإجابة الأولى','الإجابة الثانية','الإجابة الثالثة','الإجابة الرابعة'],correct_index:0,feedback:'هذا هو التفسير المبسط للإجابة الصحيحة.'}],final_questions:[{question_order:1,question:'سؤال المراجعة النهائي؟',options:['اختيار أ','اختيار ب','اختيار ج','اختيار د'],correct_index:0,feedback:'تفسير الإجابة.'}]};}
 function teachingLoadSample(){const x=teachingSample();$('teachingTitle').value=x.title;$('teachingYear').value=x.target_year;$('teachingDescription').value=x.description;$('teachingJson').value=JSON.stringify({sections:x.sections,final_questions:x.final_questions},null,2);}
@@ -1023,7 +1027,7 @@ function teachingReadJson(){
  const type=$('teachingType').value;
  const title=$('teachingTitle').value.trim();
  if(!title)throw new Error('اكتب عنوان الدرس');
- const base={id:$('teachingJson').dataset.lessonId||undefined,title,description:$('teachingDescription').value.trim(),target_year:$('teachingYear').value,avatar:$('teachingAvatar').value,published:$('teachingPublished').value==='true',lesson_type:type};
+ const base={id:$('teachingJson').dataset.lessonId||undefined,title,description:$('teachingDescription').value.trim(),target_year:$('teachingYear').value,subject:$('teachingSubject').value||null,avatar:$('teachingAvatar').value,published:$('teachingPublished').value==='true',lesson_type:type};
  if(type==='video'){
   const video_url=$('teachingVideoUrl').value.trim();
   if(!video_url)throw new Error('أضف رابط الفيديو المباشر');
@@ -1040,7 +1044,7 @@ function teachingReadJson(){
 function teachingPreview(){try{const d=teachingReadJson();$('teachingPreviewBox').innerHTML='<h4 style="margin-bottom:8px">'+esc(d.title)+'</h4><p class="muted">'+esc(d.description)+'</p><p>عدد أجزاء الشرح: <b>'+d.sections.length+'</b> — أسئلة الاختبار النهائي: <b>'+d.final_questions.length+'</b></p>'+d.sections.map((q,i)=>'<div style="padding:10px;border:1px solid var(--line);border-radius:10px;margin:8px 0"><b>الجزء '+(i+1)+': '+esc(q.title||'')+'</b><p>'+esc(q.explanation||'')+'</p><small>'+esc(q.question||'')+'</small></div>').join('');$('teachingPreviewBox').classList.remove('hidden');$('teachingEditorError').textContent=''}catch(e){$('teachingEditorError').textContent=e.message}}
 async function teachingSaveLesson(btn){try{const lesson=teachingReadJson();if(btn)btn.disabled=true;const {data,error}=await db.rpc('teaching_admin_save',{p_admin_password:ADMIN_PASSWORD,p_lesson:lesson});if(error)throw error;if(data?.success===false)throw new Error(data.message||'تعذر حفظ الدرس');toast('تم حفظ الدرس بنجاح');teachingNewLesson();await loadTeachingLessons();}catch(e){$('teachingEditorError').textContent=e.message||'تعذر حفظ الدرس';}finally{if(btn)btn.disabled=false}}
 async function loadTeachingLessons(){const body=$('teachingTable')?.querySelector('tbody');if(!body)return;body.innerHTML=loadingRow(6);try{const {data,error}=await db.rpc('teaching_admin_list',{p_admin_password:ADMIN_PASSWORD});if(error)throw error;teachingLessonsCache=Array.isArray(data)?data:(data?.lessons||[]);$('teachingCount').textContent=teachingLessonsCache.length+' درس';body.innerHTML=teachingLessonsCache.length?teachingLessonsCache.map(l=>`<tr><td><b>${esc(l.title)}</b><div class="muted">${esc(l.description||'')}</div><small>${l.lesson_type==='video'?'🎬 درس فيديو':'🎓 درس تفاعلي'}</small></td><td>${esc(l.target_year||'—')}</td><td>${l.lesson_type==='video'?'—':Number(l.sections_count??l.section_count??0)}</td><td>${l.lesson_type==='video'?'—':Number(l.final_questions_count??l.final_count??0)}</td><td><span class="pill ${l.published?'':'off'}">${l.published?'منشور':'مسودة'}</span></td><td><button class="btn light small" onclick="teachingEditLesson('${esc(l.id)}')">تعديل</button> <button class="btn red small" onclick="teachingDeleteLesson('${esc(l.id)}')">حذف</button></td></tr>`).join(''):emptyRow(6,'لا توجد دروس حتى الآن');}catch(e){body.innerHTML=emptyRow(6,'تعذر تحميل الدروس: '+esc(e.message));}}
-async function teachingEditLesson(id){try{const {data,error}=await db.rpc('teaching_admin_get',{p_admin_password:ADMIN_PASSWORD,p_lesson_id:id});if(error)throw error;const d=data?.lesson||data;if(!d)throw new Error('لم يتم العثور على بيانات الدرس');$('teachingTitle').value=d.title||'';$('teachingYear').value=d.target_year||'الأولى';$('teachingDescription').value=d.description||'';$('teachingAvatar').value=d.avatar||'teacher_1';$('teachingPublished').value=String(!!d.published);$('teachingType').value=d.lesson_type||'interactive';$('teachingVideoUrl').value=d.video_url||'';$('teachingJson').value=JSON.stringify({sections:d.sections||[],final_questions:d.final_questions||[]},null,2);$('teachingJson').dataset.lessonId=id;$('lessonEditorHeading').textContent='تعديل الدرس: '+(d.title||'');$('teachingEditorError').textContent='';$('teachingPreviewBox').classList.add('hidden');teachingToggleType();window.scrollTo({top:0,behavior:'smooth'});}catch(e){fail('تعذر فتح الدرس للتعديل',e)}}
+async function teachingEditLesson(id){try{const {data,error}=await db.rpc('teaching_admin_get',{p_admin_password:ADMIN_PASSWORD,p_lesson_id:id});if(error)throw error;const d=data?.lesson||data;if(!d)throw new Error('لم يتم العثور على بيانات الدرس');$('teachingTitle').value=d.title||'';$('teachingYear').value=d.target_year||'الأولى';$('teachingDescription').value=d.description||'';$('teachingSubject').value=d.subject||'';$('teachingAvatar').value=d.avatar||'teacher_1';$('teachingPublished').value=String(!!d.published);$('teachingType').value=d.lesson_type||'interactive';$('teachingVideoUrl').value=d.video_url||'';$('teachingJson').value=JSON.stringify({sections:d.sections||[],final_questions:d.final_questions||[]},null,2);$('teachingJson').dataset.lessonId=id;$('lessonEditorHeading').textContent='تعديل الدرس: '+(d.title||'');$('teachingEditorError').textContent='';$('teachingPreviewBox').classList.add('hidden');teachingToggleType();window.scrollTo({top:0,behavior:'smooth'});}catch(e){fail('تعذر فتح الدرس للتعديل',e)}}
 async function teachingDeleteLesson(id){if(!confirm('هل تريد حذف هذا الدرس نهائيًا؟'))return;try{const {error}=await db.rpc('teaching_admin_delete',{p_admin_password:ADMIN_PASSWORD,p_lesson_id:id});if(error)throw error;toast('تم حذف الدرس');loadTeachingLessons()}catch(e){fail('تعذر حذف الدرس',e)}}
 
 /* ---------- المساعد الذكي ---------- */

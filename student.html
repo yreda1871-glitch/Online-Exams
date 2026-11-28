@@ -1158,6 +1158,12 @@ button,.btn{touch-action:manipulation}input,textarea,select{font-size:16px!impor
 .subject-tile-count{background:#F1F5F9;color:#475569;border-radius:999px;padding:1px 8px;font-size:11px}
 .subject-tile.active .subject-tile-count{background:rgba(255,255,255,.25);color:#fff}
 .subject-tile-badge{position:absolute;top:-8px;left:-6px;background:#DC2626;color:#fff;border-radius:999px;padding:1px 7px;font-size:10px;font-weight:700;box-shadow:0 2px 6px rgba(220,38,38,.4)}
+.subject-home-cards{grid-column:1/-1;margin:0 0 16px}
+.subject-tile-card .subject-tile-badge{position:absolute;top:10px;inset-inline-start:10px;left:auto;font-size:11px;padding:2px 9px;z-index:3}
+.subject-open-bar{grid-column:1/-1;display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin:0 0 12px}
+.subject-open-bar .subject-back-btn{padding:7px 14px;font-size:13px;font-weight:700}
+.subject-open-title{font-weight:800;font-size:17px;color:#0f172a}
+.subject-open-count{background:#EFF6FF;color:#1D4ED8;border-radius:999px;padding:2px 10px;font-size:12px;font-weight:700}
 .subject-heading{grid-column:1/-1;font-weight:800;font-size:16px;color:#0F172A;margin:12px 0 0;padding-right:4px}
 /* الشرح التفاعلي */
 .lesson-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:14px;margin-top:16px}
@@ -2102,18 +2108,26 @@ function groupBySubject(items){
  return order.filter(k=>groups[k]).map(k=>({subject:k,items:groups[k]}));
 }
 function subjectHeading(subj){const x=SUBJECTS.find(v=>v.n===subj);return '<div class="subject-heading">'+(x?x.i:'📦')+' '+esc(subj)+'</div>'}
-function groupedCards(area,all,list,cardFor,emptyMsg){
- let html=subjectBar(area,all);
- if(!list.length)return html+'<div class="panel muted" style="grid-column:1/-1;text-align:center;">'+emptyMsg+'</div>';
- if(subjectFilter[area]==='الكل'){
-  groupBySubject(list).forEach(g=>{html+=subjectHeading(g.subject)+'<div style="display:contents">'+g.items.map(cardFor).join('')+'</div>'});
- }else{
-  html+='<div style="display:contents">'+list.map(cardFor).join('')+'</div>';
- }
- return html;
+function subjectTileGrid(area,all){
+ const present=SUBJECTS.filter(x=>all.some(it=>subjectNameOf(it)===x.n));
+ const hasOther=all.some(it=>subjectNameOf(it)===OTHER_SUBJECT);
+ const unitFor=c=>area==='exams'?(c>=3&&c<=10?'امتحانات':'امتحان'):area==='library'?(c>=3&&c<=10?'كتب':'كتاب'):(c>=3&&c<=10?'دروس':'درس');
+ const mk=(key,label,icon,count,nc)=>'<button type="button" class="contest-card subject-tile-card" onclick="setSubjectFilter(\''+area+'\',\''+key+'\')"><span class="shortcut-icon" aria-hidden="true">'+icon+'</span><b>'+esc(label)+'</b><span class="shortcut-caption">'+count+' '+unitFor(count)+'</span><span class="shortcut-go">افتح القسم ←</span>'+(nc?'<span class="subject-tile-badge">'+nc+' جديد</span>':'')+'</button>';
+ let html='<div class="home-cards subject-home-cards">';
+ present.forEach(x=>{html+=mk(x.n,x.n,x.i,all.filter(it=>subjectNameOf(it)===x.n).length,subjectNewCount(area,all,x.n))});
+ if(hasOther)html+=mk(OTHER_SUBJECT,OTHER_SUBJECT,'📦',all.filter(it=>subjectNameOf(it)===OTHER_SUBJECT).length,subjectNewCount(area,all,OTHER_SUBJECT));
+ return html+'</div>';
 }
-
- function renderExamCards(){
+function groupedCards(area,all,list,cardFor,emptyMsg){
+ if(!all.length)return '<div class="panel muted" style="grid-column:1/-1;text-align:center;">'+emptyMsg+'</div>';
+ const open=subjectFilter[area];
+ if(!open||open==='الكل')return subjectTileGrid(area,all);
+ const x=SUBJECTS.find(v=>v.n===open);
+ const head='<div class="subject-open-bar"><button type="button" class="btn outline subject-back-btn" onclick="setSubjectFilter(\''+area+'\',\'الكل\')">→ كل المواد</button><span class="subject-open-title">'+(x?x.i:'📦')+' '+esc(open)+'</span><span class="subject-open-count">'+list.length+'</span></div>';
+ if(!list.length)return head+'<div class="panel muted" style="grid-column:1/-1;text-align:center;">'+emptyMsg+'</div>';
+ return head+'<div style="display:contents">'+list.map(cardFor).join('')+'</div>';
+}
+function renderExamCards(){
  const list=(subjectFilter.exams==='الكل')?examCache:examCache.filter(e=>subjectNameOf(e)===subjectFilter.exams);
  const cardFor=(e)=>{
   const done=attempts.find(a=>a.exam_id===e.id&&a.completed);

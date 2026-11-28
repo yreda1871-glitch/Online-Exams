@@ -700,9 +700,9 @@ async function saveExamMeta(){
 
 /* أسئلة الامتحان */
 async function loadBuilderQuestions(){
- const {data,error}=await db.from('exam_questions').select('*').eq('exam_id',B.examId).order('question_order');
- if(error){fail('تعذر تحميل الأسئلة',error);return}
- B.questions=data||[];renderQuestions();
+ const {data,error}=await db.rpc('admin_get_questions',{p_admin_password:ADMIN_PASSWORD,p_exam_id:B.examId});
+ if(error||!data||data.status!=='ok'){fail('تعذر تحميل الأسئلة',error||new Error((data&&data.status)||'خطأ'));return}
+ B.questions=data.questions||[];renderQuestions();
 }
 const LETTERS=['أ','ب','ج','د','هـ','و'];
 function renderQuestions(){
@@ -807,10 +807,14 @@ async function saveQuestion(next){
  B.saving=true;$('saveQBtn').disabled=$('saveQNextBtn').disabled=true;
  try{
   let error;
-  if(B.editingId){({error}=await db.from('exam_questions').update(row).eq('id',B.editingId))}
+  if(B.editingId){
+   const _r=await db.rpc('admin_upsert_question',{p_admin_password:ADMIN_PASSWORD,p_question:{...row,id:B.editingId}});
+   error=_r.error||(_r.data&&_r.data.status!=='ok'?new Error(_r.data.status):null);
+  }
   else{
    const order=B.questions.length?Math.max(...B.questions.map(q=>q.question_order||0))+1:1;
-   ({error}=await db.from('exam_questions').insert({...row,exam_id:B.examId,question_order:order}));
+   const _r=await db.rpc('admin_upsert_question',{p_admin_password:ADMIN_PASSWORD,p_question:{...row,exam_id:B.examId,question_order:order}});
+   error=_r.error||(_r.data&&_r.data.status!=='ok'?new Error(_r.data.status):null);
   }
   if(error){fail('تعذر حفظ السؤال',error);return}
   toast(B.editingId?'تم حفظ التعديل':'تمت إضافة السؤال');
@@ -822,18 +826,19 @@ async function saveQuestion(next){
 }
 async function deleteQuestion(id){
  if(!confirm('حذف هذا السؤال؟'))return;
- const {error}=await db.from('exam_questions').delete().eq('id',id);
+ const _dr=await db.rpc('admin_delete_question',{p_admin_password:ADMIN_PASSWORD,p_question_id:id});
+ const error=_dr.error||(_dr.data&&_dr.data.status!=='ok'?new Error(_dr.data.status):null);
  if(error){fail('تعذر حذف السؤال',error);return}
  if(B.editingId===id)resetQuestionForm();
  toast('تم حذف السؤال');await loadBuilderQuestions();
  // إعادة ترقيم الأسئلة بعد الحذف
- for(let i=0;i<B.questions.length;i++){if(B.questions[i].question_order!==i+1)await db.from('exam_questions').update({question_order:i+1}).eq('id',B.questions[i].id)}
+ for(let i=0;i<B.questions.length;i++){if(B.questions[i].question_order!==i+1)await db.rpc('admin_set_question_order',{p_admin_password:ADMIN_PASSWORD,p_question_id:B.questions[i].id,p_order:i+1})}
 }
 async function moveQuestion(i,dir){
  const a=B.questions[i],b=B.questions[i+dir];if(!a||!b)return;
  const [r1,r2]=await Promise.all([
-  db.from('exam_questions').update({question_order:i+dir+1}).eq('id',a.id),
-  db.from('exam_questions').update({question_order:i+1}).eq('id',b.id)]);
+  db.rpc('admin_set_question_order',{p_admin_password:ADMIN_PASSWORD,p_question_id:a.id,p_order:i+dir+1}),
+  db.rpc('admin_set_question_order',{p_admin_password:ADMIN_PASSWORD,p_question_id:b.id,p_order:i+1})]);
  if(r1.error||r2.error){fail('تعذر تغيير الترتيب',r1.error||r2.error);return}
  await loadBuilderQuestions();
 }
@@ -881,7 +886,8 @@ async function importExamJson(){
  const {data:exam,error:examErr}=await db.from('exams').insert({subject_id:null,title:obj.title,description:obj.description||'',duration_minutes:obj.duration_minutes||null,total_marks:obj.total_marks||100,published:false,target_year:year,target_department:DEFAULT_DEPT}).select().single();
  if(examErr){fail('تعذر إنشاء الامتحان',examErr);return}
  const rows=obj.questions.map((q,i)=>{const es=q.question_type==='essay';return {exam_id:exam.id,question_text:(es?'[[essay]] ':'')+(q.question_text||q.question),question_type:es?'multiple_choice':(q.question_type||'multiple_choice'),options:es?[]:(q.options||['صح','خطأ']),correct_option:es?0:Number(q.correct_option),marks:Number(q.marks)||1,question_order:i+1}});
- const {error:qErr}=await db.from('exam_questions').insert(rows);
+ const _ir=await db.rpc('admin_bulk_insert_questions',{p_admin_password:ADMIN_PASSWORD,p_exam_id:exam.id,p_rows:rows});
+ const qErr=_ir.error||(_ir.data&&_ir.data.status!=='ok'?new Error(_ir.data.status):null);
  if(qErr){await db.from('exams').delete().eq('id',exam.id);fail('خطأ في الأسئلة وتم إلغاء المسودة',qErr);return}
  $('examJson').value='';toast('تم استيراد الامتحان كمسودة. راجعه ثم انشره.');
  await loadExams();await refreshAll();

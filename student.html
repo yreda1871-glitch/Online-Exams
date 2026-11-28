@@ -2826,7 +2826,7 @@ async function dailyNotifyIfDue(force){
  try{localStorage.setItem(dailyKey(),JSON.stringify({last:today}))}catch(e){}
 }
 let dailyTimer=null;
-function initDaily(){dailyEnsureToday();updateMsgBadge();renderInbox(false);dailyNotifyIfDue();if(location.hash==='#messages')openMessages();clearInterval(dailyTimer);dailyTimer=setInterval(dailyNotifyIfDue,600000)}
+function initDaily(){subscribePush();dailyEnsureToday();updateMsgBadge();renderInbox(false);dailyNotifyIfDue();if(location.hash==='#messages')openMessages();clearInterval(dailyTimer);dailyTimer=setInterval(dailyNotifyIfDue,600000)}
 document.addEventListener('visibilitychange',()=>{if(!document.hidden)dailyNotifyIfDue()});
 let examsChannel=null,checkingExams=false;
 const knownKey=()=>'exam_known_ids_'+(profile?.student_code||'');
@@ -2834,10 +2834,27 @@ function renderNotifCard(){
  const c=document.getElementById('notifCard');if(!c)return;
  c.classList.toggle('hidden',!('Notification' in window)||Notification.permission!=='default');
 }
+/* إشعارات الهاتف الحقيقية (Web Push) — تصل حتى والمتصفح مقفول */
+const VAPID_PUBLIC_KEY='BGJWIpHD82ITcN7sZrGEBV9mmb4EonKIltt1B6j9Na-SEA_SeaXzgzALRq3L1_iq29LDybWONJQRm0bndervyHw';
+function b64ToUint8(b){const p='='.repeat((4-b.length%4)%4);const s=(b+p).replace(/-/g,'+').replace(/_/g,'/');const raw=atob(s);const a=new Uint8Array(raw.length);for(let i=0;i<raw.length;i++)a[i]=raw.charCodeAt(i);return a}
+function u8ToB64(buf){const a=new Uint8Array(buf);let s='';a.forEach(b=>s+=String.fromCharCode(b));return btoa(s).replace(/\+/g,'-').replace(/\//g,'_').replace(/=+$/,'')}
+async function subscribePush(){
+ if(!profile||!profile.student_code||!db)return;
+ if(!('serviceWorker' in navigator)||!('PushManager' in window))return;
+ if(!('Notification' in window)||Notification.permission!=='granted')return;
+ try{
+  const reg=await navigator.serviceWorker.getRegistration();if(!reg)return;
+  let sub=await reg.pushManager.getSubscription();
+  if(!sub)sub=await reg.pushManager.subscribe({userVisibleOnly:true,applicationServerKey:b64ToUint8(VAPID_PUBLIC_KEY)});
+  const k1=sub.getKey('p256dh'),k2=sub.getKey('auth');if(!k1||!k2)return;
+  await db.rpc('save_push_subscription',{p_student_code:profile.student_code,p_endpoint:sub.endpoint,p_p256dh:u8ToB64(k1),p_auth:u8ToB64(k2)});
+ }catch(e){}
+}
 async function enableNotifications(){
  if(!('Notification' in window)){toast('متصفحك لا يدعم الإشعارات.');return}
  const p=await Notification.requestPermission();
  renderNotifCard();
+ if(p==='granted'){subscribePush()}
  toast(p==='granted'?'تم تفعيل الإشعارات ✅':'لم يتم السماح بالإشعارات. يمكنك تفعيلها من إعدادات المتصفح.');
 }
 async function notifyNewExam(list){

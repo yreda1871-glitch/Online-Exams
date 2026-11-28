@@ -2182,6 +2182,44 @@ function examOptions(value){
 }
 function isEssayQ(q){return !!q&&String(q.question_text||'').indexOf('[[essay]]')===0}
 function essayText(q){return String(q&&q.question_text||'').replace(/^\[\[essay\]\]\s*/,'')}
+/* مساعدة واحدة لكل محاولة: تُظهر الإجابة الصحيحة للسؤال الحالي */
+let examHelpUsed=false;
+function helpStorageKey(){return 'exam_help_'+(activeExam&&activeExam.attempt_id||'')}
+function helpMarkUsed(){examHelpUsed=true;try{localStorage.setItem(helpStorageKey(),'1')}catch(e){}}
+function helpLoadState(){try{examHelpUsed=localStorage.getItem(helpStorageKey())==='1'}catch(e){examHelpUsed=false}}
+async function useExamHelp(){
+ if(!activeExam||examReviewMode)return;
+ if(examHelpUsed){toast('استخدمت المساعدة بالفعل في هذه المحاولة.');return}
+ const q=(activeExam.questions||[])[currentQuestionIndex];
+ if(!q||isEssayQ(q)){toast('المساعدة متاحة لأسئلة الاختيارات وصح وخطأ فقط.');return}
+ if(!confirm('استخدام المساعدة الوحيدة في هذا الامتحان؟ ستُظهر الإجابة الصحيحة لهذا السؤال.'))return;
+ try{
+  const {data,error}=await db.rpc('use_exam_help',{p_student_code:profile.student_code,p_exam_id:activeExam.__examId,p_question_id:q.id});
+  if(error)throw error;
+  if(!data||!data.success){
+   if(data&&data.reason==='already_used'){helpMarkUsed();renderHelpAvatar();toast('استخدمت المساعدة بالفعل في هذه المحاولة.')}
+   else toast('المساعدة غير متاحة لهذا السؤال.');
+   return;
+  }
+  helpMarkUsed();
+  const idx=Number(data.correct_option);
+  const labels=[...document.querySelectorAll('#examModalBody .exam-option')];
+  const target=labels[idx];
+  if(target){target.style.border='2px solid #22c55e';target.style.background='rgba(34,197,94,.22)';target.style.borderRadius='12px';const mark=document.createElement('b');mark.textContent=' ✓ الإجابة الصحيحة';mark.style.color='#22c55e';target.appendChild(mark)}
+  renderHelpAvatar();
+  toast('تم استخدام المساعدة: هذه هي الإجابة الصحيحة ✅');
+ }catch(e){toast('تعذر استخدام المساعدة الآن.')}
+}
+function helpAvatarHtml(){
+ const used=examHelpUsed;
+ return `<button type="button" id="helpAvatarBtn" onclick="useExamHelp()" title="مساعدة واحدة: تُظهر الإجابة الصحيحة" style="position:relative;flex:0 0 auto;width:52px;height:52px;border-radius:50%;border:2px solid ${used?'rgba(255,255,255,.25)':'#fbbf24'};background:${used?'rgba(255,255,255,.08)':'rgba(251,191,36,.15)'};font-size:26px;cursor:${used?'not-allowed':'pointer'};opacity:${used?'.55':'1'}">💡<span id="helpCount" style="position:absolute;top:-6px;inset-inline-start:-6px;min-width:22px;height:22px;border-radius:999px;background:${used?'#64748b':'#ef4444'};color:#fff;font:800 13px/22px Cairo,Tahoma,Arial,sans-serif;text-align:center;padding:0 5px">${used?'0':'1'}</span></button>`;
+}
+function renderHelpAvatar(){
+ const btn=document.getElementById('helpAvatarBtn');
+ if(!btn)return;
+ const wrap=btn.parentElement;
+ if(wrap)wrap.innerHTML=helpAvatarHtml()+(wrap.dataset.tip?`<small class="muted" style="align-self:center">${wrap.dataset.tip}</small>`:'');
+}
 function selectExamOption(questionId,index){
  if(!activeExam||examReviewMode||questionAdvanceLocked)return;
  const q=activeExam.questions[currentQuestionIndex];
@@ -2206,7 +2244,7 @@ async function startExamNotice(id){
   if(data.status==='exam_unavailable')throw new Error('هذا الامتحان غير منشور أو لم يعد متاحًا.');
   if(data.status==='no_questions')throw new Error('الامتحان لا يحتوي على أسئلة بعد.');
   if(data.status!=='started')throw new Error('تعذر بدء الامتحان: '+data.status);
-  activeExam=data;activeExam.__examId=id;try{examSelections=JSON.parse(localStorage.getItem('exam_answers_'+data.attempt_id)||'{}')||{};}catch(e){examSelections={};}examReviewMode=false;renderActiveExam();
+  activeExam=data;activeExam.__examId=id;try{examSelections=JSON.parse(localStorage.getItem('exam_answers_'+data.attempt_id)||'{}')||{};}catch(e){examSelections={};}examReviewMode=false;helpLoadState();renderActiveExam();
  }catch(e){toast('تعذر فتح الامتحان: '+(e.message||'خطأ غير معروف'));}
  finally{btns.forEach(b=>b.disabled=false);}
 }
@@ -2238,7 +2276,7 @@ function renderCurrentExamQuestion(){
   const ta=document.getElementById('essayAnswerBox');
   ta.addEventListener('input',()=>{examSelections[q.id]=ta.value;if(activeExam&&activeExam.attempt_id){try{localStorage.setItem('exam_answers_'+activeExam.attempt_id,JSON.stringify(examSelections))}catch(e){}}});
  }else{
- document.getElementById('examModalBody').innerHTML=`<article class="exam-question"><h3><span>${currentQuestionIndex+1}.</span>${esc(q.question_text)} <small class="muted">(${esc(q.marks)} درجة)</small></h3>${opts.map((op,j)=>`<label class="exam-option"><input type="radio" name="answer_${q.id}" value="${j}" ${Number(examSelections[q.id])===j?'checked':''} onchange="selectExamOption('${q.id}',${j})"><span>${esc(op)}</span></label>`).join('')}</article>`;
+ document.getElementById('examModalBody').innerHTML=`<article class="exam-question"><div class="help-row" data-tip="مساعدة واحدة لكل امتحان" style="display:flex;gap:10px;justify-content:flex-start;align-items:center;margin-bottom:10px">${helpAvatarHtml()}<small class="muted" style="align-self:center">مساعدة واحدة لكل امتحان: تُظهر إجابة هذا السؤال</small></div><h3><span>${currentQuestionIndex+1}.</span>${esc(q.question_text)} <small class="muted">(${esc(q.marks)} درجة)</small></h3>${opts.map((op,j)=>`<label class="exam-option"><input type="radio" name="answer_${q.id}" value="${j}" ${Number(examSelections[q.id])===j?'checked':''} onchange="selectExamOption('${q.id}',${j})"><span>${esc(op)}</span></label>`).join('')}</article>`;
  }
  document.getElementById('prevQuestionBtn').classList.add('hidden');
  document.getElementById('nextQuestionBtn').classList.add('hidden');

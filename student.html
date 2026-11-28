@@ -2319,7 +2319,7 @@ async function gradeEssaysBatchOnce(items){
   prompt+='إجابة الطالب: '+x.a+'\n\n';});
  prompt+='أعد '+items.length+' أرقام فقط مفصولة بفاصلة بنفس الترتيب، كل رقم هو درجة الإجابة من 0 إلى 10. التنسيق المطلوب بالضبط: أرقام إنجليزية مفصولة بفواصل بدون أي كلمة، مثال: 8,5,9';
  const t=await pollinationsChat(sys,prompt);
- const nums=(String(t).match(/-?[0-9٠-٩۰-۹]+(?:[.,٫][0-9٠-٩۰-۹]+)?/g)||[]).map(x=>Number(normArabicNum(x))).filter(n=>isFinite(n));
+ const nums=(String(t).match(/-?[0-9٠-٩۰-۹]+/g)||[]).map(x=>Number(normArabicNum(x))).filter(n=>isFinite(n));
  if(nums.length<items.length){try{localStorage.setItem('essay_grader_last_raw',String(t).slice(0,500));}catch(_){};throw new Error('batch parse: '+String(t).slice(0,80));}
  return nums.slice(0,items.length).map((n,i)=>Math.max(0,Math.min(items[i].max,Math.round(n))));
 }

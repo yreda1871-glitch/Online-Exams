@@ -1160,6 +1160,22 @@ button,.btn{touch-action:manipulation}input,textarea,select{font-size:16px!impor
 .subject-tile-badge{position:absolute;top:-8px;left:-6px;background:#DC2626;color:#fff;border-radius:999px;padding:1px 7px;font-size:10px;font-weight:700;box-shadow:0 2px 6px rgba(220,38,38,.4)}
 .subject-home-cards{grid-column:1/-1;margin:0 0 16px}
 .subject-tile-card .subject-tile-badge{position:absolute;top:10px;inset-inline-start:10px;left:auto;font-size:11px;padding:2px 9px;z-index:3}
+.subject-home-cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(165px,1fr));gap:12px;grid-column:1/-1;margin:0 0 16px}
+.subject-card{font:inherit;text-align:start;position:relative;display:flex;flex-direction:column;gap:12px;padding:16px;background:#fff;border:1px solid #E5E9F2;border-radius:16px;cursor:pointer;box-shadow:0 1px 2px rgba(15,23,42,.05);transition:transform .18s,box-shadow .18s,border-color .18s,opacity .18s;min-width:0}
+.subject-card:hover{transform:translateY(-2px);border-color:#C7D2FE;box-shadow:0 10px 24px rgba(30,64,175,.10);opacity:1}
+.subject-card:active{transform:translateY(0)}
+.subject-card:focus-visible{outline:3px solid #93C5FD;outline-offset:2px}
+.subject-card.is-empty{opacity:.5}
+.subject-card.is-empty .sc-ico{background:#F8FAFC;border-color:#EEF2F7}
+.subject-card.is-empty .sc-go{color:#94A3B8}
+.subject-card .sc-top{display:flex;align-items:flex-start;justify-content:space-between;gap:8px;width:100%}
+.subject-card .sc-ico{width:44px;height:44px;border-radius:13px;display:grid;place-items:center;font-size:21px;background:linear-gradient(160deg,#EEF2FF,#E0E7FF);border:1px solid #E0E7FF;flex:none}
+.subject-card .sc-badge{background:#EF4444;color:#fff;border-radius:999px;padding:3px 9px;font-size:10.5px;font-weight:800;white-space:nowrap;box-shadow:0 2px 6px rgba(239,68,68,.3);flex:none}
+.subject-card .sc-title{font-size:15px;font-weight:800;color:#0F172A;line-height:1.45;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.subject-card .sc-meta{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-top:auto;padding-top:2px}
+.subject-card .sc-count{font-size:12px;font-weight:600;color:#64748B}
+.subject-card .sc-go{font-size:12px;font-weight:800;color:#1D4ED8}
+
 .subject-open-bar{grid-column:1/-1;display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin:0 0 12px}
 .subject-open-bar .subject-back-btn{padding:7px 14px;font-size:13px;font-weight:700}
 .subject-open-title{font-weight:800;font-size:17px;color:#0f172a}
@@ -2109,11 +2125,11 @@ function groupBySubject(items){
 }
 function subjectHeading(subj){const x=SUBJECTS.find(v=>v.n===subj);return '<div class="subject-heading">'+(x?x.i:'📦')+' '+esc(subj)+'</div>'}
 function subjectTileGrid(area,all){
- const present=SUBJECTS.filter(x=>all.some(it=>subjectNameOf(it)===x.n));
+ const present=SUBJECTS.slice();
  const hasOther=all.some(it=>subjectNameOf(it)===OTHER_SUBJECT);
  const unitFor=c=>area==='exams'?(c>=3&&c<=10?'امتحانات':'امتحان'):area==='library'?(c>=3&&c<=10?'كتب':'كتاب'):(c>=3&&c<=10?'دروس':'درس');
- const mk=(key,label,icon,count,nc)=>'<button type="button" class="contest-card subject-tile-card" onclick="setSubjectFilter(\''+area+'\',\''+key+'\')"><span class="shortcut-icon" aria-hidden="true">'+icon+'</span><b>'+esc(label)+'</b><span class="shortcut-caption">'+count+' '+unitFor(count)+'</span><span class="shortcut-go">افتح القسم ←</span>'+(nc?'<span class="subject-tile-badge">'+nc+' جديد</span>':'')+'</button>';
- let html='<div class="home-cards subject-home-cards">';
+ const mk=(key,label,icon,count,nc)=>'<button type="button" class="subject-card'+(count?'':' is-empty')+'" onclick="setSubjectFilter(\''+area+'\',\''+key+'\')"><span class="sc-top"><span class="sc-ico" aria-hidden="true">'+icon+'</span>'+(nc?'<span class="sc-badge">'+nc+' جديد</span>':'')+'</span><span class="sc-title">'+esc(label)+'</span><span class="sc-meta"><span class="sc-count">'+(count?count+' '+unitFor(count):'لا يوجد بعد')+'</span><span class="sc-go">افتح ←</span></span></button>';
+ let html='<div class="subject-home-cards">';
  present.forEach(x=>{html+=mk(x.n,x.n,x.i,all.filter(it=>subjectNameOf(it)===x.n).length,subjectNewCount(area,all,x.n))});
  if(hasOther)html+=mk(OTHER_SUBJECT,OTHER_SUBJECT,'📦',all.filter(it=>subjectNameOf(it)===OTHER_SUBJECT).length,subjectNewCount(area,all,OTHER_SUBJECT));
  return html+'</div>';

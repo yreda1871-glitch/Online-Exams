@@ -612,10 +612,11 @@ async function deleteStudent(id){
 async function loadExams(){
  $('examYearBadge').textContent='الفرقة '+year;
  const body=document.querySelector('#examsTable tbody');body.innerHTML=loadingRow(5);
- const {data,error}=await db.from('exams').select('id,title,published,created_at,duration_minutes,total_marks,exam_questions(id)').eq('target_year',year).order('created_at',{ascending:false});
+ const {data:aleData,error}=await db.rpc('admin_list_exams',{p_admin_password:ADMIN_PASSWORD,p_year:year});
  if(error){body.innerHTML=emptyRow(5,esc(error.message));return}
- body.innerHTML=(data||[]).map(e=>{
-  const n=e.exam_questions?.length||0;
+ const examsList=(aleData&&aleData.exams)||[];
+ body.innerHTML=examsList.map(e=>{
+  const n=e.question_count||0;
   return `<tr data-status="${e.published?'published':'draft'}"><td><b>${esc(e.title)}</b><div class="muted" style="font-size:11px">${date(e.created_at)}</div></td><td>${n}</td><td>${e.duration_minutes?e.duration_minutes+' د':'—'}</td><td><span class="pill ${e.published?'':'off'}">${e.published?'منشور':'مسودة'}</span></td><td><div class="actions"><button class="btn light small" onclick="openBuilder('${esc(e.id)}')">✎ الأسئلة والتعديل</button><button class="btn small ${e.published?'ghost':'gold'}" onclick="togglePublish('${esc(e.id)}',${!e.published},${n})">${e.published?'إخفاء':'نشر'}</button><button class="btn red small" onclick="deleteExam('${esc(e.id)}')">حذف</button></div></td></tr>`;
  }).join('')||emptyRow(5,'لا توجد امتحانات للفرقة '+year+'. اضغط «امتحان جديد» للبدء.');
  filterExamStatus();
